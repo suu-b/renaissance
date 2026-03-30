@@ -1,0 +1,23 @@
+[
+    {
+        "id": 1,
+        "title": "The Divine Comdey",
+        "img": "https://m.media-amazon.com/images/I/51i-9SGWr-L._AC_UF1000,1000_QL80_.jpg",
+        "author": "Dante",
+        "desc": "The poem discusses the state of the soul after death and presents an image of divine justice meted out as due punishment or reward, and describes Dante's travels through Hell, Purgatory, and Heaven. Allegorically, the poem represents the soul's journey towards God, beginning with the recognition and rejection of sin (Inferno), followed by the penitent Christian life (Purgatorio), which is then followed by the soul's ascent to God (Paradiso)."
+    },
+    {
+        "id": 1,
+        "title": "The Prince",
+        "img": "https://m.media-amazon.com/images/I/4117w9ptZnL._AC_UF1000,1000_QL80_.jpg",
+        "author": "Niccolo Machiaveli",
+        "desc": "The Prince is a 16th-century political treatise written by the Italian diplomat, philosopher, and political theorist Niccolò Machiavelli. The main idea of The Prince is for a ruler; the ends justify the means. Machiavelli argued that rulers should strive to maintain or expand their position, even if immoral acts are necessary to accomplish that goal."
+    },
+    {
+        "id": 1,
+        "title": "The Picture of Dorian Gray",
+        "img": "https://m.media-amazon.com/images/I/91uns-1GnQL._AC_UF1000,1000_QL80_.jpg",
+        "author": "Dante",
+        "desc": "The Picture of Dorian Gray is a philosophical novel by Irish writer Oscar Wilde. Oscar Wilde's only novel is the dreamlike story of a young man who sells his soul for eternal youth and beauty. In this celebrated work Wilde forged a devastating portrait of the effects of evil and debauchery on a young aesthete in late-19th-century England."
+    }
+]

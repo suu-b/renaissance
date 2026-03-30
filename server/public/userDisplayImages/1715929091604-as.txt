@@ -1,0 +1,5 @@
+Histogram
+Find num by removing k's
+Infix to Postfix
+Do subsequences
+Generate parenthesis

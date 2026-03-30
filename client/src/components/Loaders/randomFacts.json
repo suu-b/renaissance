@@ -1,0 +1,52 @@
+[
+    {
+        "id": 0,
+        "fact": "Tolkien, the author of 'Lord of the Rings' preferred to use an old-fashioned typewriter while sitting in his bathtub.",
+        "imgSrc": "https://i.postimg.cc/rFtcJs2W/tolkien.jpg"
+    },
+    {
+        "id": 1,
+        "fact": "Edgar Allan Poe, master of macabre literature, died under mysterious circumstances in 1849. To this day, the cause of his death remains uncertain, with theories ranging from alcohol poisoning to rabies.",
+        "imgSrc": "https://i.postimg.cc/7L4xbkcz/edgar-Allen-Poe.jpg"
+    },
+    {
+        "id": 2,
+        "fact": "Mark Twain was born in 1835, the same year Halley's Comet appeared. He famously predicted that he would die when the comet returned. True to his word, he passed away in 1910, the year Halley's Comet once again graced the skies.",
+        "imgSrc": "https://i.postimg.cc/SsTqZzKL/mark-Twain.jpg"
+    },
+    {
+        "id": 3,
+        "fact": "Roald Dahl wrote in a quirky hut. The hut was filled with strange mementos and artifacts, including his own hip bone, which he had replaced after a childhood injury.",
+        "imgSrc": "https://i.postimg.cc/NGnBmTSB/roald-Dahl.jpg"
+    },
+    {
+        "id": 4,
+        "fact": "In 1926, the famous mystery writer Agatha Christie disappeared for eleven days, sparking a nationwide manhunt in England. She was eventually found staying in a hotel under an assumed name, claiming amnesia.",
+        "imgSrc": "https://i.postimg.cc/1zKyqdhj/agatha-Christie.jpg"
+    },
+    {
+        "id": 5,
+        "fact": "In Douglas Adams' science fiction series 'The Hitchhiker's Guide to the Galaxy,' the number 42 is famously referenced as the 'Answer to the Ultimate Question of Life, the Universe, and Everything.'",
+        "imgSrc": "https://i.postimg.cc/D0ShRyW9/douglas-Adams.jpg"
+    },
+    {
+        "id": 6,
+        "fact": "William Shakespeare, widely regarded as one of the greatest playwrights in the English language, had various spellings of his own name, including 'Shakspere,' 'Shaxberd,' and 'Shakespear.'",
+        "imgSrc": "https://i.postimg.cc/13hSYSyd/william-Shakespeare.jpg"
+    },
+    {
+        "id": 7,
+        "fact": "Fyodor Dostoevsky, the Russian novelist, struggled with a severe gambling addiction. He once famously lost all his money and even pawned his wife's wedding ring.",
+        "imgSrc": "https://i.postimg.cc/vBHbLvGH/fyodor.jpg"
+    },
+    {
+        "id": 8,
+        "fact": "William Shakespeare coined over 1,700 words in the English language, including 'eyeball', 'swagger' and 'bedazzled'.",
+        "imgSrc": "https://i.postimg.cc/13hSYSyd/william-Shakespeare.jpg"
+    },
+    {
+        "id": 9,
+        "fact": "James Joyce, the influential Irish author known for his complex and experimental writing style, had a fascination with bodily functions, including flatulence. In his letters to his wife, he often joked about 'farting competitions'",
+        "imgSrc": "https://i.postimg.cc/90s225Zr/james-joyce.jpg"
+    }
+]
