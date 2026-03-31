@@ -1,73 +1,135 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom';
-import { ToastContainer } from 'react-toastify';
-import "react-toastify/dist/ReactToastify.css";
-import { Routes, Route } from 'react-router-dom'
-import Home from './components/Landing-Page/Home'
-import Loader from './components/Loaders/Loader'
-import Register from './components/Auth-UI/Register'
-import WelcomeLoader from './components/Loaders/WelcomeLoader'
-import UserDashboard from './components/UserDashboard'
-import NewProject from './components/Projects/NewProject'
-import ProjectInterface from './components/Projects/ProjectInterface'
-import NewChapter from './components/Projects/NewChapter'
-import ChapterInterface from './components/Chapters/ChapterInterface'
-import ForkedProjectInterface from './components/Projects/ForkedProjectInterface'
-import DailyArtist from './components/Landing-Page/DailyArtist';
-import RequestInterface from './components/UserAccount/RequestInterface';
-import UserProjectInterface from './components/Projects/UserProjectInterface';
-import Account from './components/UserAccount/Account';
-import GoogleAuth from './components/Loaders/GoogleAuth';
-import Explore from './components/Explore/Explore';
-import NavBar from './components/NavBar';
-import getCookie from './utils/getCookie'
-import './index.css'
+import { useState } from 'react'
+import reactLogo from './assets/react.svg'
+import viteLogo from './assets/vite.svg'
+import heroImg from './assets/hero.png'
 import './App.css'
-import Read from './components/Explore/Read';
-import Enter from './components/ChatRoom/Enter'
-import Chat from './components/ChatRoom/Chat'
+import { useEffect } from 'react'
 
 function App() {
-  const [isLogin, setLogin] = useState(false)
-  const navigate = useNavigate()
-  useEffect(() => {
-    if (getCookie('accessToken')) {
-      setLogin(true)
-    }
-  }, [])
+  const [count, setCount] = useState(0)
 
   useEffect(() => {
-    if (!isLogin) {
-      navigate('/')
+  const fetchData = async () => {
+    try {
+      const res = await fetch("http://localhost:8000");
+      const data = await res.json(); 
+      console.log(data);
+    } catch (err) {
+      console.error(err);
     }
-  }, [isLogin])
+  };
+
+  fetchData();
+}, []);
 
   return (
-    <div className=''>
-      <Routes>
-        <Route path='/' element={<Home isLogin={isLogin} />} />
-        <Route path='/Register' element={<Register setLogin={setLogin} isLogin={isLogin} />} />
-        <Route path='/Dashboard' element={isLogin ? <UserDashboard /> : <Register setLogin={setLogin} />} />
-        <Route path='/NewProject' element={isLogin ? <NewProject /> : <Register setLogin={setLogin} />} />
-        <Route path='/Loader' element={<Loader />} />
-        <Route path='/welcome' element={<WelcomeLoader />} />
-        <Route path='/project/:projectID' element={<ProjectInterface />} />
-        <Route path='/newChapter/:projectName/:forkID/:projectID/:isPermit' element={<NewChapter />} />
-        <Route path='/chapter/:projectName/:chapterID' element={<ChapterInterface />} />
-        <Route path='/forkedProject/:forkID' element={<ForkedProjectInterface />} />
-        <Route path='/userAccount/:userID' element={<Account setLogin={setLogin} isLogin={isLogin} />} />
-        <Route path='/request/:requestID' element={<RequestInterface />} />
-        <Route path='/success' element={<GoogleAuth setLogin={setLogin} isLogin={isLogin} />} />
-        <Route path='/DailyArtist/:artistID' element={<DailyArtist />} />
-        <Route path='/myProject/:projectID' element={<UserProjectInterface />} />
-        <Route path='/Explore' element={<Explore />} />
-        <Route path='/Read/:projectID' element={<Read isLogin={isLogin} />} />
-        <Route path='/EnterRoom/:roomID' element={<Enter />} />
-        <Route path='/Chats/:roomID/:userName' element={<Chat />} />
-      </Routes>
-      <NavBar />
-      <ToastContainer />
-    </div>
+    <>
+      <section id="center">
+        <div className="hero">
+          <img src={heroImg} className="base" width="170" height="179" alt="" />
+          <img src={reactLogo} className="framework" alt="React logo" />
+          <img src={viteLogo} className="vite" alt="Vite logo" />
+        </div>
+        <div>
+          <h1>Get started</h1>
+          <p>
+            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+          </p>
+        </div>
+        <button
+          className="counter"
+          onClick={() => setCount((count) => count + 1)}
+        >
+          Count is {count}
+        </button>
+      </section>
+
+      <div className="ticks"></div>
+
+      <section id="next-steps">
+        <div id="docs">
+          <svg className="icon" role="presentation" aria-hidden="true">
+            <use href="/icons.svg#documentation-icon"></use>
+          </svg>
+          <h2>Documentation</h2>
+          <p>Your questions, answered</p>
+          <ul>
+            <li>
+              <a href="https://vite.dev/" target="_blank">
+                <img className="logo" src={viteLogo} alt="" />
+                Explore Vite
+              </a>
+            </li>
+            <li>
+              <a href="https://react.dev/" target="_blank">
+                <img className="button-icon" src={reactLogo} alt="" />
+                Learn more
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div id="social">
+          <svg className="icon" role="presentation" aria-hidden="true">
+            <use href="/icons.svg#social-icon"></use>
+          </svg>
+          <h2>Connect with us</h2>
+          <p>Join the Vite community</p>
+          <ul>
+            <li>
+              <a href="https://github.com/vitejs/vite" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#github-icon"></use>
+                </svg>
+                GitHub
+              </a>
+            </li>
+            <li>
+              <a href="https://chat.vite.dev/" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#discord-icon"></use>
+                </svg>
+                Discord
+              </a>
+            </li>
+            <li>
+              <a href="https://x.com/vite_js" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#x-icon"></use>
+                </svg>
+                X.com
+              </a>
+            </li>
+            <li>
+              <a href="https://bsky.app/profile/vite.dev" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#bluesky-icon"></use>
+                </svg>
+                Bluesky
+              </a>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <div className="ticks"></div>
+      <section id="spacer"></section>
+    </>
   )
 }
 
