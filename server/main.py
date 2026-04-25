@@ -1,10 +1,13 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import uvicorn
 import logging
+import socket
 
+from config import load_config
 from routes.user_routes import user_router
 
 load_dotenv()
@@ -15,8 +18,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    
+    yield
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 logger.info("Setting up CORS middleware")
 app.add_middleware(
@@ -36,5 +43,21 @@ def health():
 
 
 if __name__ == '__main__':
-    logger.info("Starting FastAPI server on http://localhost:8000")
-    uvicorn.run(app, host='0.0.0.0', port=8000)
+    logger.info("Starting FastAPI server...")
+
+    sck = socket.socket()
+    sck.bind(("127.0.0.1", 0)) 
+    port = sck.getsockname()[1]
+
+    host, port = sck.getsockname()
+    url = f"http://{host}:{port}"
+
+    logger.info(f"FastAPI server is starting at: {url}")
+
+    # Uvicorn server
+    config = uvicorn.Config(app=app, log_level="info")
+    server = uvicorn.Server(config)
+
+    #  TODO: Let the parent electron process know what is the url to hit
+    #  python main.py --user-data /home/suub/.config/renaissance --provider git
+    server.run(sockets=[sck])    
