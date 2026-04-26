@@ -1,18 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException
-from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Request, Depends
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 
 from models.user import User
-from controllers.user_controller import (
-    list_users, find_user, find_user_by_id,
-    create_user, update_user, delete_user
-)
-from supabase_client import get_supabase_client
+from user.main import UserStore
 from util.hash_helper import HashHelper
+from util.jwt_helper import JWTHelper
 from util.auth import get_current_user
-from util.jwt_helper import JWTHelper 
+
 
 user_router = APIRouter(prefix="/user", tags=["user"])
+
+
+def get_user_store(request: Request) -> UserStore:
+    client = request.app.state.supabase_client
+    return UserStore(client)
+
 
 class UserRegisterRequest(BaseModel):
     name: str
@@ -31,64 +34,68 @@ class UserUpdateRequest(BaseModel):
 
 
 @user_router.post("/register", response_model=User)
-async def register_user(request: UserRegisterRequest, client=Depends(get_supabase_client)):
-    existing = await find_user(client, request.email)
+def register_user(
+    payload: UserRegisterRequest,
+    store: UserStore = Depends(get_user_store)
+):
+    existing = store.load_by_email(payload.email)
     if existing:
         raise HTTPException(status_code=400, detail="User already exists")
-    return await create_user(client, request.name, request.email, request.password)
+
+    return store.create(
+        name=payload.name,
+        email=payload.email,
+        password=payload.password
+    )
 
 
 @user_router.post("/login")
-async def login_user(request: UserLoginRequest, client=Depends(get_supabase_client)):
-    user = await find_user(client, request.email)
-    if not user or not HashHelper.verify_password(request.password, user.password):
+def login_user(
+    payload: UserLoginRequest,
+    store: UserStore = Depends(get_user_store)
+):
+    user = store.load_by_email(payload.email)
+
+    if not user or not HashHelper.verify_password(payload.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = JWTHelper.get_token(user)
     return {"access_token": token}
 
 
-@user_router.get("/", response_model=List[User])
-async def get_all_users(
-    client=Depends(get_supabase_client),
-    current_user=Depends(get_current_user)
-):
-    return await list_users(client)
-
-
 @user_router.get("/me", response_model=User)
-async def get_me(
-    client=Depends(get_supabase_client),
-    current_user=Depends(get_current_user)
+def get_me(
+    current_user=Depends(get_current_user),
+    store: UserStore = Depends(get_user_store)
 ):
-    user = await find_user_by_id(client, current_user["user_id"])
+    user = store.load_by_id(current_user["user_id"])
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
     return user
 
 
 @user_router.put("/me", response_model=User)
-async def update_me(
-    request: UserUpdateRequest,
-    client=Depends(get_supabase_client),
-    current_user=Depends(get_current_user)
+def update_me(
+    payload: UserUpdateRequest,
+    current_user=Depends(get_current_user),
+    store: UserStore = Depends(get_user_store)
 ):
-    updated = await update_user(
-        client,
-        current_user["user_id"],
-        **request.model_dump(exclude_none=True)
-    )
-    if not updated:
+    user = store.load_by_id(current_user["user_id"])
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return updated
+
+    return store.update(**payload.model_dump(exclude_none=True))
 
 
 @user_router.delete("/me")
-async def delete_me(
-    client=Depends(get_supabase_client),
-    current_user=Depends(get_current_user)
+def delete_me(
+    current_user=Depends(get_current_user),
+    store: UserStore = Depends(get_user_store)
 ):
-    success = await delete_user(client, current_user["user_id"])
-    if not success:
+    user = store.load_by_id(current_user["user_id"])
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    store.delete()
     return {"detail": "User deleted successfully"}

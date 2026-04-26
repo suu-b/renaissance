@@ -17,6 +17,7 @@ class JWTHelper:
     def get_token(user: User) -> str:
         payload = {
             "user_id": str(user.id),
+            "email": user.email,
             "exp": datetime.utcnow() + timedelta(hours=1)
         }
         return jwt.encode(payload, SECRET, algorithm="HS256")

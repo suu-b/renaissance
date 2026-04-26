@@ -7,8 +7,11 @@ import uvicorn
 import logging
 import socket
 
+from supabase import create_client
+
 from config import load_config
 from routes.user_routes import user_router
+from routes.vcs_routes import vcs_router
 
 load_dotenv()
 
@@ -18,10 +21,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    
+    logger.info("Initializing application state...")
+
+    config = load_config()
+    supabase = create_client(config.supabase_url, config.supabase_key)
+
+    app.state.config = config
+    app.state.supabase_client = supabase
+
     yield
+
+    logger.info("Shutting down application...")
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -35,6 +49,8 @@ app.add_middleware(
 )
 
 app.include_router(user_router)
+app.include_router(vcs_router)
+
 
 @app.get("/health", tags=['health'])
 def health():
@@ -47,17 +63,13 @@ if __name__ == '__main__':
 
     sck = socket.socket()
     sck.bind(("127.0.0.1", 0)) 
-    port = sck.getsockname()[1]
 
     host, port = sck.getsockname()
     url = f"http://{host}:{port}"
 
     logger.info(f"FastAPI server is starting at: {url}")
 
-    # Uvicorn server
     config = uvicorn.Config(app=app, log_level="info")
     server = uvicorn.Server(config)
 
-    #  TODO: Let the parent electron process know what is the url to hit
-    #  python main.py --user-data /home/suub/.config/renaissance --provider git
-    server.run(sockets=[sck])    
+    server.run(sockets=[sck])

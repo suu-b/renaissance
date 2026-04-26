@@ -5,7 +5,7 @@ from datetime import datetime
 from pydantic import BaseModel
 import uuid
 
-from provider.git import GitProvider
+from vcs.provider.git import GitProvider
 from util.provider import Provider
 
 
@@ -29,7 +29,7 @@ class VCS:
     def get_projects_file_path(self):
         return self._base_repo_path / "projects.json"
 
-    def init_user(self, repo_path):
+    def init_user(self):
         self._logger.info("Initializing user..")
 
         self._base_repo_path.mkdir(parents=True, exist_ok=True)
@@ -56,7 +56,7 @@ class VCS:
             created_at=created_at
         )
 
-        data.append(project.model_dump())
+        data.append(project.model_dump(mode="json"))
         projects_file.write_text(json.dumps(data, indent=2))
 
     def _resolve(self, project_name: str, relative_path: str):

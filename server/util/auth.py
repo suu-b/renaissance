@@ -11,12 +11,12 @@ security = HTTPBearer()
 
 def get_current_user(
     creds: HTTPAuthorizationCredentials = Depends(security)
-) -> str:
+) -> dict:
     token = creds.credentials
 
     try:
         payload = jwt.decode(token, SECRET, algorithms=["HS256"])
-        return payload["user_id"]
+        return {"user_id": payload["user_id"], "email": payload.get("email")}
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:

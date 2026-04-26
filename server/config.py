@@ -4,9 +4,11 @@ import argparse
 from util.provider import Provider
 
 class Config:
-    def __init__(self, user_data, provider):
+    def __init__(self, user_data, provider, supabase_url, supabase_key):
         self.user_data = user_data
         self.provider = provider
+        self.supabase_url = supabase_url
+        self.supabase_key = supabase_key        
 
 def load_config():
     parser = argparse.ArgumentParser()
@@ -24,4 +26,12 @@ def load_config():
     if not provider:
         raise RuntimeError("provider is missing. cannot do config setup")
     
-    return Config(user_data=user_data, provider=provider)
+    supabase_url = os.getenv("SUPABASE_URL", "")
+    if supabase_url == "":
+        raise RuntimeError("Supabase URL not set")
+    
+    supabase_key = os.getenv("SUPABASE_KEY", "")
+    if supabase_key == "":
+        raise RuntimeError("Supabase KEY not set")
+    
+    return Config(user_data=user_data, provider=provider, supabase_url=supabase_url, supabase_key=supabase_key)
