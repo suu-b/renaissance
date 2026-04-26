@@ -10,6 +10,7 @@ from util.provider import Provider
 
 
 class Project(BaseModel):
+    id: str
     name: str
     description: str
     created_at: datetime
@@ -43,14 +44,15 @@ class VCS:
     def create_project(self, name, description, created_at):
         self._logger.info("Creating project..")
 
-        project_dir = self._base_repo_path / name
+        project_id = str(uuid.uuid4())
+        project_dir = self._base_repo_path / project_id
         project_dir.mkdir(parents=True, exist_ok=True)
 
         projects_file = self.get_projects_file_path()
-
         data = json.loads(projects_file.read_text()) if projects_file.exists() else []
 
         project = Project(
+            id=project_id,
             name=name,
             description=description,
             created_at=created_at
@@ -59,14 +61,26 @@ class VCS:
         data.append(project.model_dump(mode="json"))
         projects_file.write_text(json.dumps(data, indent=2))
 
-    def _resolve(self, project_name: str, relative_path: str):
-        return (self._base_repo_path / project_name) / relative_path
+        return project_id
 
-    def _meta_path(self, path: Path):
-        return path.parent / f"{path.name}.json"
+    def _resolve(self, project_id: str, relative_path: str):
+        base = (self._base_repo_path / project_id).resolve()
 
-    def _content_path(self, path: Path):
-        return path.parent / f"{path.name}.md"
+        if not relative_path:
+            return base
+
+        target = (base / relative_path).resolve()
+
+        if not str(target).startswith(str(base)):
+            raise RuntimeError("Invalid path")
+
+        if not target.exists():
+            raise RuntimeError(f"Path does not exist: {relative_path}")
+
+        if not target.is_dir():
+            raise RuntimeError(f"Path is not a directory: {relative_path}")
+
+        return target
 
     def _write_metadata(self, path: Path, meta: dict):
         path.write_text(json.dumps(meta, indent=2))
@@ -79,52 +93,61 @@ class VCS:
             "created_at": datetime.now().isoformat()
         }
 
-    def create_file(self, project_name: str, relative_path: str, label: str, content: str = ""):
+    def create_file(self, project_id: str, relative_path: str, label: str, content: str = ""):
         self._logger.info("Creating file..")
 
-        base = self._resolve(project_name, relative_path)
+        file_uuid = str(uuid.uuid4())
 
-        file_id = str(uuid.uuid4())
+        dir_path = self._resolve(project_id, relative_path)
 
-        md_file = self._content_path(base)
-        json_file = self._meta_path(base)
+        md_file = dir_path / f"{file_uuid}.md"
+        json_file = dir_path / f"{file_uuid}.json"
 
-        md_file.parent.mkdir(parents=True, exist_ok=True)
+        if md_file.exists() or json_file.exists():
+            raise RuntimeError("File already exists")
 
         md_file.write_text(content)
 
         self._write_metadata(
             json_file,
-            self._create_metadata(file_id, label, "file")
+            self._create_metadata(file_uuid, label, "file")
         )
 
-    def create_folder(self, project_name: str, relative_path: str, label: str):
+        return file_uuid
+
+    def create_folder(self, project_id: str, relative_path: str, label: str):
         self._logger.info("Creating folder..")
 
-        base = self._resolve(project_name, relative_path)
+        folder_uuid = str(uuid.uuid4())
 
-        folder_id = str(uuid.uuid4())
+        parent_dir = self._resolve(project_id, relative_path)
+        folder_path = parent_dir / folder_uuid
 
-        md_file = self._content_path(base)
-        json_file = self._meta_path(base)
+        if folder_path.exists():
+            raise RuntimeError("Folder already exists")
 
-        md_file.parent.mkdir(parents=True, exist_ok=True)
+        folder_path.mkdir()
 
-        md_file.write_text("")
-
-        self._write_metadata(
-            json_file,
-            self._create_metadata(folder_id, label, "folder")
-        )
+        return folder_uuid
 
     def commit_all(self, message: str):
         self._logger.info(f"Committing all changes: {message}")
         self._provider.add(["."])
         self._provider.commit(message)
 
-
-    def commit(self, path: str, message: str):
+    def commit(self, project_id: str, path: str, message: str):
         self._logger.info(f"Committing path {path}: {message}")
 
-        self._provider.add([path])
+        base = (self._base_repo_path / project_id).resolve()
+        target = (base / path).resolve()
+
+        if not str(target).startswith(str(base)):
+            raise RuntimeError("Invalid path")
+
+        if not target.exists():
+            raise RuntimeError("Path does not exist")
+
+        # rel_path = target.relative_to(base)
+
+        self._provider.add([str(target)])
         self._provider.commit(message)

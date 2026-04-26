@@ -24,14 +24,14 @@ class ProjectCreate(BaseModel):
 
 
 class FileCreate(BaseModel):
-    project_name: str
+    project_id: str
     relative_path: str
     label: str
     content: str = ""
 
 
 class FolderCreate(BaseModel):
-    project_name: str
+    project_id: str
     relative_path: str
     label: str
 
@@ -41,10 +41,10 @@ class CommitAllRequest(BaseModel):
 
 
 class CommitRequest(BaseModel):
+    project_id: str
     path: str
     message: str
-
-
+    
 
 @vcs_router.post("/init")
 def init_user(vcs: VCS = Depends(get_vcs)):
@@ -62,7 +62,7 @@ def create_project(payload: ProjectCreate, vcs: VCS = Depends(get_vcs)):
     logger.info(f"Creating project '{payload.name}'")
 
     created_at = datetime.now()
-    vcs.create_project(
+    project_id = vcs.create_project(
         name=payload.name,
         description=payload.description,
         created_at=created_at
@@ -70,6 +70,7 @@ def create_project(payload: ProjectCreate, vcs: VCS = Depends(get_vcs)):
 
     return {
         "status": "success",
+        "project_id": project_id,
         "project_name": payload.name,
         "description": payload.description,
         "created_at": created_at.isoformat()
@@ -78,10 +79,10 @@ def create_project(payload: ProjectCreate, vcs: VCS = Depends(get_vcs)):
 
 @vcs_router.post("/file")
 def create_file(payload: FileCreate, vcs: VCS = Depends(get_vcs)):
-    logger.info(f"Creating file '{payload.label}' in project '{payload.project_name}'")
+    logger.info(f"Creating file '{payload.label}' in project '{payload.project_id}'")
 
-    vcs.create_file(
-        project_name=payload.project_name,
+    file_id = vcs.create_file(
+        project_id=payload.project_id,
         relative_path=payload.relative_path,
         label=payload.label,
         content=payload.content
@@ -89,27 +90,29 @@ def create_file(payload: FileCreate, vcs: VCS = Depends(get_vcs)):
 
     return {
         "status": "success",
-        "project_name": payload.project_name,
+        "project_id": payload.project_id,
         "relative_path": payload.relative_path,
-        "label": payload.label
+        "label": payload.label,
+        "file_id": file_id
     }
 
 
 @vcs_router.post("/folder")
 def create_folder(payload: FolderCreate, vcs: VCS = Depends(get_vcs)):
-    logger.info(f"Creating folder '{payload.label}' in project '{payload.project_name}'")
+    logger.info(f"Creating folder '{payload.label}' in project '{payload.project_id}'")
 
-    vcs.create_folder(
-        project_name=payload.project_name,
+    folder_id = vcs.create_folder(
+        project_id=payload.project_id,
         relative_path=payload.relative_path,
         label=payload.label
     )
 
     return {
         "status": "success",
-        "project_name": payload.project_name,
+        "project_id": payload.project_id,
         "relative_path": payload.relative_path,
-        "label": payload.label
+        "label": payload.label,
+        "folder_id": folder_id
     }
 
 
@@ -130,10 +133,11 @@ def commit_all(payload: CommitAllRequest, vcs: VCS = Depends(get_vcs)):
 def commit(payload: CommitRequest, vcs: VCS = Depends(get_vcs)):
     logger.info(f"Committing path '{payload.path}': {payload.message}")
 
-    vcs.commit(path=payload.path, message=payload.message)
+    vcs.commit(project_id=payload.project_id, path=payload.path, message=payload.message)
 
     return {
         "status": "success",
+        "project_id": payload.project_id,
         "path": payload.path,
         "message": payload.message,
         "committed_at": datetime.now().isoformat()
