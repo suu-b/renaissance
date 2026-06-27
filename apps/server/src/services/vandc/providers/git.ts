@@ -4,7 +4,6 @@
 // path is used to resolve the path to the repository
 import { execFile } from "child_process";
 import { promisify } from "util";
-import path from "path";
 
 // Project Modules
 // vandc-service is the interface for the versioning and collaboration service
