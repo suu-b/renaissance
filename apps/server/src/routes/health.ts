@@ -1,8 +1,7 @@
 import { FastifyInstance } from "fastify";
 
 export async function healthRoute(app: FastifyInstance) {
-
-    app.get("/health", async () => {
+    app.get("/", async () => {
         return [
             {
                 health: 'awesome!'
