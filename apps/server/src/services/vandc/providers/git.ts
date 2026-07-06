@@ -14,12 +14,11 @@ const execFileAsync = promisify(execFile);
 export class GitProvider implements VandcService {
     private repoPath: string;
 
-    constructor(repoPath?: string) {
-        this.repoPath = repoPath || "";
+    constructor(repoPath: string) {
+        this.repoPath = repoPath;
     }
 
-    async init(repoPath: string): Promise<void> {
-        this.repoPath = repoPath;
+    async init(): Promise<void> {
         try {
             await execFileAsync("git", ["init"], { cwd: this.repoPath });
         } catch (error) {

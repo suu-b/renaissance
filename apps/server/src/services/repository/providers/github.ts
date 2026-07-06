@@ -4,6 +4,7 @@
 // path is used to resolve the path to the repository
 import { execFile } from "child_process";
 import { promisify } from "util";
+import { mkdir } from "fs/promises";
 
 // Project Modules
 // Repository Service is an interface for the providers
@@ -15,14 +16,14 @@ export class GitHubProvider implements RepositoryService {
     private repoPath: string;
     private readonly remoteUrl?: string;
 
-    constructor(remoteUrl?: string, repoPath?: string) {
+    constructor(repoPath: string, remoteUrl?: string) {
+        this.repoPath = repoPath;
         this.remoteUrl = remoteUrl;
-        this.repoPath = repoPath || "";
     }
 
-    async init(repoPath: string): Promise<void> {
-        this.repoPath = repoPath;
+    async init(): Promise<void> {
         try {
+            await mkdir(this.repoPath, { recursive: true });
             // Configure remote URL if provided
             if (this.remoteUrl) {
                 try {
