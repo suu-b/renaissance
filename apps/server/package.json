@@ -13,7 +13,9 @@
   "type": "module",
   "dependencies": {
     "@renaissance/shared": "workspace:*",
-    "fastify": "^5.8.5"
+    "fastify": "^5.8.5",
+    "fastify-type-provider-zod": "^7.0.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^24.13.2",
