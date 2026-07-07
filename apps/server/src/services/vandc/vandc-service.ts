@@ -3,7 +3,8 @@
  */
 export interface VandcService {
     // Would init the local global repo for the user
-    init(repoPath: string): Promise<void>;
+    // VandcService instance should receive that path during init only
+    init(): Promise<void>;
 
     // Scoped methods
     // A Scope is the level within a project

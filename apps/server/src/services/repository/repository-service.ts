@@ -3,7 +3,7 @@
  */
 export interface RepositoryService {
     // Would init the local global repo for the user
-    init(repoPath: string): Promise<void>;
+    init(): Promise<void>;
 
     // Scoped methods
     // A Scope is the level within a project
