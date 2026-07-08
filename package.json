@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm --parallel --filter @renaissance/client --filter @renaissance/server dev",
+    "dev": "pnpm --parallel --filter @renaissance/client --filter @renaissance/server --filter @renaissance/remote-service dev",
     "build": "pnpm -r build"
   },
   "packageManager": "pnpm@10.12.1",
