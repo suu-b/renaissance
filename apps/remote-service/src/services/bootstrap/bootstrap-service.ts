@@ -1,5 +1,5 @@
 import { FastifyBaseLogger } from "fastify";
-import { WorkspaceService } from "./workspace-service";
+import { WorkspaceService } from "../workspace/workspace-service";
 
 /**
  * Executions specific to various lifecycle stages of the Remote service

@@ -5,8 +5,9 @@ import {
     ZodTypeProvider
 } from "fastify-type-provider-zod";
 
-import bootstrapPlugin from "./plugins/bootstrap-plugin.js";
-import workspacePlugin from "./plugins/workspace-plugin.js";
+import servicesPlugin from "./plugins/services-plugin.js";
+import supabasePlugin from "./plugins/supabase-plugin.js";
+import repositoryPlugin from "./plugins/repository-plugin.js";
 
 import { router } from "./routes/router.js";
 
@@ -18,8 +19,9 @@ export function buildApp() {
     app.setValidatorCompiler(validatorCompiler)
     app.setSerializerCompiler(serializerCompiler)
 
-    app.register(workspacePlugin);
-    app.register(bootstrapPlugin);
+    app.register(supabasePlugin);
+    app.register(repositoryPlugin);
+    app.register(servicesPlugin);
 
     app.addHook("onReady", async () => {
         await app.bootstrapService.initialize();
