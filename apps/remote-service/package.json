@@ -13,6 +13,8 @@
   "license": "ISC",
   "packageManager": "pnpm@10.12.1",
   "dependencies": {
+    "@renaissance/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.48.0",
     "dotenv": "^16.4.5",
     "fastify": "^5.8.5",
     "fastify-plugin": "^6.0.0",
