@@ -4,6 +4,8 @@ import { UserRepositoryService } from "../services/repository/user-repository-se
 import { SupabaseUserRepository } from "../services/repository/providers/supabase/user-repository.js";
 
 export default fp(async (app: FastifyInstance) => {
-    const userRepository: UserRepositoryService = new SupabaseUserRepository(app.supabase);
+    app.log.info("Initializing repository plugin...");
+    const userRepository: UserRepositoryService = new SupabaseUserRepository(app.supabase, app.log);
     app.decorate("userRepository", userRepository);
+    app.log.info("UserRepository registered successfully.");
 });

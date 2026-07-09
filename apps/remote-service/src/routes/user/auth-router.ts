@@ -15,14 +15,17 @@ export async function authRouter(app: FastifyInstance) {
             body: RegisterUserRequestSchema
         }
     }, async (request, reply) => {
+        const { email, password, displayName, username } = request.body;
         try {
-            const { email, password, displayName, username } = request.body;
+            request.log.info({ email, username, displayName }, "User registration API triggered");
             const user = await app.userRepository.register(email, password, displayName, username);
+            request.log.info({ userId: user.id, username }, "User registration API completed successfully");
             return reply.status(201).send({
                 success: true,
                 data: user
             });
         } catch (err: any) {
+            request.log.error({ err, email, username }, "User registration API failed");
             return reply.status(400).send({
                 success: false,
                 error: {
@@ -39,14 +42,17 @@ export async function authRouter(app: FastifyInstance) {
             body: LoginRequestSchema
         }
     }, async (request, reply) => {
+        const { email, password } = request.body;
         try {
-            const { email, password } = request.body;
+            request.log.info({ email }, "User login API triggered");
             const loginResult = await app.userRepository.login(email, password);
+            request.log.info({ userId: loginResult.user.id }, "User login API completed successfully");
             return reply.status(200).send({
                 success: true,
                 data: loginResult
             });
         } catch (err: any) {
+            request.log.error({ err, email }, "User login API failed");
             return reply.status(401).send({
                 success: false,
                 error: {
@@ -63,14 +69,17 @@ export async function authRouter(app: FastifyInstance) {
             body: RefreshSessionRequestSchema
         }
     }, async (request, reply) => {
+        const { refreshToken } = request.body;
         try {
-            const { refreshToken } = request.body;
+            request.log.info("User session refresh API triggered");
             const session = await app.userRepository.refresh(refreshToken);
+            request.log.info("User session refresh API completed successfully");
             return reply.status(200).send({
                 success: true,
                 data: session
             });
         } catch (err: any) {
+            request.log.error({ err }, "User session refresh API failed");
             return reply.status(401).send({
                 success: false,
                 error: {

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# ==============================================================================
+# RENAISSANCE - USER REGISTRATION TEST
+# ==============================================================================
+# API Endpoint: POST /api/v1/user/auth/register
+# Description: Registers a new user account.
+# Expected Output: A JSON response with success: true and the created UserObject.
+# Note: Replace <EMAIL> with a valid email address (e.g. your_email@gmail.com).
+# ==============================================================================
+
+curl -X POST http://127.0.0.1:8080/api/v1/user/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "<EMAIL>",
+    "password": "supersecurepassword123",
+    "displayName": "Lead Developer",
+    "username": "dev_test_user"
+  }'
+echo -e "\n"

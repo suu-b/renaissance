@@ -1,5 +1,5 @@
-import { createHash } from "crypto";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { FastifyBaseLogger } from "fastify";
 import {
     UserObject,
     LoginResponseObject,
@@ -10,9 +10,11 @@ import { UserRepositoryService } from "../../user-repository-service.js";
 
 export class SupabaseUserRepository implements UserRepositoryService {
     private supabase: SupabaseClient;
+    private logger: FastifyBaseLogger;
 
-    constructor(supabase: SupabaseClient) {
+    constructor(supabase: SupabaseClient, logger: FastifyBaseLogger) {
         this.supabase = supabase;
+        this.logger = logger;
     }
 
     async register(
@@ -21,10 +23,10 @@ export class SupabaseUserRepository implements UserRepositoryService {
         displayName: string,
         username: string
     ): Promise<UserObject> {
-        const hashedPassword = this.hashPassword(password);
+        this.logger.info({ email, username, displayName }, "Attempting to register new user");
         const { data: authData, error: authError } = await this.supabase.auth.signUp({
             email,
-            password: hashedPassword,
+            password,
             options: {
                 data: {
                     username,
@@ -33,11 +35,30 @@ export class SupabaseUserRepository implements UserRepositoryService {
             }
         });
 
-        if (authError) throw authError;
-        if (!authData.user) throw new Error("Registration failed: User was not created.");
+        if (authError) {
+            this.logger.error(
+                {
+                    email,
+                    username,
+                    message: authError.message,
+                    status: authError.status,
+                    code: authError.code,
+                    name: authError.name
+                },
+                "Supabase auth registration failed"
+            );
+
+            throw authError;
+        }
+        if (!authData.user) {
+            const err = new Error("Registration failed: User was not created.");
+            this.logger.error(err.message);
+            throw err;
+        }
 
         const avatarUrl = `https://avatar.vercel.sh/${username}.png`;
 
+        this.logger.info({ userId: authData.user.id }, "Syncing user profile data into database public.users table");
         // Sync into public.users database table
         const { error: dbError } = await this.supabase.from("users").insert({
             id: authData.user.id,
@@ -46,7 +67,12 @@ export class SupabaseUserRepository implements UserRepositoryService {
             avatar_url: avatarUrl
         });
 
-        if (dbError) throw dbError;
+        if (dbError) {
+            this.logger.error({ dbError, userId: authData.user.id }, "Database sync to public.users failed");
+            throw dbError;
+        }
+
+        this.logger.info({ userId: authData.user.id, username }, "User registration and database sync completed successfully");
 
         return {
             id: authData.user.id,
@@ -62,27 +88,50 @@ export class SupabaseUserRepository implements UserRepositoryService {
         email: string,
         password: string
     ): Promise<LoginResponseObject> {
-        const hashedPassword = this.hashPassword(password);
+        this.logger.info({ email }, "Attempting user authentication login");
         const { data, error } = await this.supabase.auth.signInWithPassword({
             email,
-            password: hashedPassword
+            password
         });
 
-        if (error) throw error;
-        
-        const session = data.session;
-        if (!data.user || !session) throw new Error("Login failed: missing user or session data.");
+        if (error) {
+            this.logger.error(
+                {
+                    email,
+                    message: error.message,
+                    status: error.status,
+                    code: error.code,
+                    name: error.name
+                },
+                "Supabase authentication login failed"
+            );
+            throw error;
+        }
 
+        const session = data.session;
+        if (!data.user || !session) {
+            const err = new Error("Login failed: missing user or session data.");
+            this.logger.error(err.message);
+            throw err;
+        }
+
+        this.logger.info({ userId: data.user.id }, "Fetching user profile metadata from public.users table");
         // Fetch DB metadata for profile completeness
-        const { data: dbUser } = await this.supabase
+        const { data: dbUser, error: dbError } = await this.supabase
             .from("users")
             .select("*")
             .eq("id", data.user.id)
             .single();
 
+        if (dbError) {
+            this.logger.warn({ dbError, userId: data.user.id }, "Failed to fetch user metadata from database. Using auth metadata fallback.");
+        }
+
         const username = dbUser?.username ?? data.user.user_metadata?.username ?? "";
         const displayName = dbUser?.display_name ?? data.user.user_metadata?.display_name ?? "";
         const avatarUrl = dbUser?.avatar_url ?? data.user.user_metadata?.avatar_url ?? `https://avatar.vercel.sh/${username || "user"}.png`;
+
+        this.logger.info({ userId: data.user.id, username }, "User authenticated and profile loaded successfully");
 
         return {
             user: {
@@ -104,14 +153,24 @@ export class SupabaseUserRepository implements UserRepositoryService {
     async refresh(
         refreshToken: string
     ): Promise<SessionObject> {
+        this.logger.info("Attempting session token refresh");
         const { data, error } = await this.supabase.auth.refreshSession({
             refresh_token: refreshToken
         });
 
-        if (error) throw error;
-        
+        if (error) {
+            this.logger.error({ error }, "Supabase refreshSession failed");
+            throw error;
+        }
+
         const session = data.session;
-        if (!session) throw new Error("Session refresh failed: session is missing.");
+        if (!session) {
+            const err = new Error("Session refresh failed: session is missing.");
+            this.logger.error(err.message);
+            throw err;
+        }
+
+        this.logger.info({ userId: data.user?.id }, "Session token refreshed successfully");
 
         return {
             accessToken: session.access_token,
@@ -123,6 +182,7 @@ export class SupabaseUserRepository implements UserRepositoryService {
     async search(
         query: SearchUserRequestObject
     ): Promise<UserObject[]> {
+        this.logger.info({ query }, "Executing search query on users table");
         let queryBuilder = this.supabase
             .from("users")
             .select(query.fields?.length ? query.fields.join(",") : "*");
@@ -178,7 +238,12 @@ export class SupabaseUserRepository implements UserRepositoryService {
         queryBuilder = queryBuilder.range(from, to);
 
         const { data, error } = await queryBuilder;
-        if (error) throw error;
+        if (error) {
+            this.logger.error({ error, query }, "Search query on users table failed");
+            throw error;
+        }
+
+        this.logger.info({ count: data?.length ?? 0 }, "Search query on users table completed successfully");
 
         return (data || []).map((row: any) => ({
             id: row.id,
@@ -193,14 +258,24 @@ export class SupabaseUserRepository implements UserRepositoryService {
     async findById(
         id: string
     ): Promise<UserObject> {
+        this.logger.info({ id }, "Querying user profile by ID");
         const { data, error } = await this.supabase
             .from("users")
             .select("*")
             .eq("id", id)
             .single();
 
-        if (error) throw error;
-        if (!data) throw new Error(`User with ID ${id} not found.`);
+        if (error) {
+            this.logger.error({ error, id }, "Query user profile by ID failed");
+            throw error;
+        }
+        if (!data) {
+            const err = new Error(`User with ID ${id} not found.`);
+            this.logger.warn({ id }, err.message);
+            throw err;
+        }
+
+        this.logger.info({ id, username: data.username }, "User profile found by ID");
 
         return {
             id: data.id,
@@ -215,14 +290,24 @@ export class SupabaseUserRepository implements UserRepositoryService {
     async findByUsername(
         username: string
     ): Promise<UserObject> {
+        this.logger.info({ username }, "Querying user profile by username");
         const { data, error } = await this.supabase
             .from("users")
             .select("*")
             .eq("username", username)
             .single();
 
-        if (error) throw error;
-        if (!data) throw new Error(`User with username ${username} not found.`);
+        if (error) {
+            this.logger.error({ error, username }, "Query user profile by username failed");
+            throw error;
+        }
+        if (!data) {
+            const err = new Error(`User with username ${username} not found.`);
+            this.logger.warn({ username }, err.message);
+            throw err;
+        }
+
+        this.logger.info({ id: data.id, username }, "User profile found by username");
 
         return {
             id: data.id,
@@ -232,9 +317,5 @@ export class SupabaseUserRepository implements UserRepositoryService {
             email: data.email ?? "",
             createdAt: new Date(data.created_at)
         };
-    }
-
-    private hashPassword(password: string): string {
-        return createHash("sha256").update(password).digest("hex");
     }
 }
