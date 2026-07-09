@@ -13,12 +13,15 @@ export async function globalUserRouter(app: FastifyInstance) {
         }
     }, async (request, reply) => {
         try {
+            request.log.info({ query: request.body }, "Global user search API triggered");
             const users = await app.userRepository.search(request.body);
+            request.log.info({ count: users.length }, "Global user search API completed successfully");
             return reply.status(200).send({
                 success: true,
                 data: users
             });
         } catch (err: any) {
+            request.log.error({ err }, "Global user search API failed");
             return reply.status(400).send({
                 success: false,
                 error: {
@@ -37,14 +40,17 @@ export async function globalUserRouter(app: FastifyInstance) {
             })
         }
     }, async (request, reply) => {
+        const { id } = request.params;
         try {
-            const { id } = request.params;
+            request.log.info({ id }, "Global get user by ID API triggered");
             const user = await app.userRepository.findById(id);
+            request.log.info({ id, username: user.username }, "Global get user by ID API completed successfully");
             return reply.status(200).send({
                 success: true,
                 data: user
             });
         } catch (err: any) {
+            request.log.error({ err, id }, "Global get user by ID API failed");
             return reply.status(404).send({
                 success: false,
                 error: {
@@ -63,14 +69,17 @@ export async function globalUserRouter(app: FastifyInstance) {
             })
         }
     }, async (request, reply) => {
+        const { username } = request.params;
         try {
-            const { username } = request.params;
+            request.log.info({ username }, "Global get user by username API triggered");
             const user = await app.userRepository.findByUsername(username);
+            request.log.info({ username, id: user.id }, "Global get user by username API completed successfully");
             return reply.status(200).send({
                 success: true,
                 data: user
             });
         } catch (err: any) {
+            request.log.error({ err, username }, "Global get user by username API failed");
             return reply.status(404).send({
                 success: false,
                 error: {
