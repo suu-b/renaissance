@@ -1,17 +1,20 @@
 import {
     ProjectObject,
     SearchProjectRequestObject,
-    CreateProjectRequestObject
+    CreateProjectRequestObject,
+    GlobalSearchProjectRequestObject
 } from "@renaissance/shared";
 
 export interface ProjectRepositoryService {
-    searchGlobal(
-        query: SearchProjectRequestObject,
-        includeUserProjects?: boolean
-    ): Promise<ProjectObject[]>;
+    create(
+        userId: string,
+        username: string,
+        payload: CreateProjectRequestObject
+    ): Promise<ProjectObject>;
 
     findById(
-        id: string
+        id: string,
+        userId: string
     ): Promise<ProjectObject>;
 
     searchUserProjects(
@@ -19,8 +22,8 @@ export interface ProjectRepositoryService {
         query: SearchProjectRequestObject
     ): Promise<ProjectObject[]>;
 
-    create(
+    searchGlobalProjects(
         userId: string,
-        project: CreateProjectRequestObject
-    ): Promise<ProjectObject>;
+        query: GlobalSearchProjectRequestObject
+    ): Promise<ProjectObject[]>;
 }
