@@ -8,6 +8,7 @@ import {
 import servicesPlugin from "./plugins/services-plugin.js";
 import supabasePlugin from "./plugins/supabase-plugin.js";
 import repositoryPlugin from "./plugins/repository-plugin.js";
+import authPlugin from "./plugins/auth-plugin.js";
 
 import { router } from "./routes/router.js";
 
@@ -20,6 +21,7 @@ export function buildApp() {
     app.setSerializerCompiler(serializerCompiler)
 
     app.register(supabasePlugin);
+    app.register(authPlugin);
     app.register(repositoryPlugin);
     app.register(servicesPlugin);
 
