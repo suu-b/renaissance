@@ -1,0 +1,4 @@
+# AI context exclusion file
+**/.env
+**/.env.*
+!.env.example

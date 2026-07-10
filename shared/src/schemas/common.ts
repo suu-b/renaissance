@@ -4,7 +4,9 @@ export const UserSchema = z.object({
     id: z.uuid(),
     username: z.string(),
     displayName: z.string(),
-    avatarUrl: z.url()
+    avatarUrl: z.url(),
+    email: z.string().email(),
+    createdAt: z.coerce.date()
 });
 
 export type UserObject = z.infer<typeof UserSchema>;
@@ -56,3 +58,50 @@ export const FilterObjectSchema = z.object({
 });
 
 export type FilterObject = z.infer<typeof FilterObjectSchema>;
+
+export const SessionSchema = z.object({
+    accessToken: z.string(),
+    refreshToken: z.string(),
+    expiresAt: z.coerce.date()
+});
+
+export type SessionObject = z.infer<typeof SessionSchema>;
+
+export const LoginResponseSchema = z.object({
+    user: UserSchema,
+    session: SessionSchema
+});
+
+export type LoginResponseObject = z.infer<typeof LoginResponseSchema>;
+
+export const SearchUserRequestSchema = z.object({
+    limit: z.number().int().min(1).max(100).default(25),
+    offset: z.number().int().min(0).default(0),
+    sort: SortObjectSchema.optional(),
+    filters: z.array(FilterObjectSchema).default([]),
+    fields: z.array(z.string()).default([])
+});
+
+export type SearchUserRequestObject = z.infer<typeof SearchUserRequestSchema>;
+
+export const RegisterUserRequestSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(6),
+    displayName: z.string().min(1),
+    username: z.string().min(1)
+});
+
+export type RegisterUserRequestObject = z.infer<typeof RegisterUserRequestSchema>;
+
+export const LoginRequestSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(1)
+});
+
+export type LoginRequestObject = z.infer<typeof LoginRequestSchema>;
+
+export const RefreshSessionRequestSchema = z.object({
+    refreshToken: z.string()
+});
+
+export type RefreshSessionRequestObject = z.infer<typeof RefreshSessionRequestSchema>;
