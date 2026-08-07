@@ -1,0 +1,8 @@
+curl -X POST http://127.0.0.1:8080/api/v1/user/data/project/publish \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN>"\
+    "id": "d18f7861-ff5c-45cf-bc25-db4b1256923e",
+    "patchContent": "diff --git a/dev_test_user/d18f7861-ff5c-45cf-bc25-db4b1256923e/README.md b/dev_test_user/d18f7861-ff5c-45cf-bc25-db4b1256923e/README.md\nindex e69de29..a4c2d51 100644\n--- a/dev_test_user/d18f7861-ff5c-45cf-bc25-db4b1256923e/README.md\n+++ b/dev_test_user/d18f7861-ff5c-45cf-bc25-db4b1256923e/README.md\n@@ -1 +1,2 @@\n Project Setup\n+Hello, Renaissance!\n"
+  }'
+
+echo

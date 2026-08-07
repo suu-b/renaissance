@@ -363,4 +363,36 @@ export class SupabaseProjectRepository implements ProjectRepositoryService {
 
         return (data || []).map((row) => this.mapProjectRow(row));
     }
+
+    async canMakeChanges(
+        userId: string,
+        username: string,
+        projectId: string
+    ): Promise<boolean> {
+        this.logger.info(
+            { userId, projectId },
+            "Checking if user can make changes..."
+        );
+
+        const pathPrefix = `${username}/${projectId}`;
+
+        const { data, error } = await this.supabase
+            .from("project_policies")
+            .select("user_id")
+            .eq("user_id", userId)
+            .eq("project_id", projectId)
+            .eq("allowed_path_prefix", pathPrefix)
+            .eq("can_publish", true)
+            .maybeSingle();
+
+        if (error) {
+            this.logger.error(
+                { error, userId, projectId },
+                "Checking if user can make changes failed"
+            );
+            throw error;
+        }
+
+        return data !== null;
+    }
 }

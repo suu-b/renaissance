@@ -47,3 +47,29 @@ Creates a new project.
 |-------|------|
 | response | CARObject |
 | response.data | ProjectObject |
+
+
+---
+
+## POST `/api/v1/user/data/project/publish`
+
+Publishes changes to an existing project.
+
+### Headers
+
+| Header | Type | Required | Description |
+|--------|------|----------|-------------|
+| Authorization | string | Yes | Bearer token in the format `Bearer <access_token>`. |
+
+### Payload
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| id | string | Yes | ID of the project. |
+| patchContent | string | Yes | Unified Git patch to apply before publishing. |
+
+### Response
+
+| Field | Type | Description |
+|------|------|-------------|
+| success | boolean | Indicates whether the request completed successfully. |
