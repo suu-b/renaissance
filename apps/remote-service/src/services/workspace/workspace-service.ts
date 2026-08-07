@@ -1,12 +1,14 @@
-import { execFile } from "child_process";
-import { randomUUID } from "crypto";
+import { execFile, spawn } from "child_process";
 import * as fsPromises from "fs/promises";
-import * as os from "os";
 import * as path from "path";
 import { promisify } from "util";
 import { FastifyBaseLogger } from "fastify";
 
 const execFileAsync = promisify(execFile);
+
+export interface Workspace {
+    path: string;
+}
 
 /**
  * Responsible for CGS-local workspace lifecycle.
@@ -15,33 +17,19 @@ const execFileAsync = promisify(execFile);
  * In a future session-based model, this may be instantiated per session.
  */
 export class WorkspaceService {
-    private logger: FastifyBaseLogger;
-    private _sessionId?: string;
-    private _workspacePath?: string;
-
-    constructor(logger: FastifyBaseLogger) {
-        this.logger = logger;
-    }
+    constructor(
+        private readonly logger: FastifyBaseLogger,
+        private readonly workspace: Workspace
+    ) { }
 
     async initialize(): Promise<void> {
-        this.logger.info("Initializing workspace root directory...");
-        const workspaceRoot = path.join(os.tmpdir(), "workspace");
+        this.logger.info("Initializing workspace...");
 
-        await fsPromises.mkdir(workspaceRoot, {
-            recursive: true
-        });
-
-        this._sessionId = randomUUID();
-
-        this._workspacePath = path.join(
-            workspaceRoot,
-            this._sessionId,
-            "cgs"
-        );
-
-        this.logger.info(
-            { sessionId: this._sessionId, workspacePath: this._workspacePath },
-            "Workspace session path generated"
+        await fsPromises.mkdir(
+            path.dirname(this.workspace.path),
+            {
+                recursive: true
+            }
         );
 
         const gitUrl = process.env.GITHUB_URL;
@@ -62,90 +50,157 @@ export class WorkspaceService {
             );
         }
 
-        this.logger.info({ gitUrl }, "Cloning CGS repository...");
+        this.logger.info(
+            { workspacePath: this.workspace.path, gitUrl },
+            "Cloning CGS repository..."
+        );
+
         try {
             const result = await execFileAsync("git", [
                 "clone",
                 cloneUrl,
-                this._workspacePath,
+                this.workspace.path
             ]);
 
             this.logger.info({ stdout: result.stdout });
             this.logger.info({ stderr: result.stderr });
-            this.logger.info("CGS repository cloned successfully. Workspace initialized.");
+            this.logger.info("CGS repository cloned successfully.");
         } catch (error) {
             this.logger.error(
                 { error: error instanceof Error ? error.message : String(error) },
                 "Failed to clone CGS repository. Initiating cleanup..."
             );
+
             await this.destroy();
 
             throw new Error(
-                `Failed to clone CGS repository: ${error instanceof Error ? error.message : String(error)}`
+                `Failed to clone CGS repository: ${error instanceof Error ? error.message : String(error)
+                }`
             );
         }
     }
 
-    async destroy(): Promise<void> {
-        if (!this._sessionId) {
-            this.logger.info("No active workspace session to destroy");
-            return;
-        }
-
-        const sessionDir = path.join(
-            os.tmpdir(),
-            "workspace",
-            this._sessionId
+    async applyPatch(patch: string): Promise<void> {
+        this.logger.info(
+            { workspace: this.workspace.path },
+            "Applying git patch"
         );
 
-        this.logger.info({ sessionId: this._sessionId, sessionDir }, "Destroying workspace session...");
+        const git = spawn("git", [
+            "-C",
+            this.workspace.path,
+            "apply",
+            "-"
+        ]);
+
+        let stderr = "";
+
+        git.stderr.on("data", (data) => {
+            stderr += data.toString();
+        });
+
+        git.on("error", (err) => {
+            this.logger.error({ err }, "Failed to spawn git process");
+        });
+
+        git.stdin.write(patch);
+        git.stdin.end();
+
+        await new Promise<void>((resolve, reject) => {
+            git.on("close", (code) => {
+                if (code === 0) {
+                    this.logger.info("Git patch applied successfully");
+                    resolve();
+                } else {
+                    this.logger.error(
+                        {
+                            exitCode: code,
+                            stderr
+                        },
+                        "Failed to apply git patch"
+                    );
+
+                    reject(new Error(`git apply failed (${code})\n${stderr}`));
+                }
+            });
+        });
+    }
+
+    async stageAll(): Promise<void> {
+        this.logger.info("Staging workspace changes...");
+
+        const { stdout, stderr } = await execFileAsync("git", [
+            "-C",
+            this.workspace.path,
+            "add",
+            "."
+        ]);
+
+        this.logger.info({ stdout, stderr }, "Workspace staged successfully");
+    }
+
+    async commit(
+        message: string,
+        author?: {
+            name: string;
+            email: string;
+        }
+    ): Promise<void> {
+        this.logger.info({ message }, "Creating git commit...");
+
+        const args = [
+            "-C",
+            this.workspace.path,
+            "commit",
+            "-m",
+            message
+        ];
+
+        if (author) {
+            args.push(
+                `--author=${author.name} <${author.email}>`
+            );
+        }
+
+        try {
+            const { stdout, stderr } = await execFileAsync("git", args);
+
+            this.logger.info(
+                { stdout, stderr },
+                "Git commit created successfully"
+            );
+        } catch (err) {
+            this.logger.error(
+                { err },
+                "Failed to create git commit"
+            );
+            throw err;
+        }
+    }
+
+    async destroy(): Promise<void> {
+        const workspaceDir = path.dirname(this.workspace.path);
+
+        this.logger.info(
+            { workspaceDir },
+            "Destroying workspace..."
+        );
 
         try {
             await fsPromises.rm(
-                sessionDir,
+                workspaceDir,
                 {
                     recursive: true,
                     force: true
                 }
             );
-            this.logger.info("Temporary workspace files removed successfully");
+
+            this.logger.info("Temporary workspace removed successfully");
         } catch (error) {
             this.logger.error(
                 { error: error instanceof Error ? error.message : String(error) },
-                "Error cleaning up temporary workspace files"
-            );
-        } finally {
-            this._sessionId = undefined;
-            this._workspacePath = undefined;
-            this.logger.info("Workspace session destroyed and references cleared");
-        }
-    }
-
-    get workspacePath(): string {
-        if (!this._workspacePath) {
-            throw new Error(
-                "WorkspaceService is not initialized"
+                "Error cleaning up workspace"
             );
         }
-
-        return this._workspacePath;
-    }
-
-    get sessionId(): string {
-        if (!this._sessionId) {
-            throw new Error(
-                "WorkspaceService is not initialized"
-            );
-        }
-
-        return this._sessionId;
-    }
-
-    getWorkspacePath(): string {
-        return this.workspacePath;
-    }
-
-    getSessionId(): string {
-        return this.sessionId;
     }
 }

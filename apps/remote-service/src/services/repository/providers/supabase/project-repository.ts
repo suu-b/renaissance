@@ -45,6 +45,13 @@ export class SupabaseProjectRepository implements ProjectRepositoryService {
         };
     }
 
+    /**
+     * Creates a new repository 
+     * @param userId the user id
+     * @param username the user name 
+     * @param payload payload 
+     * @returns 
+     */
     async create(
         userId: string,
         username: string,
