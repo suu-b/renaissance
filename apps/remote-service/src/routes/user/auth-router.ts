@@ -18,7 +18,7 @@ export async function authRouter(app: FastifyInstance) {
         const { email, password, displayName, username } = request.body;
         try {
             request.log.info({ email, username, displayName }, "User registration API triggered");
-            const user = await app.userRepository.register(email, password, displayName, username);
+            const user = await app.userRepositoryService.register(email, password, displayName, username);
             request.log.info({ userId: user.id, username }, "User registration API completed successfully");
             return reply.status(201).send({
                 success: true,
@@ -45,7 +45,7 @@ export async function authRouter(app: FastifyInstance) {
         const { email, password } = request.body;
         try {
             request.log.info({ email }, "User login API triggered");
-            const loginResult = await app.userRepository.login(email, password);
+            const loginResult = await app.userRepositoryService.login(email, password);
             request.log.info({ userId: loginResult.user.id }, "User login API completed successfully");
             return reply.status(200).send({
                 success: true,
@@ -72,7 +72,7 @@ export async function authRouter(app: FastifyInstance) {
         const { refreshToken } = request.body;
         try {
             request.log.info("User session refresh API triggered");
-            const session = await app.userRepository.refresh(refreshToken);
+            const session = await app.userRepositoryService.refresh(refreshToken);
             request.log.info("User session refresh API completed successfully");
             return reply.status(200).send({
                 success: true,

@@ -14,7 +14,7 @@ export async function globalUserRouter(app: FastifyInstance) {
     }, async (request, reply) => {
         try {
             request.log.info({ query: request.body }, "Global user search API triggered");
-            const users = await app.userRepository.search(request.body);
+            const users = await app.userRepositoryService.search(request.body);
             request.log.info({ count: users.length }, "Global user search API completed successfully");
             return reply.status(200).send({
                 success: true,
@@ -43,7 +43,7 @@ export async function globalUserRouter(app: FastifyInstance) {
         const { id } = request.params;
         try {
             request.log.info({ id }, "Global get user by ID API triggered");
-            const user = await app.userRepository.findById(id);
+            const user = await app.userRepositoryService.findById(id);
             request.log.info({ id, username: user.username }, "Global get user by ID API completed successfully");
             return reply.status(200).send({
                 success: true,
@@ -72,7 +72,7 @@ export async function globalUserRouter(app: FastifyInstance) {
         const { username } = request.params;
         try {
             request.log.info({ username }, "Global get user by username API triggered");
-            const user = await app.userRepository.findByUsername(username);
+            const user = await app.userRepositoryService.findByUsername(username);
             request.log.info({ username, id: user.id }, "Global get user by username API completed successfully");
             return reply.status(200).send({
                 success: true,

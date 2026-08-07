@@ -37,3 +37,10 @@ export const CreateProjectRequestSchema = z.object({
 });
 
 export type CreateProjectRequestObject = z.infer<typeof CreateProjectRequestSchema>;
+
+export const PublishProjectRequestSchema = z.object({
+    id: z.uuid(),
+    patchContent: z.string(),
+});
+
+export type PublishProjectRequestObject = z.infer<typeof PublishProjectRequestSchema>;

@@ -26,4 +26,10 @@ export interface ProjectRepositoryService {
         userId: string,
         query: GlobalSearchProjectRequestObject
     ): Promise<ProjectObject[]>;
+
+    canMakeChanges(
+        userId: string,
+        username: string,
+        projectId: string
+    ): Promise<boolean>;
 }

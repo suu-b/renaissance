@@ -126,17 +126,27 @@ export class WorkspaceService {
         });
     }
 
-    async stageAll(): Promise<void> {
-        this.logger.info("Staging workspace changes...");
+    async stage(pathspec: string): Promise<void> {
+        this.logger.info(
+            { path: pathspec },
+            "Staging workspace changes..."
+        );
 
         const { stdout, stderr } = await execFileAsync("git", [
             "-C",
             this.workspace.path,
             "add",
-            "."
+            pathspec
         ]);
 
-        this.logger.info({ stdout, stderr }, "Workspace staged successfully");
+        this.logger.info(
+            { stdout, stderr },
+            "Workspace changes staged successfully"
+        );
+    }
+
+    async stageAll(): Promise<void> {
+        await this.stage(".");
     }
 
     async commit(

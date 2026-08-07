@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --parallel --filter @renaissance/client --filter @renaissance/server --filter @renaissance/remote-service dev",
-    "build": "pnpm -r build"
+    "build": "pnpm -r build",
+    "check": "pnpm -r exec tsc --noEmit"
   },
   "packageManager": "pnpm@10.12.1",
   "type": "module"

@@ -16,7 +16,7 @@ export async function globalProjectRouter(app: FastifyInstance) {
         try {
             request.log.info({ query: request.body }, "Global project search API triggered");
             const userId = request.user!.id;
-            const projects = await app.projectRepository.searchGlobalProjects(userId, request.body);
+            const projects = await app.projectRepositoryService.searchGlobalProjects(userId, request.body);
             request.log.info({ count: projects.length }, "Global project search API completed successfully");
             return reply.status(200).send({
                 success: true,
@@ -47,7 +47,7 @@ export async function globalProjectRouter(app: FastifyInstance) {
         try {
             request.log.info({ id }, "Global get project by ID API triggered");
             const userId = request.user!.id;
-            const project = await app.projectRepository.findById(id, userId);
+            const project = await app.projectRepositoryService.findById(id, userId);
             request.log.info({ id, name: project.name }, "Global get project by ID API completed successfully");
             return reply.status(200).send({
                 success: true,
