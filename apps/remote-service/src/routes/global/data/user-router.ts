@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { SearchUserRequestSchema } from "@renaissance/shared";
+import { SearchUserRequestSchema, sendSuccess, sendError, Errors } from "@renaissance/shared";
 import { z } from "zod";
 
 export async function globalUserRouter(app: FastifyInstance) {
@@ -16,19 +16,10 @@ export async function globalUserRouter(app: FastifyInstance) {
             request.log.info({ query: request.body }, "Global user search API triggered");
             const users = await app.userRepositoryService.search(request.body);
             request.log.info({ count: users.length }, "Global user search API completed successfully");
-            return reply.status(200).send({
-                success: true,
-                data: users
-            });
+            return reply.status(200).send(sendSuccess(users));
         } catch (err: any) {
             request.log.error({ err }, "Global user search API failed");
-            return reply.status(400).send({
-                success: false,
-                error: {
-                    code: "SEARCH_FAILED",
-                    message: err.message || "User search failed."
-                }
-            });
+            return reply.status(400).send(sendError(Errors.USERS_SEARCH_FAILED));
         }
     });
 
@@ -44,20 +35,26 @@ export async function globalUserRouter(app: FastifyInstance) {
         try {
             request.log.info({ id }, "Global get user by ID API triggered");
             const user = await app.userRepositoryService.findById(id);
-            request.log.info({ id, username: user.username }, "Global get user by ID API completed successfully");
-            return reply.status(200).send({
-                success: true,
-                data: user
-            });
+            if (!user) {
+                return reply
+                    .status(404)
+                    .send(sendError(Errors.USER_NOT_FOUND));
+            }
+            request.log.info(
+                { id, username: user.username },
+                "Global get user by ID API completed successfully"
+            );
+            return reply
+                .status(200)
+                .send(sendSuccess(user));
         } catch (err: any) {
-            request.log.error({ err, id }, "Global get user by ID API failed");
-            return reply.status(404).send({
-                success: false,
-                error: {
-                    code: "USER_NOT_FOUND",
-                    message: err.message || "Requested user does not exist."
-                }
-            });
+            request.log.error(
+                { err, id },
+                "Global get user by ID API failed"
+            );
+            return reply
+                .status(500)
+                .send(sendError(Errors.USER_GET_FAILED));
         }
     });
 
@@ -71,22 +68,32 @@ export async function globalUserRouter(app: FastifyInstance) {
     }, async (request, reply) => {
         const { username } = request.params;
         try {
-            request.log.info({ username }, "Global get user by username API triggered");
+            request.log.info(
+                { username },
+                "Global get user by username API triggered"
+            );
             const user = await app.userRepositoryService.findByUsername(username);
-            request.log.info({ username, id: user.id }, "Global get user by username API completed successfully");
-            return reply.status(200).send({
-                success: true,
-                data: user
-            });
+            if (!user) {
+                return reply
+                    .status(404)
+                    .send(sendError(Errors.USER_NOT_FOUND));
+            }
+            request.log.info(
+                { username, id: user.id },
+                "Global get user by username API completed successfully"
+            );
+            return reply
+                .status(200)
+                .send(sendSuccess(user));
+
         } catch (err: any) {
-            request.log.error({ err, username }, "Global get user by username API failed");
-            return reply.status(404).send({
-                success: false,
-                error: {
-                    code: "USER_NOT_FOUND",
-                    message: err.message || "Requested user does not exist."
-                }
-            });
+            request.log.error(
+                { err, username },
+                "Global get user by username API failed"
+            );
+            return reply
+                .status(500)
+                .send(sendError(Errors.USER_GET_FAILED));
         }
     });
 }

@@ -3,7 +3,10 @@ import { ZodTypeProvider } from "fastify-type-provider-zod";
 import {
     RegisterUserRequestSchema,
     LoginRequestSchema,
-    RefreshSessionRequestSchema
+    RefreshSessionRequestSchema,
+    sendSuccess,
+    sendError,
+    Errors
 } from "@renaissance/shared";
 
 export async function authRouter(app: FastifyInstance) {
@@ -20,21 +23,13 @@ export async function authRouter(app: FastifyInstance) {
             request.log.info({ email, username, displayName }, "User registration API triggered");
             const user = await app.userRepositoryService.register(email, password, displayName, username);
             request.log.info({ userId: user.id, username }, "User registration API completed successfully");
-            return reply.status(201).send({
-                success: true,
-                data: user
-            });
+            return reply.status(201).send(sendSuccess(user));
         } catch (err: any) {
             request.log.error({ err, email, username }, "User registration API failed");
-            return reply.status(400).send({
-                success: false,
-                error: {
-                    code: "REGISTRATION_FAILED",
-                    message: err.message || "Failed to register user."
-                }
-            });
+            return reply.status(400).send(sendError(Errors.USER_REGISTRATION_FAILED));
         }
     });
+
 
     // POST /api/v1/user/auth/login
     typedApp.post("/login", {
@@ -47,19 +42,10 @@ export async function authRouter(app: FastifyInstance) {
             request.log.info({ email }, "User login API triggered");
             const loginResult = await app.userRepositoryService.login(email, password);
             request.log.info({ userId: loginResult.user.id }, "User login API completed successfully");
-            return reply.status(200).send({
-                success: true,
-                data: loginResult
-            });
+            return reply.status(200).send(sendSuccess(loginResult));
         } catch (err: any) {
             request.log.error({ err, email }, "User login API failed");
-            return reply.status(401).send({
-                success: false,
-                error: {
-                    code: "LOGIN_FAILED",
-                    message: err.message || "Invalid email or password."
-                }
-            });
+            return reply.status(401).send(sendError(Errors.USER_LOGIN_FAILED));
         }
     });
 
@@ -74,19 +60,10 @@ export async function authRouter(app: FastifyInstance) {
             request.log.info("User session refresh API triggered");
             const session = await app.userRepositoryService.refresh(refreshToken);
             request.log.info("User session refresh API completed successfully");
-            return reply.status(200).send({
-                success: true,
-                data: session
-            });
+            return reply.status(200).send(sendSuccess(session));
         } catch (err: any) {
             request.log.error({ err }, "User session refresh API failed");
-            return reply.status(401).send({
-                success: false,
-                error: {
-                    code: "REFRESH_FAILED",
-                    message: err.message || "Invalid or expired refresh token."
-                }
-            });
+            return reply.status(401).send(sendError(Errors.USER_REFRESH_FAILED));
         }
     });
 }

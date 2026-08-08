@@ -18,13 +18,19 @@ export const ErrorObjectSchema = z.object({
 
 export type ErrorObject = z.infer<typeof ErrorObjectSchema>;
 
-export const CARObjectSchema = z.object({
-    success: z.boolean(),
-    error: ErrorObjectSchema.optional(),
-    data: z.any().optional()
-});
+export const CARObjectSchema = z.discriminatedUnion("success", [
+    z.object({
+        success: z.literal(true),
+        data: z.any().optional(),
+    }),
+    z.object({
+        success: z.literal(false),
+        error: ErrorObjectSchema,
+    }),
+]);
 
 export type CARObject = z.infer<typeof CARObjectSchema>;
+
 
 export const SortObjectSchema = z.object({
     field: z.string(),
@@ -105,3 +111,10 @@ export const RefreshSessionRequestSchema = z.object({
 });
 
 export type RefreshSessionRequestObject = z.infer<typeof RefreshSessionRequestSchema>;
+
+export const ErrorRegistryObjectSchema = z.object({
+    code: z.string(),
+    message: z.string()
+})
+
+export type ErrorRegistryObject = z.infer<typeof ErrorRegistryObjectSchema>

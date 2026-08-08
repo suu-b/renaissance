@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 
-import { SearchProjectRequestSchema, CreateProjectRequestSchema, PublishProjectRequestSchema } from "@renaissance/shared";
+import { SearchProjectRequestSchema, CreateProjectRequestSchema, PublishProjectRequestSchema, CARObjectSchema, sendSuccess, Errors, sendError } from "@renaissance/shared";
 
 export async function projectRouter(app: FastifyInstance) {
     const typedApp = app.withTypeProvider<ZodTypeProvider>();
@@ -9,7 +9,10 @@ export async function projectRouter(app: FastifyInstance) {
     // POST /api/v1/user/data/project/search
     typedApp.post("/search", {
         schema: {
-            body: SearchProjectRequestSchema
+            body: SearchProjectRequestSchema,
+            response: {
+                "*": CARObjectSchema,
+            },
         },
         preHandler: app.authenticate
     }, async (request, reply) => {
@@ -18,26 +21,20 @@ export async function projectRouter(app: FastifyInstance) {
             const userId = request.user!.id;
             const projects = await app.projectRepositoryService.searchUserProjects(userId, request.body);
             request.log.info({ count: projects.length }, "User scoped project search API completed successfully");
-            return reply.status(200).send({
-                success: true,
-                data: projects
-            });
+            return reply.status(200).send(sendSuccess(projects));
         } catch (err: any) {
             request.log.error({ err }, "User scoped project search API failed");
-            return reply.status(400).send({
-                success: false,
-                error: {
-                    code: "SEARCH_FAILED",
-                    message: err.message || "Failed to search projects."
-                }
-            });
+            return reply.status(400).send(sendError(Errors.PROJECTS_SEARCH_FAILED));
         }
     });
 
     // POST /api/v1/user/data/project/new 
     typedApp.post("/new", {
         schema: {
-            body: CreateProjectRequestSchema
+            body: CreateProjectRequestSchema,
+            response: {
+                "*": CARObjectSchema,
+            },
         },
         preHandler: app.authenticate
     }, async (request, reply) => {
@@ -47,13 +44,7 @@ export async function projectRouter(app: FastifyInstance) {
             const dbUser = await app.userRepositoryService.findById(userId);
 
             if (!dbUser) {
-                return reply.status(404).send({
-                    success: false,
-                    error: {
-                        code: "USER_NOT_FOUND",
-                        message: "Authenticated user profile was not found."
-                    }
-                });
+                return reply.status(404).send(sendError(Errors.USER_NOT_FOUND));
             }
 
             const username = dbUser.username;
@@ -84,19 +75,10 @@ export async function projectRouter(app: FastifyInstance) {
                 return project;
             });
             request.log.info({ projectId: project.id }, "Create project API completed successfully");
-            return reply.status(201).send({
-                success: true,
-                data: project
-            });
+            return reply.status(201).send(sendSuccess(project));
         } catch (err: any) {
             request.log.error({ err }, "Create project API failed");
-            return reply.status(400).send({
-                success: false,
-                error: {
-                    code: "CREATE_FAILED",
-                    message: err.message || "Failed to create project."
-                }
-            });
+            return reply.status(400).send(sendError(Errors.PROJECT_CREATE_FAILED));
         }
     });
 
@@ -117,13 +99,7 @@ export async function projectRouter(app: FastifyInstance) {
 
             const canMakeChanges = await app.projectRepositoryService.canMakeChanges(userId, username, projectId)
             if (!canMakeChanges) {
-                return reply.status(403).send({
-                    success: false,
-                    error: {
-                        code: "PUBLISH_FAILED",
-                        message: "You do not have permission to make changes to this project."
-                    }
-                });
+                return reply.status(403).send(sendError(Errors.PROJECT_PUBLISH_FORBIDDEN));
             }
 
             await app.lockService.withLock(async () => {
@@ -133,18 +109,10 @@ export async function projectRouter(app: FastifyInstance) {
                 await app.storeService.publish()
             });
             request.log.info("Publish project API completed successfully");
-            return reply.status(200).send({
-                success: true,
-            });
+            return reply.status(200).send(sendSuccess({}));
         } catch (err: any) {
             request.log.error({ err }, "Publish project API failed");
-            return reply.status(400).send({
-                success: false,
-                error: {
-                    code: "PUBLISH_FAILED",
-                    message: err.message || "Failed to publish project."
-                }
-            });
+            return reply.status(500).send(sendError(Errors.PROJECT_PUBLISH_FAILED));
         }
     });
 }
