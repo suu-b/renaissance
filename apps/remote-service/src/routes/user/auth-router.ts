@@ -6,7 +6,8 @@ import {
     RefreshSessionRequestSchema,
     sendSuccess,
     sendError,
-    Errors
+    Errors,
+    CARResponses
 } from "@renaissance/shared";
 
 export async function authRouter(app: FastifyInstance) {
@@ -15,7 +16,8 @@ export async function authRouter(app: FastifyInstance) {
     // POST /api/v1/user/auth/register
     typedApp.post("/register", {
         schema: {
-            body: RegisterUserRequestSchema
+            body: RegisterUserRequestSchema,
+            response: CARResponses
         }
     }, async (request, reply) => {
         const { email, password, displayName, username } = request.body;
@@ -34,7 +36,8 @@ export async function authRouter(app: FastifyInstance) {
     // POST /api/v1/user/auth/login
     typedApp.post("/login", {
         schema: {
-            body: LoginRequestSchema
+            body: LoginRequestSchema,
+            response: CARResponses
         }
     }, async (request, reply) => {
         const { email, password } = request.body;
@@ -52,7 +55,8 @@ export async function authRouter(app: FastifyInstance) {
     // POST /api/v1/user/auth/refresh
     typedApp.post("/refresh", {
         schema: {
-            body: RefreshSessionRequestSchema
+            body: RefreshSessionRequestSchema,
+            response: CARResponses
         }
     }, async (request, reply) => {
         const { refreshToken } = request.body;

@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { SearchUserRequestSchema, sendSuccess, sendError, Errors } from "@renaissance/shared";
+import { SearchUserRequestSchema, sendSuccess, sendError, Errors, CARResponses } from "@renaissance/shared";
 import { z } from "zod";
 
 export async function globalUserRouter(app: FastifyInstance) {
@@ -9,7 +9,8 @@ export async function globalUserRouter(app: FastifyInstance) {
     // POST /api/v1/global/data/user/search
     typedApp.post("/search", {
         schema: {
-            body: SearchUserRequestSchema
+            body: SearchUserRequestSchema,
+            response: CARResponses
         }
     }, async (request, reply) => {
         try {
@@ -28,7 +29,8 @@ export async function globalUserRouter(app: FastifyInstance) {
         schema: {
             params: z.object({
                 id: z.string().uuid()
-            })
+            }),
+            response: CARResponses
         }
     }, async (request, reply) => {
         const { id } = request.params;
@@ -63,7 +65,8 @@ export async function globalUserRouter(app: FastifyInstance) {
         schema: {
             params: z.object({
                 username: z.string().min(1)
-            })
+            }),
+            response: CARResponses
         }
     }, async (request, reply) => {
         const { username } = request.params;

@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 
-import { SearchProjectRequestSchema, CreateProjectRequestSchema, PublishProjectRequestSchema, CARObjectSchema, sendSuccess, Errors, sendError } from "@renaissance/shared";
+import { SearchProjectRequestSchema, CreateProjectRequestSchema, PublishProjectRequestSchema, CARObjectSchema, sendSuccess, Errors, sendError, CARResponses } from "@renaissance/shared";
 
 export async function projectRouter(app: FastifyInstance) {
     const typedApp = app.withTypeProvider<ZodTypeProvider>();
@@ -10,9 +10,7 @@ export async function projectRouter(app: FastifyInstance) {
     typedApp.post("/search", {
         schema: {
             body: SearchProjectRequestSchema,
-            response: {
-                "*": CARObjectSchema,
-            },
+            response: CARResponses
         },
         preHandler: app.authenticate
     }, async (request, reply) => {
@@ -32,9 +30,7 @@ export async function projectRouter(app: FastifyInstance) {
     typedApp.post("/new", {
         schema: {
             body: CreateProjectRequestSchema,
-            response: {
-                "*": CARObjectSchema,
-            },
+            response: CARResponses
         },
         preHandler: app.authenticate
     }, async (request, reply) => {
@@ -85,7 +81,8 @@ export async function projectRouter(app: FastifyInstance) {
     // POST /api/v1/user/data/project/publish
     typedApp.post("/publish", {
         schema: {
-            body: PublishProjectRequestSchema
+            body: PublishProjectRequestSchema,
+            response: CARResponses
         },
         preHandler: app.authenticate
     }, async (request, reply) => {
