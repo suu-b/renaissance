@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { GlobalSearchProjectRequestSchema } from "@renaissance/shared";
+import { GlobalSearchProjectRequestSchema, sendError, sendSuccess, Errors } from "@renaissance/shared";
 import { z } from "zod";
 
 export async function globalProjectRouter(app: FastifyInstance) {
@@ -14,23 +14,37 @@ export async function globalProjectRouter(app: FastifyInstance) {
         preHandler: app.authenticate
     }, async (request, reply) => {
         try {
-            request.log.info({ query: request.body }, "Global project search API triggered");
+            request.log.info(
+                { query: request.body },
+                "Global project search API triggered"
+            );
+
             const userId = request.user!.id;
-            const projects = await app.projectRepositoryService.searchGlobalProjects(userId, request.body);
-            request.log.info({ count: projects.length }, "Global project search API completed successfully");
-            return reply.status(200).send({
-                success: true,
-                data: projects
-            });
+
+            const projects =
+                await app.projectRepositoryService.searchGlobalProjects(
+                    userId,
+                    request.body
+                );
+
+            request.log.info(
+                { count: projects.length },
+                "Global project search API completed successfully"
+            );
+
+            return reply
+                .status(200)
+                .send(sendSuccess(projects));
+
         } catch (err: any) {
-            request.log.error({ err }, "Global project search API failed");
-            return reply.status(400).send({
-                success: false,
-                error: {
-                    code: "SEARCH_FAILED",
-                    message: err.message || "Project search failed."
-                }
-            });
+            request.log.error(
+                { err },
+                "Global project search API failed"
+            );
+
+            return reply
+                .status(500)
+                .send(sendError(Errors.PROJECT_GET_FAILED));
         }
     });
 
@@ -44,25 +58,48 @@ export async function globalProjectRouter(app: FastifyInstance) {
         preHandler: app.authenticate
     }, async (request, reply) => {
         const { id } = request.params;
+
         try {
-            request.log.info({ id }, "Global get project by ID API triggered");
+            request.log.info(
+                { id },
+                "Global get project by ID API triggered"
+            );
+
             const userId = request.user!.id;
-            const project = await app.projectRepositoryService.findById(id, userId);
-            request.log.info({ id, name: project.name }, "Global get project by ID API completed successfully");
-            return reply.status(200).send({
-                success: true,
-                data: project
-            });
+
+            const project =
+                await app.projectRepositoryService.findById(id, userId);
+
+            if (!project) {
+                return reply
+                    .status(404)
+                    .send(sendError(Errors.PROJECT_NOT_FOUND));
+            }
+
+            request.log.info(
+                { id, name: project.name },
+                "Global get project by ID API completed successfully"
+            );
+
+            return reply
+                .status(200)
+                .send(sendSuccess(project));
+
         } catch (err: any) {
-            request.log.error({ err, id }, "Global get project by ID API failed");
-            const isForbidden = err.message.includes("Access denied");
-            return reply.status(isForbidden ? 403 : 404).send({
-                success: false,
-                error: {
-                    code: isForbidden ? "ACCESS_DENIED" : "PROJECT_NOT_FOUND",
-                    message: err.message || "Requested project does not exist."
-                }
-            });
+            request.log.error(
+                { err, id },
+                "Global get project by ID API failed"
+            );
+
+            if (err.message?.includes("Access denied")) {
+                return reply
+                    .status(403)
+                    .send(sendError(Errors.PROJECT_ACCESS_DENIED));
+            }
+
+            return reply
+                .status(500)
+                .send(sendError(Errors.PROJECT_GET_FAILED));
         }
     });
 }
