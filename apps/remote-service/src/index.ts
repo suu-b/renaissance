@@ -6,8 +6,8 @@ const app = buildApp();
 async function start() {
     try {
         await app.listen({
-            port: 8080,
-            host: "127.0.0.1"
+            port: Number(process.env.PORT) || 8080,
+            host: "0.0.0.0"
         });
 
         app.log.info({ address: app.server.address() }, "Renaissance service running");
