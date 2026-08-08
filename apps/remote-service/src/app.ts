@@ -4,6 +4,8 @@ import {
     validatorCompiler,
     ZodTypeProvider
 } from "fastify-type-provider-zod";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 
 import servicesPlugin from "./plugins/services-plugin.js";
 import supabasePlugin from "./plugins/supabase-plugin.js";
@@ -19,6 +21,19 @@ export function buildApp() {
 
     app.setValidatorCompiler(validatorCompiler)
     app.setSerializerCompiler(serializerCompiler)
+
+    app.register(swagger, {
+        openapi: {
+            info: {
+                title: "Renaissance API",
+                description: "Renaissance Remote Service API",
+                version: "1.0.0",
+            },
+        },
+    });
+    app.register(swaggerUi, {
+        routePrefix: "/docs",
+    });
 
     app.register(supabasePlugin);
     app.register(authPlugin);

@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { GlobalSearchProjectRequestSchema, sendError, sendSuccess, Errors } from "@renaissance/shared";
+import { GlobalSearchProjectRequestSchema, sendError, sendSuccess, Errors, CARResponses } from "@renaissance/shared";
 import { z } from "zod";
 
 export async function globalProjectRouter(app: FastifyInstance) {
@@ -9,7 +9,8 @@ export async function globalProjectRouter(app: FastifyInstance) {
     // POST /api/v1/global/data/project/search
     typedApp.post("/search", {
         schema: {
-            body: GlobalSearchProjectRequestSchema
+            body: GlobalSearchProjectRequestSchema,
+            response: CARResponses
         },
         preHandler: app.authenticate
     }, async (request, reply) => {
@@ -53,7 +54,8 @@ export async function globalProjectRouter(app: FastifyInstance) {
         schema: {
             params: z.object({
                 id: z.string().uuid()
-            })
+            }),
+            response: CARResponses
         },
         preHandler: app.authenticate
     }, async (request, reply) => {

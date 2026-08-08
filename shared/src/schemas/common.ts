@@ -118,3 +118,9 @@ export const ErrorRegistryObjectSchema = z.object({
 })
 
 export type ErrorRegistryObject = z.infer<typeof ErrorRegistryObjectSchema>
+
+export const CARResponses = {
+    "2xx": CARObjectSchema,
+    "4xx": CARObjectSchema,
+    "5xx": CARObjectSchema
+};
