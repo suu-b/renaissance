@@ -17,7 +17,8 @@ export async function authRouter(app: FastifyInstance) {
     typedApp.post("/register", {
         schema: {
             body: RegisterUserRequestSchema,
-            response: CARResponses
+            response: CARResponses,
+            tags: ["User Authentication"],
         }
     }, async (request, reply) => {
         const { email, password, displayName, username } = request.body;
@@ -37,7 +38,8 @@ export async function authRouter(app: FastifyInstance) {
     typedApp.post("/login", {
         schema: {
             body: LoginRequestSchema,
-            response: CARResponses
+            response: CARResponses,
+            tags: ["User Authentication"],  
         }
     }, async (request, reply) => {
         const { email, password } = request.body;
@@ -56,7 +58,8 @@ export async function authRouter(app: FastifyInstance) {
     typedApp.post("/refresh", {
         schema: {
             body: RefreshSessionRequestSchema,
-            response: CARResponses
+            response: CARResponses,
+            tags: ["User Authentication"]
         }
     }, async (request, reply) => {
         const { refreshToken } = request.body;

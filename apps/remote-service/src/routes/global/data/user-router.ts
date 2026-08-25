@@ -10,7 +10,8 @@ export async function globalUserRouter(app: FastifyInstance) {
     typedApp.post("/search", {
         schema: {
             body: SearchUserRequestSchema,
-            response: CARResponses
+            response: CARResponses,
+            tags: ["Global Data"],
         }
     }, async (request, reply) => {
         try {
@@ -30,7 +31,8 @@ export async function globalUserRouter(app: FastifyInstance) {
             params: z.object({
                 id: z.string().uuid()
             }),
-            response: CARResponses
+            response: CARResponses,
+            tags: ["Global Data"],
         }
     }, async (request, reply) => {
         const { id } = request.params;
@@ -64,9 +66,10 @@ export async function globalUserRouter(app: FastifyInstance) {
     typedApp.get("/by-username/:username", {
         schema: {
             params: z.object({
-                username: z.string().min(1)
+                username: z.string().min(1),
             }),
-            response: CARResponses
+            response: CARResponses,
+            tags: ["Global Data"],
         }
     }, async (request, reply) => {
         const { username } = request.params;

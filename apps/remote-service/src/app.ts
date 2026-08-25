@@ -25,8 +25,8 @@ export function buildApp() {
     app.register(swagger, {
         openapi: {
             info: {
-                title: "Renaissance API",
-                description: "Renaissance Remote Service API",
+                title: "Renaissance Remote Service API",
+                description: "Remote service is the proxy layer between client applications and cloud capabilities - CGS Repo and Supabase",
                 version: "1.0.0",
             },
         },

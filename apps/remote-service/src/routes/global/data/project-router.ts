@@ -10,7 +10,8 @@ export async function globalProjectRouter(app: FastifyInstance) {
     typedApp.post("/search", {
         schema: {
             body: GlobalSearchProjectRequestSchema,
-            response: CARResponses
+            response: CARResponses,
+            tags: ["Global Data"],
         },
         preHandler: app.authenticate
     }, async (request, reply) => {
@@ -55,7 +56,8 @@ export async function globalProjectRouter(app: FastifyInstance) {
             params: z.object({
                 id: z.string().uuid()
             }),
-            response: CARResponses
+            response: CARResponses,
+            tags: ["Global Data"],
         },
         preHandler: app.authenticate
     }, async (request, reply) => {

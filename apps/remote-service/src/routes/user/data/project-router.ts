@@ -10,7 +10,8 @@ export async function projectRouter(app: FastifyInstance) {
     typedApp.post("/search", {
         schema: {
             body: SearchProjectRequestSchema,
-            response: CARResponses
+            response: CARResponses,
+            tags: ["User Data"]
         },
         preHandler: app.authenticate
     }, async (request, reply) => {
@@ -30,7 +31,8 @@ export async function projectRouter(app: FastifyInstance) {
     typedApp.post("/new", {
         schema: {
             body: CreateProjectRequestSchema,
-            response: CARResponses
+            response: CARResponses,
+            tags: ["User Data"]
         },
         preHandler: app.authenticate
     }, async (request, reply) => {
@@ -82,7 +84,8 @@ export async function projectRouter(app: FastifyInstance) {
     typedApp.post("/publish", {
         schema: {
             body: PublishProjectRequestSchema,
-            response: CARResponses
+            response: CARResponses,
+            tags: ["User Data"]
         },
         preHandler: app.authenticate
     }, async (request, reply) => {
