@@ -32,7 +32,7 @@ export default function Dashboard(): React.JSX.Element {
         <ProjectList itemsPerPage={4} size="sm" className="my-5" />
         </div>
         <div className="mx-auto w-[25vw]">
-             <ArtistOfTheDay className="ml-auto mb-5" />
+             {/* <ArtistOfTheDay className="ml-auto mb-5" /> */}
             <Activity/>
         </div>
     </Page>

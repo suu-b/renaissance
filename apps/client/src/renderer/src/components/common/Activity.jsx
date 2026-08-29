@@ -36,7 +36,7 @@ export default function Activity() {
   }, {})
 
   return (
-    <div className="border border-foreground/20 rounded-lg p-4">
+    <div className="border border-foreground/20 rounded-lg p-4 max-h-full ">
       {/* Header with Mine button */}
       <div className="flex justify-between items-center mb-4">
         <Typography variant="h3">Activity</Typography>

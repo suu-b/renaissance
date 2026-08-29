@@ -96,9 +96,6 @@ export default function ProjectList({
                 <Button variant="primary" size="sm">
                   Open
                 </Button>
-                <Button variant="secondary" size="sm">
-                  Delete
-                </Button>
               </div>
             }
           />
