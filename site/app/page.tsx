@@ -51,7 +51,7 @@ function Feature({ feature, reverse }: { feature: typeof features[number]; rever
         <p>{feature.body}</p>
         <span className="feature-arrow"><ArrowDownRight size={17} /></span>
       </div>
-    </article>
+    </article>primary
   )
 }
 
@@ -59,7 +59,10 @@ export default function Page() {
   return (
     <main>
       <section className="hero" id="top">
-        <img src="/banner.png" alt="Renaissance writing workspace preview" className="hero-banner" />
+        <div className="hero-banner-container">
+          <img src="/banner.png" alt="Renaissance writing workspace preview" className="hero-banner" />
+          <p className="banner-credit">Illustrations by Magtira Paolo of Sketchify Germany, sourced via Canva. Used with appreciation.</p>
+        </div>
         <div className="hero-copy">
           <h1>Renaissance</h1>
           <p>A Bower for thee</p>

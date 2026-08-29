@@ -6,6 +6,7 @@ import {
 } from "fastify-type-provider-zod";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import cors from "@fastify/cors";
 
 import servicesPlugin from "./plugins/services-plugin.js";
 import supabasePlugin from "./plugins/supabase-plugin.js";
@@ -33,6 +34,11 @@ export function buildApp() {
     });
     app.register(swaggerUi, {
         routePrefix: "/docs",
+    });
+
+    app.register(cors, {
+        origin: "*",
+        credentials: true,
     });
 
     app.register(supabasePlugin);

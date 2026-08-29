@@ -14,6 +14,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.12.1",
   "dependencies": {
+    "@fastify/cors": "^10.0.1",
     "@fastify/swagger": "^9.8.1",
     "@fastify/swagger-ui": "^6.1.1",
     "@renaissance/shared": "workspace:*",
