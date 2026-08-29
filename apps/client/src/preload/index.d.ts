@@ -5,6 +5,7 @@ declare global {
     electron: ElectronAPI
     api: {
       getServerPort: () => number | null
+      maximizeWindow: () => void
     }
   }
 }
