@@ -33,9 +33,13 @@ const features = [
   },
 ]
 
-function Button({ children, secondary = false }: { children: React.ReactNode; secondary?: boolean }) {
+function Button({ children, secondary = false, feedback = false }: { children: React.ReactNode; secondary?: boolean, feedback?: boolean }) {
   if (secondary) {
     return <a className="cta cta-secondary" href="/download" target="_blank" rel="noopener noreferrer">{children}<Download size={15} /></a>
+  }
+  if(feedback){
+    return <a className="cta cta-secondary" href="/feedback" target="_blank" rel="noopener noreferrer">{children}</a>
+
   }
   return <a className="cta cta-primary" href="/join" target="_blank" rel="noopener noreferrer">{children}<ArrowUpRight size={15} /></a>
 }
@@ -66,7 +70,7 @@ export default function Page() {
         <div className="hero-copy">
           <h1>Renaissance</h1>
           <p>A Bower for thee</p>
-          <div className="cta-row"><Button>Get Started</Button><Button secondary>Download</Button></div>
+          <div className="cta-row"><Button>Get Started</Button><Button secondary>Download</Button><Button feedback>Feedback</Button></div>
         </div>
       </section>
 

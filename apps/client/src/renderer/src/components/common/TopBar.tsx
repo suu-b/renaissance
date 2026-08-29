@@ -12,7 +12,7 @@ export default function TopBar(): React.JSX.Element {
         Renaissance
       </Typography>
       <div className="flex items-center gap-4">
-        <Button variant="secondary" size="sm" onClick={() => console.log("Feedback clicked")}>
+        <Button variant="secondary" size="sm" external href="http://localhost:3000/feedback">
           Feedback
         </Button>
         <div className="relative group">
