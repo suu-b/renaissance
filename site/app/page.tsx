@@ -51,7 +51,7 @@ function Feature({ feature, reverse }: { feature: typeof features[number]; rever
         <p>{feature.body}</p>
         <span className="feature-arrow"><ArrowDownRight size={17} /></span>
       </div>
-    </article>primary
+    </article>
   )
 }
 
