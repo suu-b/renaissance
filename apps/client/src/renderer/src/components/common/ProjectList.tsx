@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
+import { FiPlus } from "react-icons/fi"
 import Card from "../ui/Card"
 import Button from "../ui/Button"
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi"
+import Pagination from "../ui/Pagination"
 
 type Project = {
   id: number
@@ -19,7 +20,7 @@ const staticProjects: Project[] = Array.from({ length: 20 }, (_, i) => ({
 const projectListVariants = cva("flex flex-col", {
   variants: {
     size: {
-      sm: "gap-2",
+      sm: "gap-1",
       md: "gap-4",
       lg: "gap-6",
     },
@@ -56,20 +57,33 @@ export default function ProjectList({
 
   const cardGap =
     size === "sm"
-      ? "gap-2"
+      ? "gap-1"
       : size === "lg"
         ? "gap-6"
         : "gap-4"
 
-  const buttonSize =
-    size === "sm"
-      ? "sm"
-      : size === "lg"
-        ? "lg"
-        : "md"
-
   return (
     <div className={`${projectListVariants({ size })} ${className ?? ""}`}>
+      <div className="mb-2 flex items-center justify-between">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={staticProjects.length}
+          itemsPerPage={itemsPerPage}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+        />
+        <div className="flex gap-2">
+          <Button variant="primary" size="sm" onClick={() => console.log("New Project clicked")}>
+            Create
+            <FiPlus />
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => console.log("See All clicked")}>
+            See All
+          </Button>
+        </div>
+      </div>
+
       <div className={`flex flex-col ${cardGap}`}>
         {currentProjects.map((project) => (
           <Card
@@ -78,7 +92,7 @@ export default function ProjectList({
             title={project.title}
             subtitle={project.subtitle}
             button={
-              <div className="flex gap-4">
+              <div className="flex gap-2">
                 <Button variant="primary" size="sm">
                   Open
                 </Button>
@@ -89,31 +103,6 @@ export default function ProjectList({
             }
           />
         ))}
-      </div>
-
-      <div className="mt-4 flex items-center justify-between">
-        <Button
-          variant="secondary"
-          size={buttonSize}
-          onClick={handlePrevious}
-          disabled={currentPage === 1}
-        >
-          <FiChevronLeft />
-        </Button>
-
-        <span className="text-sm text-muted-foreground">
-          {startIndex + 1}-{Math.min(endIndex, staticProjects.length)} of{" "}
-          {staticProjects.length}
-        </span>
-
-        <Button
-          variant="secondary"
-          size={buttonSize}
-          onClick={handleNext}
-          disabled={currentPage === totalPages}
-        >
-          <FiChevronRight />
-        </Button>
       </div>
     </div>
   )

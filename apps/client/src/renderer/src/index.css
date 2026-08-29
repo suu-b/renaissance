@@ -28,3 +28,5 @@ html, body {
   --font-sans: 'Poppins', sans-serif;
   --radius-lg: 1rem;
 }
+
+::selection { background: var(--primary);}

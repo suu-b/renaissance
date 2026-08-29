@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
+
 import Welcome from "./pages/Welcome"
 import Dashboard from "./pages/Dashboard"
+import TopBar from "./components/common/TopBar"
 
 function App(): React.JSX.Element {
   const port: number | null = window.api.getServerPort()
@@ -11,6 +13,7 @@ function App(): React.JSX.Element {
 
   return (
     <BrowserRouter>
+    <TopBar />
       <Routes>
         <Route path="/" element={<Welcome />} />
         <Route path="/dashboard" element={<Dashboard />} />

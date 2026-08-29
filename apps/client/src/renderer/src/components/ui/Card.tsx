@@ -38,7 +38,7 @@ export default function Card({
     size === "sm" ? "h3" : size === "lg" ? "h2" : "h3"
 
   const subtitleVariant =
-    size === "sm" ? "small" : "p"
+    size === "sm" ? "muted" : "p"
 
   const titleMargin =
     size === "sm" ? "mb-1" : size === "lg" ? "mb-3" : "mb-2"
