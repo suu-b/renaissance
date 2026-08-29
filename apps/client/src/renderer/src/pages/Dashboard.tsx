@@ -1,16 +1,16 @@
 import React from "react"
+import pfp from "../assets/pfp.jpeg"
 
 import Page from "../components/layout/Page"
-import Typography from "../components/ui/Typography"
+import Image from "../components/ui/Image"
+import ProjectList from "../components/common/ProjectList"
 
 export default function Dashboard(): React.JSX.Element {
     return (
-        <Page alignment="center">
-            <div className="flex flex-col gap-4 max-w-[50vw]">
-                <Typography variant="h1">Dashboard</Typography>
-                <Typography variant="p">Welcome to your Renaissance workspace.</Typography>
-                <Typography variant="muted">This is a placeholder for the main application interface.</Typography>
-            </div>
+        <Page alignment="default">
+            <Image src={pfp} alt="Profile" variant="pfp" size="xl" className="mx-auto"/>
+            <ProjectList size="lg" className="w-[50vw] mx-auto my-5"/>
+
         </Page>
     )
 }

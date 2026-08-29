@@ -26,6 +26,7 @@ type ButtonProps = VariantProps<typeof buttonVariants> & {
   className?: string
   external?: boolean
   href?: string
+  disabled?: boolean
   onClick?: () => void
 }
 
@@ -36,26 +37,29 @@ export default function Button({
   className,
   external = false,
   href,
+  disabled = false,
   onClick,
 }: ButtonProps) {
   const classes = `${buttonVariants({ variant, size })} ${className ?? ""}`
   
   if (href) {
     return (
-      <a
-        href={href}
-        className={classes}
-        target={external ? "_blank" : undefined}
-        rel={external ? "noopener noreferrer" : undefined}
-      >
-        {children}
-        {external && <FiExternalLink className="text-sm" />}
-      </a>
+      <button disabled={disabled}>
+        <a
+          href={href}
+          className={classes}
+          target={external ? "_blank" : undefined}
+          rel={external ? "noopener noreferrer" : undefined}
+        >
+          {children}
+          {external && <FiExternalLink className="text-sm" />}
+        </a>
+      </button>
     )
   }
 
   return (
-    <button className={classes} onClick={onClick}>
+    <button className={classes} onClick={onClick} disabled={disabled}>
       {children}
       {external && <FiExternalLink className="text-sm" />}
     </button>
