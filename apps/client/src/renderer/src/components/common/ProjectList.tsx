@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { cva, type VariantProps } from "class-variance-authority"
 import { FiPlus } from "react-icons/fi"
 import Card from "../ui/Card"
@@ -40,6 +41,7 @@ export default function ProjectList({
   itemsPerPage = 10,
   className,
 }: ProjectListProps) {
+  const navigate = useNavigate()
   const [currentPage, setCurrentPage] = useState(1)
 
   const totalPages = Math.ceil(staticProjects.length / itemsPerPage)
@@ -74,7 +76,7 @@ export default function ProjectList({
           onNext={handleNext}
         />
         <div className="flex gap-2">
-          <Button variant="primary" size="sm" onClick={() => console.log("New Project clicked")}>
+          <Button variant="primary" size="sm" onClick={() => navigate('/new-project')}>
             Create
             <FiPlus />
           </Button>

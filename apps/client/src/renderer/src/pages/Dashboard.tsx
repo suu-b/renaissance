@@ -1,11 +1,9 @@
 import React from "react"
-import pfp from "../assets/pfp.jpeg"
 
 import Page from "../components/layout/Page"
 import Typography from "../components/ui/Typography"
 import ProjectList from "../components/common/ProjectList"
 import SearchBar from "../components/ui/SearchBar"
-import ArtistOfTheDay from "../components/common/ArtistOfTheDay"
 import Activity from "../components/common/Activity"
 
 export default function Dashboard(): React.JSX.Element {
