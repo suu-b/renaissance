@@ -6,7 +6,6 @@ import NewProject from "./pages/NewProject"
 
 import TopBar from "./components/common/TopBar"
 import Project from "./pages/Project"
-import Footer from "./components/common/Footer"
 
 function App(): React.JSX.Element {
   const port: number | null = window.api.getServerPort()
@@ -24,7 +23,6 @@ function App(): React.JSX.Element {
         <Route path="/new-project" element={<NewProject />} />
         <Route path="/project/:id" element={<Project />} />
       </Routes>
-      <Footer />
     </BrowserRouter>
   )
 }
