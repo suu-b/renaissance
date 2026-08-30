@@ -13,6 +13,7 @@ function createWindow(): void {
     height: 670,
     show: false,
     autoHideMenuBar: true,
+    frame: false,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -58,6 +59,19 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
   ipcMain.on('maximize-window', () => {
     mainWindow?.maximize()
+  })
+  ipcMain.on('minimize-window', () => {
+    mainWindow?.minimize()
+  })
+  ipcMain.on('close-window', () => {
+    mainWindow?.close()
+  })
+  ipcMain.on('toggle-maximize-window', () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize()
+    } else {
+      mainWindow?.maximize()
+    }
   })
 
   createWindow()

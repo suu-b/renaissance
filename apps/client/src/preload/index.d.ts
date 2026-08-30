@@ -6,6 +6,9 @@ declare global {
     api: {
       getServerPort: () => number | null
       maximizeWindow: () => void
+      minimizeWindow: () => void
+      closeWindow: () => void
+      toggleMaximizeWindow: () => void
     }
   }
 }

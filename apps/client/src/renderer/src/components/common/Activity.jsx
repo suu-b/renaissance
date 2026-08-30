@@ -36,9 +36,9 @@ export default function Activity() {
   }, {})
 
   return (
-    <div className="border border-foreground/20 rounded-lg p-4 max-h-full ">
+    <div className="border border-foreground/20 rounded-lg p-4 max-h-full flex flex-col">
       {/* Header with Mine button */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-3">
         <Typography variant="h3">Activity</Typography>
         <Button 
           variant="ghost" 
@@ -51,7 +51,7 @@ export default function Activity() {
       </div>
 
       {/* Filter chips */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-3">
         {activityTypes.map(type => (
           <button
             key={type}
@@ -73,31 +73,33 @@ export default function Activity() {
       </div>
 
       {/* Activity logs grouped by date */}
-      {Object.entries(groupedActivities).map(([dateGroup, groupActivities]) => (
-        <div key={dateGroup} className="mb-4">
-          <Typography variant="small" className="text-muted-foreground font-semibold mb-2 uppercase tracking-wider">
-            {dateGroup}
-          </Typography>
-          <div className="flex flex-col gap-3">
-            {groupActivities.map(activity => (
-              <ActivityLog 
-                key={activity.id}
-                user={activity.user} 
-                action={activity.action} 
-                object={activity.object} 
-                when={activity.when}
-                avatar={activity.avatar}
-              />
-            ))}
+      <div className="flex-1 overflow-y-auto">
+        {Object.entries(groupedActivities).map(([dateGroup, groupActivities]) => (
+          <div key={dateGroup} className="mb-3">
+            <Typography variant="small" className="text-muted-foreground font-semibold mb-2 uppercase tracking-wider">
+              {dateGroup}
+            </Typography>
+            <div className="flex flex-col gap-2">
+              {groupActivities.map(activity => (
+                <ActivityLog 
+                  key={activity.id}
+                  user={activity.user} 
+                  action={activity.action} 
+                  object={activity.object} 
+                  when={activity.when}
+                  avatar={activity.avatar}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
 
-      {filteredActivities.length === 0 && (
-        <Typography variant="p" className="text-muted-foreground text-center py-4">
-          No activities found
-        </Typography>
-      )}
+        {filteredActivities.length === 0 && (
+          <Typography variant="p" className="text-muted-foreground text-center py-4">
+            No activities found
+          </Typography>
+        )}
+      </div>
     </div>
   )
 }

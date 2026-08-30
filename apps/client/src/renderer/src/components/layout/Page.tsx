@@ -1,6 +1,6 @@
 import {cva, type VariantProps } from "class-variance-authority"
 
-const pageVariants = cva("max-w-full h-dvh overflow-x-hidden", {
+const pageVariants = cva("max-w-full overflow-x-hidden", {
     variants: {
         alignment: {
             default: "px-8 py-10",

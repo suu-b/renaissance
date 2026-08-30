@@ -5,11 +5,12 @@ import Typography from "../components/ui/Typography"
 import ProjectList from "../components/common/ProjectList"
 import SearchBar from "../components/ui/SearchBar"
 import Activity from "../components/common/Activity"
+import Explore from "../components/common/Explore"
 
 export default function Dashboard(): React.JSX.Element {
   return (
     <Page alignment="default" className="flex gap-4">
-        <div className="mx-auto w-[60vw]">
+        <div className="mx-auto w-[62vw]">
         <div className="flex items-baseline justify-between">
           <div>
             <Typography variant="h1" >Welcome</Typography>
@@ -27,11 +28,12 @@ export default function Dashboard(): React.JSX.Element {
           }}
           className="my-5"
         />
-        <ProjectList itemsPerPage={4} size="sm" className="my-5" />
+        <ProjectList itemsPerPage={5} size="sm" className="my-5" />
         </div>
         <div className="mx-auto w-[25vw]">
              {/* <ArtistOfTheDay className="ml-auto mb-5" /> */}
-            <Activity/>
+            <Explore className="mb-4" />
+            <Activity className="max-h-[40vh] overflow-y-auto" />
         </div>
     </Page>
   )

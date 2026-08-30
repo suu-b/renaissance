@@ -10,12 +10,16 @@ type Project = {
   id: number
   title: string
   subtitle: string
+  lastUpdatedBy?: string
+  lastUpdatedAt?: string
 }
 
 const staticProjects: Project[] = Array.from({ length: 20 }, (_, i) => ({
   id: i + 1,
   title: `Project ${i + 1}`,
   subtitle: `Description for project ${i + 1}. This is a placeholder project description.`,
+  lastUpdatedBy: "Shubham",
+  lastUpdatedAt: `${Math.floor(Math.random() * 24) + 1}h ago`,
 }))
 
 const projectListVariants = cva("flex flex-col", {
@@ -93,9 +97,11 @@ export default function ProjectList({
             size={size}
             title={project.title}
             subtitle={project.subtitle}
+            lastUpdatedBy={project.lastUpdatedBy}
+            lastUpdatedAt={project.lastUpdatedAt}
             button={
               <div className="flex gap-2">
-                <Button variant="primary" size="sm">
+                <Button variant="primary" size="sm" onClick={() => navigate(`/project/${project.id}`)}>
                   Open
                 </Button>
               </div>

@@ -31,6 +31,9 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('api', {
       ...api,
       maximizeWindow: () => ipcRenderer.send("maximize-window"),
+      minimizeWindow: () => ipcRenderer.send("minimize-window"),
+      closeWindow: () => ipcRenderer.send("close-window"),
+      toggleMaximizeWindow: () => ipcRenderer.send("toggle-maximize-window"),
     })
   } catch (error) {
     console.error(error)
@@ -42,5 +45,8 @@ if (process.contextIsolated) {
   window.api = {
     ...api,
     maximizeWindow: () => ipcRenderer.send("maximize-window"),
+    minimizeWindow: () => ipcRenderer.send("minimize-window"),
+    closeWindow: () => ipcRenderer.send("close-window"),
+    toggleMaximizeWindow: () => ipcRenderer.send("toggle-maximize-window"),
   }
 }
