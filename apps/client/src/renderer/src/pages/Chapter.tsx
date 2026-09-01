@@ -3,6 +3,7 @@ import Page from "@renderer/components/layout/Page"
 import ChapterReader from "@renderer/components/ui/ChapterReader"
 import BackLink from "@renderer/components/ui/BackLink"
 import Breadcrumbs from "@renderer/components/ui/Breadcrumbs"
+import ToolKit from "@renderer/components/common/ToolKit"
 
 // Sample chapter content - this would come from API in real usage
 const sampleChapterContent = `The morning sun cast long shadows across the cobblestone streets as Eleanor made her way through the ancient city. She had lived here for all of her twenty-three years, yet each dawn brought with it a sense of wonder that never seemed to fade.
@@ -42,22 +43,20 @@ export default function Chapter() {
     }
   }
 
-  const handleEdit = () => {
-    // This would navigate to an edit page or open an edit mode
-    console.log("Edit chapter", chapterId)
-  }
-
   return (
     <Page alignment="default" className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <BackLink fallbackPath={`/project/${projectId}`} />
-        <Breadcrumbs
-          items={[
-            { label: 'Dashboard', path: '/dashboard' },
-            { label: `Project ${projectId}`, path: `/project/${projectId}` },
-            { label: `Chapter ${chapterNumber}` }
-          ]}
-        />
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <BackLink fallbackPath={`/project/${projectId}`} />
+          <Breadcrumbs
+            items={[
+              { label: 'Dashboard', path: '/dashboard' },
+              { label: `Project ${projectId}`, path: `/project/${projectId}` },
+              { label: `Chapter ${chapterNumber}` }
+            ]}
+          />
+        </div>
+        <ToolKit size="sm" />
       </div>
 
       <ChapterReader
@@ -67,7 +66,6 @@ export default function Chapter() {
         totalChapters={totalChapters}
         onPrevious={handlePrevious}
         onNext={handleNext}
-        onEdit={handleEdit}
       />
     </Page>
   )

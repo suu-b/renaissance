@@ -7,6 +7,7 @@ import SearchBar from "@renderer/components/ui/SearchBar";
 import BackLink from "@renderer/components/ui/BackLink";
 import Contributions from "@renderer/components/common/Contributions";
 import Stream from "@renderer/components/common/Stream";
+import ToolKit from "@renderer/components/common/ToolKit";
 
 export default function Project() {
     const { id } = useParams<{ id: string }>()
@@ -34,14 +35,17 @@ export default function Project() {
     return(
         <Page alignment="default" className="flex gap-4">
             <div className="mx-auto w-[60vw]">
-                <div className="mb-6">
-                    <BackLink fallbackPath="/dashboard" />
-                    <Breadcrumbs 
-                        items={[
-                            { label: 'Dashboard', path: '/dashboard' },
-                            { label: 'Project Details' }
-                        ]}
-                    />
+                <div className="mb-6 flex justify-between items-start">
+                    <div>
+                        <BackLink fallbackPath="/dashboard" />
+                        <Breadcrumbs
+                            items={[
+                                { label: 'Dashboard', path: '/dashboard' },
+                                { label: 'Project Details' }
+                            ]}
+                        />
+                    </div>
+                    <ToolKit size="sm" />
                 </div>
                 <Typography variant="h1" className="my-6">Project {id}</Typography>
                 
