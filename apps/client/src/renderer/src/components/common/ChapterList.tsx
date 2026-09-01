@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { cva, type VariantProps } from "class-variance-authority"
 import Card from "../ui/Card"
 import Pagination from "../ui/Pagination"
@@ -36,6 +37,7 @@ type ChapterListProps = VariantProps<typeof chapterListVariants> & {
   itemsPerPage?: number
   className?: string
   chapters?: Chapter[]
+  projectId?: string
 }
 
 export default function ChapterList({
@@ -43,7 +45,9 @@ export default function ChapterList({
   itemsPerPage = 10,
   className,
   chapters = staticChapters,
+  projectId,
 }: ChapterListProps) {
+  const navigate = useNavigate()
   const [currentPage, setCurrentPage] = useState(1)
 
   const totalPages = Math.ceil(chapters.length / itemsPerPage)
@@ -81,14 +85,19 @@ export default function ChapterList({
 
       <div className={`flex flex-col ${cardGap}`}>
         {currentChapters.map((chapter) => (
-          <Card
+          <div
             key={chapter.id}
-            size={size}
-            title={chapter.title}
-            subtitle={chapter.description}
-            lastUpdatedBy={chapter.lastUpdatedBy}
-            lastUpdatedAt={chapter.lastUpdatedAt}
-          />
+            onClick={() => projectId && navigate(`/project/${projectId}/chapter/${chapter.id}`)}
+            className="cursor-pointer hover:bg-foreground/5 transition-colors rounded-lg"
+          >
+            <Card
+              size={size}
+              title={chapter.title}
+              subtitle={chapter.description}
+              lastUpdatedBy={chapter.lastUpdatedBy}
+              lastUpdatedAt={chapter.lastUpdatedAt}
+            />
+          </div>
         ))}
       </div>
     </div>

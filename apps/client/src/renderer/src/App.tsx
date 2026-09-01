@@ -6,6 +6,7 @@ import NewProject from "./pages/NewProject"
 
 import TopBar from "./components/common/TopBar"
 import Project from "./pages/Project"
+import Chapter from "./pages/Chapter"
 
 function App(): React.JSX.Element {
   const port: number | null = window.api.getServerPort()
@@ -22,6 +23,7 @@ function App(): React.JSX.Element {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/new-project" element={<NewProject />} />
         <Route path="/project/:id" element={<Project />} />
+        <Route path="/project/:projectId/chapter/:chapterId" element={<Chapter />} />
       </Routes>
     </BrowserRouter>
   )

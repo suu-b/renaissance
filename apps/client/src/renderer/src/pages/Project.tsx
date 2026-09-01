@@ -45,13 +45,13 @@ export default function Project() {
                 </div>
                 <Typography variant="h1" className="my-6">Project {id}</Typography>
                 
-                <SearchBar 
-                    placeholder="Search chapters..." 
-                    size="md" 
+                <SearchBar
+                    placeholder="Search chapters..."
+                    size="md"
                     onChange={() => console.log("Search chapters")}
                     className="mb-4"
                 />
-                <ChapterList size="md" itemsPerPage={5} />
+                <ChapterList size="md" itemsPerPage={5} projectId={id} />
             </div>
             <div className="mx-auto w-[25vw]">
                 <div className="mb-4 p-4 rounded-lg border border-foreground/10 bg-gradient-to-br from-gray-50 to-white">

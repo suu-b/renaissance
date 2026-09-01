@@ -8,7 +8,7 @@ const cardVariants = cva(
   {
     variants: {
       size: {
-        xsm: "p-3 border-0 hover:bg-foreground/5 transition-colors",
+        xsm: "p-3 border-0",
         sm: "p-4",
         md: "p-6",
         lg: "p-8",
