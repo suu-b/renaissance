@@ -1,11 +1,12 @@
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, useSearchParams } from "react-router-dom"
 import Page from "@renderer/components/layout/Page"
-import ChapterReader from "@renderer/components/ui/ChapterReader"
 import BackLink from "@renderer/components/ui/BackLink"
 import Breadcrumbs from "@renderer/components/ui/Breadcrumbs"
 import ToolKit from "@renderer/components/common/ToolKit"
+import ChapterReader from "@renderer/components/ui/ChapterReader"
+import ChapterWriteView from "@renderer/components/common/ChapterWriteView"
+import { convertTextToEditorFormat } from "@renderer/contentConverter"
 
-// Sample chapter content - this would come from API in real usage
 const sampleChapterContent = `The morning sun cast long shadows across the cobblestone streets as Eleanor made her way through the ancient city. She had lived here for all of her twenty-three years, yet each dawn brought with it a sense of wonder that never seemed to fade.
 
 The marketplace was already bustling with activity when she arrived. Merchants called out their wares in a dozen different languages, the air thick with the scent of fresh bread, exotic spices, and the unmistakable aroma of coffee brewing in the corner café.
@@ -27,20 +28,48 @@ The chapter of her life was about to change in ways she could never have imagine
 export default function Chapter() {
   const { projectId, chapterId } = useParams<{ projectId: string; chapterId: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const mode = searchParams.get('mode') 
 
   const chapterNumber = parseInt(chapterId || "1")
-  const totalChapters = 20 // This would come from project data
+  const totalChapters = 20 
+
+  const isWriteMode = mode === 'write'
 
   const handlePrevious = () => {
     if (chapterNumber > 1) {
-      navigate(`/project/${projectId}/chapter/${chapterNumber - 1}`)
+      navigate(`/project/${projectId}/chapter/${chapterNumber - 1}?mode=${mode}`)
     }
   }
 
   const handleNext = () => {
     if (chapterNumber < totalChapters) {
-      navigate(`/project/${projectId}/chapter/${chapterNumber + 1}`)
+      navigate(`/project/${projectId}/chapter/${chapterNumber + 1}?mode=${mode}`)
     }
+  }
+
+  const handleEdit = () => {
+    navigate(`/project/${projectId}/chapter/${chapterId}?mode=write`)
+  }
+
+  const handleDelete = () => {
+    console.log("Delete chapter", chapterId)
+    // Add actual delete logic here
+  }
+
+  const handleSave = () => {
+    console.log("Save chapter")
+    // Add actual save logic here
+    navigate(`/project/${projectId}/chapter/${chapterId}?mode=read`)
+  }
+
+  const handleCancel = () => {
+    navigate(`/project/${projectId}/chapter/${chapterId}?mode=read`)
+  }
+
+  const handleContentChange = (value: string) => {
+    console.log("Content changed:", value)
+    // Handle content changes
   }
 
   return (
@@ -56,17 +85,42 @@ export default function Chapter() {
             ]}
           />
         </div>
-        <ToolKit size="sm" />
+        <ToolKit
+            size="sm"
+            confirm={true}
+            confirmTitle="Delete Chapter"
+            confirmContent="Are you sure you want to delete this chapter? This action cannot be undone."
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            saveConfirmTitle="Save Chapter"
+            saveConfirmContent="Are you sure you want to save your changes to this chapter?"
+            cancelConfirmTitle="Cancel Editing"
+            cancelConfirmContent="Are you sure you want to cancel? Any unsaved changes will be lost."
+            showSaveCancel={isWriteMode}
+        />
       </div>
 
-      <ChapterReader
-        title={`Chapter ${chapterNumber}: The Beginning`}
-        content={sampleChapterContent}
-        chapterNumber={chapterNumber}
-        totalChapters={totalChapters}
-        onPrevious={handlePrevious}
-        onNext={handleNext}
-      />
+      {isWriteMode ? (
+        <ChapterWriteView
+          title={`Chapter ${chapterNumber}: The Beginning`}
+          initialValue={convertTextToEditorFormat(sampleChapterContent)}
+          onChange={handleContentChange}
+          chapterNumber={chapterNumber}
+          totalChapters={totalChapters}
+        />
+      ) : (
+        <ChapterReader
+          title={`Chapter ${chapterNumber}: The Beginning`}
+          content={sampleChapterContent}
+          chapterNumber={chapterNumber}
+          totalChapters={totalChapters}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          onEdit={handleEdit}
+        />
+      )}
     </Page>
   )
 }

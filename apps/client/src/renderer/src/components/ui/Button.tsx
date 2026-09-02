@@ -1,10 +1,11 @@
 import {cva, type VariantProps } from "class-variance-authority"
 import { FiExternalLink } from "react-icons/fi"
 
-const buttonVariants = cva("inline-flex items-center justify-center gap-3 font-semibold uppercase tracking-wider transition-all duration-300 ease-out cursor-pointer leading-none", {
+const buttonVariants = cva("inline-flex items-center justify-center gap-3 font-semibold uppercase tracking-wider transition-all duration-300 ease-out cursor-pointer leading-none rounded", {
   variants: {
     variant: {
-      primary: "bg-primary text-foreground hover:bg-primary/90 hover:-translate-y-0.5",
+      primary: "bg-foreground text-background hover:bg-foreground/90 hover:-translate-y-0.5",
+      highlight: "bg-primary text-foreground hover:bg-primary/90 hover:-translate-y-0.5",
       secondary: "border border-foreground text-foreground hover:bg-foreground/5 hover:-translate-y-0.5",
       ghost: "text-foreground hover:bg-foreground/3",
     },

@@ -1,9 +1,9 @@
 import { useState } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { FiTrash } from "react-icons/fi"
+import { FiX } from "react-icons/fi"
 import Modal from "./Modal"
 
-const deleteToolVariants = cva(
+const cancelToolVariants = cva(
   "flex items-center justify-center rounded border border-white/50 text-white transition-all duration-300 ease-out cursor-pointer",
   {
     variants: {
@@ -19,7 +19,7 @@ const deleteToolVariants = cva(
   }
 )
 
-type DeleteToolProps = VariantProps<typeof deleteToolVariants> & {
+type CancelToolProps = VariantProps<typeof cancelToolVariants> & {
   className?: string
   onClick?: () => void
   confirm?: boolean
@@ -27,14 +27,14 @@ type DeleteToolProps = VariantProps<typeof deleteToolVariants> & {
   confirmContent?: string
 }
 
-export default function DeleteTool({
+export default function CancelTool({
   size,
   className,
   onClick,
   confirm = false,
-  confirmTitle = "Confirm Delete",
-  confirmContent = "Are you sure you want to delete this item?",
-}: DeleteToolProps) {
+  confirmTitle = "Confirm Cancel",
+  confirmContent = "Are you sure you want to cancel? Any unsaved changes will be lost.",
+}: CancelToolProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const handleClick = () => {
@@ -59,10 +59,10 @@ export default function DeleteTool({
   return (
     <>
       <button
-        className={`${deleteToolVariants({ size })} bg-foreground ${className ?? ""}`}
+        className={`${cancelToolVariants({ size })} bg-foreground ${className ?? ""}`}
         onClick={handleClick}
       >
-        <FiTrash className="w-full h-full" />
+        <FiX className="w-full h-full" />
       </button>
       {confirm && (
         <Modal

@@ -11,6 +11,11 @@ import ToolKit from "@renderer/components/common/ToolKit";
 
 export default function Project() {
     const { id } = useParams<{ id: string }>()
+
+    const handleDelete = () => {
+        console.log("Delete project", id)
+        // Add actual delete logic here
+    }
     
     // Sample contributors data - this would come from the parent/API in real usage
     const contributors = [
@@ -45,7 +50,13 @@ export default function Project() {
                             ]}
                         />
                     </div>
-                    <ToolKit size="sm" />
+                    <ToolKit
+                        size="sm"
+                        confirm={true}
+                        confirmTitle="Delete Project"
+                        confirmContent="Are you sure you want to delete this project? This action cannot be undone."
+                        onDelete={handleDelete}
+                    />
                 </div>
                 <Typography variant="h1" className="my-6">Project {id}</Typography>
                 

@@ -1,0 +1,97 @@
+/* Basic styling for Harmonia Text Editor */
+.slate-editor {
+  min-height: 100%;
+  outline: none;
+  border: none;
+}
+
+.slate-editor:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+.slate-editor:focus-visible {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+/* Remove focus ring from editable content */
+[contenteditable="true"] {
+  outline: none;
+}
+
+[contenteditable="true"]:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.slate-editor p {
+  margin: 0.5rem 0;
+}
+
+.slate-editor h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.slate-editor h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0.75rem 0;
+}
+
+.slate-editor h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0.75rem 0;
+}
+
+.slate-editor ul,
+.slate-editor ol {
+  margin: 0.5rem 0;
+  padding-left: 2rem;
+}
+
+.slate-editor li {
+  margin: 0.25rem 0;
+}
+
+.slate-editor code {
+  background-color: rgba(28, 28, 28, 0.05);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.slate-editor pre {
+  background-color: rgba(28, 28, 28, 0.05);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+  overflow-x: auto;
+}
+
+.slate-editor pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.slate-editor strong {
+  font-weight: 700;
+}
+
+.slate-editor em {
+  font-style: italic;
+}
+
+.slate-editor u {
+  text-decoration: underline;
+}
+
+.slate-editor mark {
+  background-color: #fef08a;
+}

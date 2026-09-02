@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { cva, type VariantProps } from "class-variance-authority"
 import Card from "../ui/Card"
+import Button from "../ui/Button"
 import Pagination from "../ui/Pagination"
 
 type Chapter = {
@@ -85,19 +86,21 @@ export default function ChapterList({
 
       <div className={`flex flex-col ${cardGap}`}>
         {currentChapters.map((chapter) => (
-          <div
+          <Card
             key={chapter.id}
-            onClick={() => projectId && navigate(`/project/${projectId}/chapter/${chapter.id}`)}
-            className="cursor-pointer hover:bg-foreground/5 transition-colors rounded-lg"
-          >
-            <Card
-              size={size}
-              title={chapter.title}
-              subtitle={chapter.description}
-              lastUpdatedBy={chapter.lastUpdatedBy}
-              lastUpdatedAt={chapter.lastUpdatedAt}
-            />
-          </div>
+            size={size}
+            title={chapter.title}
+            subtitle={chapter.description}
+            lastUpdatedBy={chapter.lastUpdatedBy}
+            lastUpdatedAt={chapter.lastUpdatedAt}
+            button={
+              <div className="flex gap-2">
+                <Button variant="primary" size="sm" onClick={() => projectId && navigate(`/project/${projectId}/chapter/${chapter.id}`)}>
+                  Open
+                </Button>
+              </div>
+            }
+          />
         ))}
       </div>
     </div>
