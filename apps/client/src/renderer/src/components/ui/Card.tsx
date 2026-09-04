@@ -8,7 +8,7 @@ const cardVariants = cva(
   {
     variants: {
       size: {
-        xsm: "p-3 border-0",
+        xsm: "p-3 border-0 hover:bg-foreground/5 text-foreground/80 hover:text-foreground cursor-pointer transition-colors group",
         sm: "p-4",
         md: "p-6",
         lg: "p-8",
@@ -53,11 +53,11 @@ export default function Card({
     <div className={`${cardVariants({ size })} ${className ?? ""}`}>
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <Typography variant={titleVariant} className={titleMargin}>
+          <Typography variant={titleVariant} className={`${titleMargin} ${size === "xsm" ? "group-hover:text-foreground" : ""}`}>
             {title}
           </Typography>
 
-          <Typography variant={subtitleVariant} className={size === "xsm" ? "text-muted-foreground line-clamp-1" : ""}>
+          <Typography variant={subtitleVariant} className={`${size === "xsm" ? "line-clamp-1 group-hover:text-foreground/80" : ""}`}>
             {subtitle}
           </Typography>
         </div>

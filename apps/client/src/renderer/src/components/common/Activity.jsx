@@ -50,21 +50,20 @@ export default function Activity() {
         </Button>
       </div>
 
-      {/* Filter chips */}
       <div className="flex flex-wrap gap-2 mb-3">
         {activityTypes.map(type => (
           <button
             key={type}
             onClick={() => setSelectedFilter(type)}
-            className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors group ${
+            className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium group ${
               selectedFilter === type
                 ? "bg-foreground text-background"
                 : "bg-foreground/5 text-foreground/70 hover:bg-foreground/10"
             }`}
           >
             {type !== "All" && (
-              <span className={`text-foreground/70 group-hover:text-foreground/40 transition-colors ${
-                selectedFilter === type ? "text-background" : ""
+              <span className={`text-foreground/70 group-hover:text-foreground/40 ${
+                selectedFilter === type ? "text-white" : ""
               }`}>
                 {getIcon(type)}
               </span>

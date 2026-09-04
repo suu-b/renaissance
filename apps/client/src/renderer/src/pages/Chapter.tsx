@@ -1,7 +1,6 @@
 import { useParams, useNavigate, useSearchParams } from "react-router-dom"
 import Page from "@renderer/components/layout/Page"
 import BackLink from "@renderer/components/ui/BackLink"
-import Breadcrumbs from "@renderer/components/ui/Breadcrumbs"
 import ToolKit from "@renderer/components/common/ToolKit"
 import ChapterReader from "@renderer/components/ui/ChapterReader"
 import ChapterWriteView from "@renderer/components/common/ChapterWriteView"
@@ -77,13 +76,6 @@ export default function Chapter() {
       <div className="mb-6 flex justify-between items-start">
         <div>
           <BackLink fallbackPath={`/project/${projectId}`} />
-          <Breadcrumbs
-            items={[
-              { label: 'Dashboard', path: '/dashboard' },
-              { label: `Project ${projectId}`, path: `/project/${projectId}` },
-              { label: `Chapter ${chapterNumber}` }
-            ]}
-          />
         </div>
         <ToolKit
             size="sm"

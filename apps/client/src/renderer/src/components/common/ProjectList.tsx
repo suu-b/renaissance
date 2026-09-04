@@ -6,20 +6,26 @@ import Card from "../ui/Card"
 import Button from "../ui/Button"
 import Pagination from "../ui/Pagination"
 
-type Project = {
+export type Project = {
   id: number
   title: string
   subtitle: string
   lastUpdatedBy?: string
   lastUpdatedAt?: string
+  status?: string
+  priority?: number
+  createdDate?: string
 }
 
-const staticProjects: Project[] = Array.from({ length: 20 }, (_, i) => ({
+export const staticProjects: Project[] = Array.from({ length: 20 }, (_, i) => ({
   id: i + 1,
   title: `Project ${i + 1}`,
   subtitle: `Description for project ${i + 1}. This is a placeholder project description.`,
   lastUpdatedBy: "Shubham",
   lastUpdatedAt: `${Math.floor(Math.random() * 24) + 1}h ago`,
+  status: i % 3 === 0 ? "active" : i % 3 === 1 ? "inactive" : "archived",
+  priority: (i % 5) + 1,
+  createdDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
 }))
 
 const projectListVariants = cva("flex flex-col", {
@@ -38,20 +44,22 @@ const projectListVariants = cva("flex flex-col", {
 type ProjectListProps = VariantProps<typeof projectListVariants> & {
   itemsPerPage?: number
   className?: string
+  projects?: Project[]
 }
 
 export default function ProjectList({
   size,
   itemsPerPage = 10,
   className,
+  projects = staticProjects,
 }: ProjectListProps) {
   const navigate = useNavigate()
   const [currentPage, setCurrentPage] = useState(1)
 
-  const totalPages = Math.ceil(staticProjects.length / itemsPerPage)
+  const totalPages = Math.ceil(projects.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const currentProjects = staticProjects.slice(startIndex, endIndex)
+  const currentProjects = projects.slice(startIndex, endIndex)
 
   const handlePrevious = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1))
@@ -74,7 +82,7 @@ export default function ProjectList({
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={staticProjects.length}
+          totalItems={projects.length}
           itemsPerPage={itemsPerPage}
           onPrevious={handlePrevious}
           onNext={handleNext}

@@ -6,6 +6,7 @@ import ProjectList from "../components/common/ProjectList"
 import SearchBar from "../components/ui/SearchBar"
 import Activity from "../components/common/Activity"
 import Explore from "../components/common/Explore"
+import TextHighlight from "../components/ui/TextHighlight"
 
 export default function Dashboard(): React.JSX.Element {
   return (
@@ -14,7 +15,11 @@ export default function Dashboard(): React.JSX.Element {
         <div className="flex items-baseline justify-between">
           <div>
             <Typography variant="h1" >Welcome</Typography>
-            <Typography variant="h1"><span className="text-primary italic">Shubham</span>!</Typography>
+            <Typography variant="h1">
+              <TextHighlight color="bg-primary" intensity={60}>
+                Shubham!
+              </TextHighlight>
+            </Typography>
           </div>
           <div className="flex flex-col gap-1 text-right">
             <Typography variant="muted" className="text-muted-foreground">Words this week <span className="text-primary font-bold">253</span></Typography>

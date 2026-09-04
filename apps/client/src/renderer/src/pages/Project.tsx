@@ -2,7 +2,6 @@ import { useParams } from "react-router-dom"
 import Page from "@renderer/components/layout/Page";
 import Typography from "@renderer/components/ui/Typography";
 import ChapterList from "@renderer/components/common/ChapterList";
-import Breadcrumbs from "@renderer/components/ui/Breadcrumbs";
 import SearchBar from "@renderer/components/ui/SearchBar";
 import BackLink from "@renderer/components/ui/BackLink";
 import Contributions from "@renderer/components/common/Contributions";
@@ -43,12 +42,6 @@ export default function Project() {
                 <div className="mb-6 flex justify-between items-start">
                     <div>
                         <BackLink fallbackPath="/dashboard" />
-                        <Breadcrumbs
-                            items={[
-                                { label: 'Dashboard', path: '/dashboard' },
-                                { label: 'Project Details' }
-                            ]}
-                        />
                     </div>
                     <ToolKit
                         size="sm"
