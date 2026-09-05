@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
-import { FiLayout, FiFolder, FiCompass, FiBook } from "react-icons/fi"
+import { FiLayout, FiFolder, FiGrid } from "react-icons/fi"
+// import { FiCompass, FiBook } from "react-icons/fi" // Commented out since sidebar items are disabled
 
 import Welcome from "./pages/Welcome"
 import Dashboard from "./pages/Dashboard"
@@ -38,15 +39,20 @@ function App(): React.JSX.Element {
       icon: <FiFolder />
     },
     {
-      title: "Explore Hub",
-      path: "/explore",
-      icon: <FiCompass />
+      title: "All Projects",
+      path: "/projects",
+      icon: <FiGrid />
     },
-    {
-      title: "Documentation",
-      path: "/documentation",
-      icon: <FiBook />
-    }
+    // {
+    //   title: "Explore Hub",
+    //   path: "/explore",
+    //   icon: <FiCompass />
+    // },
+    // {
+    //   title: "Documentation",
+    //   path: "/documentation",
+    //   icon: <FiBook />
+    // }
   ]
 
   return (
@@ -114,6 +120,7 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
             <Route path="/new-project" element={<NewProject />} />
             <Route path="/project/:id" element={<Project />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/my-projects" element={<Projects mine={true} />} />
             <Route path="/project/:projectId/chapter/:chapterId" element={<Chapter />} />
           </Routes>
         </main>

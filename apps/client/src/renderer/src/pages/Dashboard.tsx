@@ -1,14 +1,24 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 
 import Page from "../components/layout/Page"
 import Typography from "../components/ui/Typography"
-import ProjectList from "../components/common/ProjectList"
+import ProjectList, { staticProjects } from "../components/common/ProjectList"
 import SearchBar from "../components/ui/SearchBar"
 import Activity from "../components/common/Activity"
 import Explore from "../components/common/Explore"
 import TextHighlight from "../components/ui/TextHighlight"
 
 export default function Dashboard(): React.JSX.Element {
+  const [showProjects, setShowProjects] = useState<boolean>(true)
+  const [projects, setProjects] = useState(staticProjects)
+
+  useEffect(() => {
+    // Randomly decide whether to show populated or empty projects list
+    const shouldShowProjects = Math.random() > 0.5
+    setShowProjects(shouldShowProjects)
+    setProjects(shouldShowProjects ? staticProjects : [])
+  }, [])
+
   return (
     <Page alignment="default" className="flex gap-4">
         <div className="mx-auto w-[62vw]">
@@ -33,7 +43,7 @@ export default function Dashboard(): React.JSX.Element {
           }}
           className="my-5"
         />
-        <ProjectList itemsPerPage={5} size="sm" className="my-5" />
+        <ProjectList itemsPerPage={5} size="sm" className="my-5" projects={projects} />
         </div>
         <div className="mx-auto w-[25vw]">
              {/* <ArtistOfTheDay className="ml-auto mb-5" /> */}

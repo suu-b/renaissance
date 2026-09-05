@@ -1,9 +1,11 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { cva, type VariantProps } from "class-variance-authority"
+import { FiPlus, FiInbox } from "react-icons/fi"
 import Card from "../ui/Card"
 import Button from "../ui/Button"
 import Pagination from "../ui/Pagination"
+import Typography from "../ui/Typography"
 
 type Chapter = {
   id: number
@@ -13,7 +15,7 @@ type Chapter = {
   lastUpdatedAt?: string
 }
 
-const staticChapters: Chapter[] = Array.from({ length: 20 }, (_, i) => ({
+export const staticChapters: Chapter[] = Array.from({ length: 20 }, (_, i) => ({
   id: i + 1,
   title: `Chapter ${i + 1}`,
   description: `Description for chapter ${i + 1}. This is a placeholder chapter description that provides an overview of the content in this chapter.`,
@@ -85,23 +87,31 @@ export default function ChapterList({
       </div>
 
       <div className={`flex flex-col ${cardGap}`}>
-        {currentChapters.map((chapter) => (
-          <Card
-            key={chapter.id}
-            size={size}
-            title={chapter.title}
-            subtitle={chapter.description}
-            lastUpdatedBy={chapter.lastUpdatedBy}
-            lastUpdatedAt={chapter.lastUpdatedAt}
-            button={
-              <div className="flex gap-2">
-                <Button variant="primary" size="sm" onClick={() => projectId && navigate(`/project/${projectId}/chapter/${chapter.id}`)}>
-                  Open
-                </Button>
-              </div>
-            }
-          />
-        ))}
+        {currentChapters.length === 0 ? (
+          <div className="flex items-center justify-center py-8">
+            <Typography variant="muted" className="text-muted-foreground text-sm">
+              No Chapter Yet! Damn - create one!
+            </Typography>
+          </div>
+        ) : (
+          currentChapters.map((chapter) => (
+            <Card
+              key={chapter.id}
+              size={size}
+              title={chapter.title}
+              subtitle={chapter.description}
+              lastUpdatedBy={chapter.lastUpdatedBy}
+              lastUpdatedAt={chapter.lastUpdatedAt}
+              button={
+                <div className="flex gap-2">
+                  <Button variant="primary" size="sm" onClick={() => projectId && navigate(`/project/${projectId}/chapter/${chapter.id}`)}>
+                    Open
+                  </Button>
+                </div>
+              }
+            />
+          ))
+        )}
       </div>
     </div>
   )

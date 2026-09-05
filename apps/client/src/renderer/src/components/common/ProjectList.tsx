@@ -1,10 +1,11 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { cva, type VariantProps } from "class-variance-authority"
-import { FiPlus } from "react-icons/fi"
+import { FiPlus, FiInbox } from "react-icons/fi"
 import Card from "../ui/Card"
 import Button from "../ui/Button"
 import Pagination from "../ui/Pagination"
+import Typography from "../ui/Typography"
 
 export type Project = {
   id: number
@@ -15,18 +16,23 @@ export type Project = {
   status?: string
   priority?: number
   createdDate?: string
+  owner?: string
 }
 
-export const staticProjects: Project[] = Array.from({ length: 20 }, (_, i) => ({
-  id: i + 1,
-  title: `Project ${i + 1}`,
-  subtitle: `Description for project ${i + 1}. This is a placeholder project description.`,
-  lastUpdatedBy: "Shubham",
-  lastUpdatedAt: `${Math.floor(Math.random() * 24) + 1}h ago`,
-  status: i % 3 === 0 ? "active" : i % 3 === 1 ? "inactive" : "archived",
-  priority: (i % 5) + 1,
-  createdDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-}))
+export const staticProjects: Project[] = Array.from({ length: 20 }, (_, i) => {
+  const owners = ["Shubham", "Alice", "Bob", "Charlie", "Diana"]
+  return {
+    id: i + 1,
+    title: `Project ${i + 1}`,
+    subtitle: `Description for project ${i + 1}. This is a placeholder project description.`,
+    lastUpdatedBy: "Shubham",
+    lastUpdatedAt: `${Math.floor(Math.random() * 24) + 1}h ago`,
+    status: i % 3 === 0 ? "active" : i % 3 === 1 ? "inactive" : "archived",
+    priority: (i % 5) + 1,
+    createdDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    owner: owners[i % owners.length],
+  }
+})
 
 const projectListVariants = cva("flex flex-col", {
   variants: {
@@ -99,23 +105,31 @@ export default function ProjectList({
       </div>
 
       <div className={`flex flex-col ${cardGap}`}>
-        {currentProjects.map((project) => (
-          <Card
-            key={project.id}
-            size={size}
-            title={project.title}
-            subtitle={project.subtitle}
-            lastUpdatedBy={project.lastUpdatedBy}
-            lastUpdatedAt={project.lastUpdatedAt}
-            button={
-              <div className="flex gap-2">
-                <Button variant="primary" size="sm" onClick={() => navigate(`/project/${project.id}`)}>
-                  Open
-                </Button>
-              </div>
-            }
-          />
-        ))}
+        {currentProjects.length === 0 ? (
+          <div className="flex items-center justify-center py-8">
+            <Typography variant="muted" className="text-muted-foreground text-sm">
+              No Project Yet! Damn - create one!
+            </Typography>
+          </div>
+        ) : (
+          currentProjects.map((project) => (
+            <Card
+              key={project.id}
+              size={size}
+              title={project.title}
+              subtitle={project.subtitle}
+              lastUpdatedBy={project.lastUpdatedBy}
+              lastUpdatedAt={project.lastUpdatedAt}
+              button={
+                <div className="flex gap-2">
+                  <Button variant="primary" size="sm" onClick={() => navigate(`/project/${project.id}`)}>
+                    Open
+                  </Button>
+                </div>
+              }
+            />
+          ))
+        )}
       </div>
     </div>
   )

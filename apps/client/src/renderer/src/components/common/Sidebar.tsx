@@ -44,7 +44,7 @@ export default function Sidebar({ items, isExpanded, className }: SidebarProps):
       {isExpanded && (
         <div className="p-4 border-t border-foreground/20 overflow-hidden">
           <Typography variant="small" className="text-muted-foreground whitespace-nowrap">
-            © 2024 Renaissance
+            © 2026 Renaissance
           </Typography>
         </div>
       )}

@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { FiInbox } from "react-icons/fi"
 import pfp from "../../assets/pfp.jpeg"
 import ActivityLog, { getIcon } from "../ui/ActivityLog"
 import Button from "../ui/Button"
@@ -96,9 +97,12 @@ export default function Activity() {
         ))}
 
         {filteredActivities.length === 0 && (
-          <Typography variant="p" className="text-muted-foreground text-center py-4">
-            No activities found
-          </Typography>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <FiInbox className="text-4xl text-muted-foreground mb-3" />
+            <Typography variant="p" className="text-muted-foreground">
+              No activities found
+            </Typography>
+          </div>
         )}
       </div>
     </div>
