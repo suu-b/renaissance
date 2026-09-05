@@ -2,14 +2,7 @@ import React, { useState, useRef } from "react"
 import Typography from "./Typography"
 import Button from "./Button"
 import { FiMapPin, FiFolder, FiMail } from "react-icons/fi"
-
-export type UserProfile = {
-  name: string
-  email: string
-  location: string
-  projectCount: number
-  avatar?: string
-}
+import { UserProfile } from "../../types/auth"
 
 type UserProfilePopoverProps = {
   user: UserProfile

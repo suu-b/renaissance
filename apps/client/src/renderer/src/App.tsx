@@ -102,6 +102,16 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
     return []
   }
 
+  const isWelcomePage = location.pathname === "/"
+
+    if (isWelcomePage) {
+      return (
+        <Routes>
+          <Route path="/" element={<Welcome />} />
+        </Routes>
+      )
+    }
+
   return (
     <div className="flex flex-col h-screen">
       <TopBar 

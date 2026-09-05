@@ -16,10 +16,11 @@ const pageVariants = cva("max-w-full overflow-x-hidden", {
 
 type PageProps = VariantProps<typeof pageVariants> & {
     children: React.ReactNode,
-    className?: string
+    className?: string,
+    showSkeleton?: boolean
 }
 
-export default function Page({ alignment, children, className }: PageProps){
+export default function Page({ alignment, children, className, showSkeleton = true }: PageProps){
     return (
         <>
             <main className={`${pageVariants({ alignment })} ${className}`}>
