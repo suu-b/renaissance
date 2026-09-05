@@ -1,4 +1,4 @@
-import { generic_client } from "./generic_client";
+import { generic_client } from "./genericClient";
 import { UserProfile } from "../types/auth";
 
 export async function getAuthStatus(): Promise<boolean> {
@@ -32,9 +32,14 @@ export async function getCurrentUser(): Promise<UserProfile> {
   });
 }
 
-// export function login(credentials: any) {
-//   return generic_client.post("/auth/login", credentials);
-// }
+export async function login(credentials: any): Promise<boolean> {
+  // return generic_client.post("/auth/login", credentials);
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(true);
+    }, 3000);
+  });
+}
 
 // export function logout() {
 //   return generic_client.post("/auth/logout", null);

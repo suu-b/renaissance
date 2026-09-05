@@ -13,7 +13,7 @@ export default function Footer({ className }: FooterProps): React.JSX.Element {
       <span className="text-muted-foreground">
         This is a Personal Project.{" "}
         <a 
-          href="http://localhost:3000/" 
+          href={config.getRenaissanceURL} 
           target="_blank" 
           rel="noopener noreferrer"
           className="text-foreground border-b border-foreground/30 hover:border-foreground transition-colors"

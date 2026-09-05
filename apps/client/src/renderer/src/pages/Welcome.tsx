@@ -1,6 +1,9 @@
 import React from "react"
 import { useNavigate } from "react-router-dom"
 
+import { config } from "../config"
+
+import { login } from "../api/authClient"
 import { useAuth } from "../auth/AuthContext"
 
 import Page from "../components/layout/Page"
@@ -14,6 +17,15 @@ export default function Welcome(): React.JSX.Element {
     const handleContinue = () => {
         window.api.maximizeWindow();
         navigate("/dashboard");
+    };
+
+    const handleSignIn = async () => {
+        try {
+            await login({ email: "test@example.com", password: "password" });
+        }
+        catch (error) {
+            console.error("Error logging in:", error)
+        }
     };
 
     return (
@@ -46,7 +58,7 @@ export default function Welcome(): React.JSX.Element {
                         <Button
                             variant="primary"
                             size="sm"
-                            onClick={handleContinue}
+                            onClick={handleSignIn}
                         >
                             Sign In
                         </Button>
@@ -54,7 +66,7 @@ export default function Welcome(): React.JSX.Element {
                         <Button
                             variant="secondary"
                             size="sm"
-                            href="http://localhost:3000/join"
+                            href={config.getRenaissanceJoinURL}
                             external
                         >
                             Sign up

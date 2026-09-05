@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 import { cva, type VariantProps } from "class-variance-authority"
 import { FiPlus, FiInbox } from "react-icons/fi"
 import Card from "../ui/Card"
@@ -60,6 +61,8 @@ export default function ProjectList({
   projects = staticProjects,
 }: ProjectListProps) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const path = location.pathname
   const [currentPage, setCurrentPage] = useState(1)
 
   const totalPages = Math.ceil(projects.length / itemsPerPage)
@@ -98,9 +101,13 @@ export default function ProjectList({
             Create
             <FiPlus />
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => console.log("See All clicked")}>
-            See All
-          </Button>
+          {
+            (path !== '/my-projects' && path !== '/projects') && (
+              <Button variant="secondary" size="sm" onClick={() => navigate('/my-projects')}>
+                See All
+              </Button>
+            )
+          }
         </div>
       </div>
 

@@ -1,6 +1,8 @@
 import React from "react"
 import { FiMenu, FiUser } from "react-icons/fi"
 
+import { config } from "../../config"
+
 import Image from "../ui/Image"
 import Typography from "../ui/Typography"
 import Button from "../ui/Button"
@@ -45,7 +47,7 @@ export default function TopBar({ onMenuClick, breadcrumbs }: TopBarProps): React
         )}
       </div>
       <div className="flex items-center gap-4">
-        <Button variant="secondary" size="sm" external href="http://localhost:3000/feedback">
+        <Button variant="secondary" size="sm" external href={config.getRenaissanceFeedbackURL}>
           Feedback
         </Button>
         {user && (

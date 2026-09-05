@@ -5,7 +5,7 @@ import {
     useState,
 } from "react";
 
-import { getAuthStatus, getCurrentUser } from "../api/auth_client";
+import { getAuthStatus, getCurrentUser } from "../api/authClient";
 import { AuthContextType, AuthProviderProps, UserProfile } from "../types/auth";
 
 const AuthContext = createContext<AuthContextType | null>(null);
