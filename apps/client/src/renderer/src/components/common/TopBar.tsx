@@ -24,8 +24,9 @@ type TopBarProps = {
 }
 
 export default function TopBar({ onMenuClick, breadcrumbs }: TopBarProps): React.JSX.Element {
+  console.log("url:", config.getRenaissanceFeedbackURL );
   const { user } = useAuth()
-
+  
   return (
     <div className="flex justify-between items-center py-2 px-5 border-b border-gray-200">
       <div className="flex items-center gap-4">
