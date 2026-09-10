@@ -113,13 +113,13 @@ VALUES
 (
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     '22222222-2222-2222-2222-222222222222',
-    'alice/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'bob/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     true
 ),
 (
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     '33333333-3333-3333-3333-333333333333',
-    'alice/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'charlie/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     true
 ),
 (
@@ -131,6 +131,6 @@ VALUES
 (
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     '33333333-3333-3333-3333-333333333333',
-    'bob/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+    'charlie/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     true
 );
