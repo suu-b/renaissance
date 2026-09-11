@@ -34,6 +34,16 @@ if (process.contextIsolated) {
       minimizeWindow: () => ipcRenderer.send("minimize-window"),
       closeWindow: () => ipcRenderer.send("close-window"),
       toggleMaximizeWindow: () => ipcRenderer.send("toggle-maximize-window"),
+      openExternal: (url: string) => ipcRenderer.send("open-external", url),
+      startOAuth: (url: string) => ipcRenderer.send("start-oauth", url),
+
+      onOAuthCallback: (callback: (url: string) => void) => {
+        ipcRenderer.on('oauth-callback', (event, url) => callback(url))
+      },
+
+      removeOAuthCallback: () => {
+       ipcRenderer.removeAllListeners('oauth-callback')
+      }
     })
   } catch (error) {
     console.error(error)
@@ -48,5 +58,13 @@ if (process.contextIsolated) {
     minimizeWindow: () => ipcRenderer.send("minimize-window"),
     closeWindow: () => ipcRenderer.send("close-window"),
     toggleMaximizeWindow: () => ipcRenderer.send("toggle-maximize-window"),
+    openExternal: (url: string) => ipcRenderer.send("open-external", url),
+    startOAuth: (url: string) => ipcRenderer.send("start-oauth", url),
+    onOAuthCallback: (callback: (url: string) => void) => {
+      ipcRenderer.on('oauth-callback', (event, url) => callback(url))
+    },
+    removeOAuthCallback: () => {
+      ipcRenderer.removeAllListeners('oauth-callback')
+    }
   }
 }

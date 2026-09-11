@@ -7,6 +7,7 @@ import { BootstrapService } from "../services/bootstrap/bootstrap-service.js";
 import { UserRepositoryService } from "../services/repository/user-repository-service.js";
 import { ProjectRepositoryService } from "../services/repository/project-repository-service.js";
 import { StoreService } from "../services/store/store-service.js";
+import { LockService } from "../services/lock/lock-service.js";
 
 declare module "fastify" {
     interface FastifyInstance {

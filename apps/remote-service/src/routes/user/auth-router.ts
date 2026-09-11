@@ -73,4 +73,22 @@ export async function authRouter(app: FastifyInstance) {
             return reply.status(401).send(sendError(Errors.USER_REFRESH_FAILED));
         }
     });
+
+    // GET /api/v1/user/auth/me
+    typedApp.get("/me", {
+        schema: {
+            response: CARResponses,
+            tags: ["User Authentication"],
+        },
+        onRequest: [app.authenticate] // Add authentication middleware
+    }, async (request, reply) => {
+        try {
+            const user = request.user!; // Set by auth middleware (guaranteed to be defined)
+            request.log.info({ userId: user.id }, "Get current user API triggered");
+            return reply.status(200).send(sendSuccess(user));
+        } catch (err: any) {
+            request.log.error({ err }, "Get current user failed");
+            return reply.status(401).send(sendError(Errors.UNAUTHORIZED));
+        }
+    });
 }

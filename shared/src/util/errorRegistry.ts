@@ -62,5 +62,10 @@ export const Errors = {
     USER_REFRESH_FAILED: {
         code: "USER_REFRESH_FAILED",
         message: "Failed to refresh user session"
+    },
+
+    UNAUTHORIZED: {
+        code: "UNAUTHORIZED",
+        message: "Unauthorized access"
     }
 } as const;

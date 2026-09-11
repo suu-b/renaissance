@@ -16,6 +16,7 @@ export type AuthContextType = {
 
     // data only authenticated user has
     user: UserProfile | null;
+    checkAuth: () => Promise<void>;
 };
 
 export type AuthProviderProps = {
