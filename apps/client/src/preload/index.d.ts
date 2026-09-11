@@ -13,6 +13,10 @@ declare global {
       startOAuth: (url: string) => void
       onOAuthCallback: (callback: (url: string) => void) => void
       removeOAuthCallback: () => void
+      folderExists: (folderName: string) => Promise<boolean>
+      checkGitInstalled: () => Promise<boolean>
+      checkFolderExists: (folderPath: string) => Promise<boolean>
+      doSetup: () => Promise<{ success: boolean; error?: string }>
     }
   }
 }

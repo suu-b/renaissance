@@ -3,6 +3,14 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
+import os from 'node:os'
+import fs from 'node:fs'
+import path from 'node:path'
+import { exec } from 'node:child_process'
+import { promisify } from 'node:util'
+
+const execAsync = promisify(exec)
+
 let mainWindow: BrowserWindow | null = null
 
 const gotTheLock = app.requestSingleInstanceLock()
@@ -126,8 +134,8 @@ app.whenReady().then(() => {
     console.log('Starting OAuth flow with embedded window URL:', url)
     
     const authWindow = new BrowserWindow({
-      width: 500,
-      height: 600,
+      width: 600,
+      height: 700,
       show: false,
       webPreferences: {
         nodeIntegration: false,
@@ -158,6 +166,54 @@ app.whenReady().then(() => {
     authWindow.on('closed', () => {
       console.log('OAuth window closed')
     })
+  })
+
+  ipcMain.handle('folder-exists', (_, folderName) => {
+    const folderPath = path.join(os.homedir(), folderName)
+    return fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()
+  })
+
+  // Check if git is installed
+  ipcMain.handle('check-git-installed', async () => {
+    try {
+      await execAsync('git --version', { timeout: 5000 })
+      return true
+    } catch (error) {
+      console.error('Git not found:', error)
+      return false
+    }
+  })
+
+  // Check if a specific folder exists
+  ipcMain.handle('check-folder-exists', (_, folderPath: string) => {
+    try {
+      return fs.existsSync(folderPath) && fs.statSync(folderPath).isDirectory()
+    } catch (error) {
+      console.error('Error checking folder:', error)
+      return false
+    }
+  })
+
+  // Do setup: create renaissance folder and git init
+  ipcMain.handle('do-setup', async () => {
+    try {
+      const renaissancePath = path.join(os.homedir(), 'renaissance')
+      
+      // Create renaissance folder if it doesn't exist
+      if (!fs.existsSync(renaissancePath)) {
+        fs.mkdirSync(renaissancePath, { recursive: true })
+        console.log('Created renaissance folder:', renaissancePath)
+      }
+      
+      // Initialize git repository
+      await execAsync('git init', { cwd: renaissancePath, timeout: 10000 })
+      console.log('Git initialized in:', renaissancePath)
+      
+      return { success: true }
+    } catch (error) {
+      console.error('Setup failed:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
   })
 
   // handle oauth callback from custom protocol

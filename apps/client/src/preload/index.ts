@@ -43,7 +43,12 @@ if (process.contextIsolated) {
 
       removeOAuthCallback: () => {
        ipcRenderer.removeAllListeners('oauth-callback')
-      }
+      },
+
+      folderExists: (folderName: string): Promise<boolean> => ipcRenderer.invoke('folder-exists', folderName),
+      checkGitInstalled: (): Promise<boolean> => ipcRenderer.invoke('check-git-installed'),
+      checkFolderExists: (folderPath: string): Promise<boolean> => ipcRenderer.invoke('check-folder-exists', folderPath),
+      doSetup: (): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('do-setup')
     })
   } catch (error) {
     console.error(error)
@@ -65,6 +70,10 @@ if (process.contextIsolated) {
     },
     removeOAuthCallback: () => {
       ipcRenderer.removeAllListeners('oauth-callback')
-    }
+    },
+    folderExists: (folderName: string): Promise<boolean> => ipcRenderer.invoke('folder-exists', folderName),
+    checkGitInstalled: (): Promise<boolean> => ipcRenderer.invoke('check-git-installed'),
+    checkFolderExists: (folderPath: string): Promise<boolean> => ipcRenderer.invoke('check-folder-exists', folderPath),
+    doSetup: (): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('do-setup')
   }
 }
