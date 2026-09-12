@@ -238,9 +238,9 @@ app.whenReady().then(() => {
         console.log('Created workspace folder:', workspacePath)
       }
       
-      // Initialize git repository in renaissance folder
-      await execAsync('git init', { cwd: renaissancePath, timeout: 10000 })
-      console.log('Git initialized in:', renaissancePath)
+      // Initialize git repository in workspace(-temp) folder
+      await execAsync('git init', { cwd: workspacePath, timeout: 10000 })
+      console.log('Git initialized in:', workspacePath)
       
       return { success: true, workspacePath }
     } catch (error) {
