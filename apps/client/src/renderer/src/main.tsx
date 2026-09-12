@@ -4,12 +4,15 @@ import App from './App'
 import './index.css'
 
 // context providers
-import { AuthProvider } from "./auth/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
+import { WorkspaceProvider } from "./context/WorkspaceContext";
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <App />
+      <WorkspaceProvider>
+        <App />
+      </WorkspaceProvider>
     </AuthProvider>
   </StrictMode>
 )

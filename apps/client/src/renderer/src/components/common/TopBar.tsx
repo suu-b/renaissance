@@ -10,7 +10,7 @@ import ControlPanel from "./ControlPanel"
 import UserProfilePopover from "../ui/UserProfilePopover"
 import Breadcrumbs from "../ui/Breadcrumbs"
 
-import { useAuth } from "../../auth/AuthContext"
+import { useAuth } from "../../context/AuthContext"
 
 type BreadcrumbItem = {
   label: string

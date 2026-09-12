@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
-import { config } from "../config"
 import { OAuthService } from "../services/oauthService"
-import { useAuth } from "../auth/AuthContext"
+import { useAuth } from "../context/AuthContext"
+import { useWorkspace } from "../context/WorkspaceContext"
 
 import Page from "../components/layout/Page"
 import Button from "../components/ui/Button"
@@ -11,8 +11,10 @@ import Typography from "../components/ui/Typography"
 
 export default function Welcome(): React.JSX.Element {
     const { authenticated, checkAuth, setAuthenticatedUser } = useAuth();
+    const { setWorkspacePath } = useWorkspace();
+
     const navigate = useNavigate();
-    const [setupStatus, setSetupStatus] = useState<'idle' | 'checking' | 'setup_needed' | 'doing_setup' | 'complete' | 'error'>('idle');
+    const [setupStatus, setSetupStatus] = useState<'idle' | 'checking' | 'setup_needed' | 'doing_setup' | 'complete' | 'error' | 'leftovers_detected'>('idle');
     const [setupStep, setSetupStep] = useState<string>('');
     const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -21,15 +23,45 @@ export default function Welcome(): React.JSX.Element {
         navigate("/dashboard");
     };
 
+    const handleContinueWithoutAccount = async () => {
+        console.log('Continue without Account button clicked');
+        // Check for leftovers from previous installations
+        try {
+            console.log('Calling checkLeftovers...');
+            const leftovers = await window.api.checkLeftovers();
+            console.log('Leftovers result:', leftovers);
+
+            if (leftovers) {
+                // User has previous workspace, show message
+                console.log('Setting status to leftovers_detected');
+                setSetupStatus('leftovers_detected');
+            } else {
+                // No leftovers, proceed with setup
+                console.log('No leftovers, calling checkUserSetup');
+                checkUserSetup();
+            }
+        } catch (error) {
+            console.error('Error checking leftovers:', error);
+            // On error, proceed with setup
+            console.log('Error occurred, proceeding with setup anyway');
+            checkUserSetup();
+        }
+    };
+
     const checkUserSetup = async () => {
+        console.log('checkUserSetup called');
         setSetupStatus('checking');
+        console.log('Status set to checking');
         
         try {
             // Check if git is installed
             setSetupStep('Preparing your workspace...');
+            console.log('Checking git installation...');
             const gitInstalled = await window.api.checkGitInstalled();
+            console.log('Git installed:', gitInstalled);
             
             if (!gitInstalled) {
+                console.log('Git not installed, setting error');
                 setSetupStatus('error');
                 setErrorMessage('Git is required to begin. Please install it first.');
                 return;
@@ -37,10 +69,13 @@ export default function Welcome(): React.JSX.Element {
             
             // Check if renaissance folder exists
             setSetupStep('Seeking your creative space...');
+            console.log('Checking renaissance folder...');
             const folderExists = await window.api.folderExists('renaissance');
+            console.log('Renaissance folder exists:', folderExists);
             
             if (folderExists) {
                 // Folder exists, proceed to dashboard
+                console.log('Folder exists, proceeding to dashboard');
                 setSetupStatus('complete');
                 setTimeout(() => {
                     window.api.maximizeWindow();
@@ -48,6 +83,7 @@ export default function Welcome(): React.JSX.Element {
                 }, 500);
             } else {
                 // Folder doesn't exist, do setup
+                console.log('Folder does not exist, setting setup_needed');
                 setSetupStatus('setup_needed');
             }
         } catch (error) {
@@ -62,11 +98,36 @@ export default function Welcome(): React.JSX.Element {
         setSetupStep('Creating your sanctuary...');
         
         try {
-            const result = await window.api.doSetup();
+            // Pass false for withAccount since this is the "Continue without Account" flow
+            const result = await window.api.doSetup(false);
             
             if (result.success) {
                 // Setup successful, verify again
                 await checkUserSetup();
+                setWorkspacePath(result.workspacePath || null);
+            } else {
+                setSetupStatus('error');
+                setErrorMessage(result.error || 'Setup failed');
+            }
+        } catch (error) {
+            console.error('Setup failed:', error);
+            setSetupStatus('error');
+            setErrorMessage('Setup failed');
+        }
+    };
+
+    const performAuthenticatedSetup = async () => {
+        setSetupStatus('doing_setup');
+        setSetupStep('Creating your sanctuary...');
+        
+        try {
+            // Pass true for withAccount since this is the authenticated flow
+            const result = await window.api.doSetup(true);
+            
+            if (result.success) {
+                // Setup successful, verify again
+                await checkUserSetup();
+                setWorkspacePath(result.workspacePath || null);
             } else {
                 setSetupStatus('error');
                 setErrorMessage(result.error || 'Setup failed');
@@ -159,7 +220,8 @@ export default function Welcome(): React.JSX.Element {
                             Loading...
                         </Typography>
                     </div>
-                ) : authenticated ? (
+                ) : setupStatus !== 'idle' ? (
+                    // Show setup flow for both authenticated and non-authenticated users when setup is in progress
                     <div className="flex flex-col justify-start items-start gap-6 mt-8">
                         {setupStatus === 'checking' ? (
                             <div className="flex flex-col gap-4 w-full">
@@ -186,9 +248,30 @@ export default function Welcome(): React.JSX.Element {
                                 <Button
                                     variant="primary"
                                     size="sm"
-                                    onClick={performSetup}
+                                    onClick={authenticated ? performAuthenticatedSetup : performSetup}
                                 >
                                     Begin Setup
+                                </Button>
+                            </div>
+                        ) : setupStatus === 'leftovers_detected' ? (
+                            <div className="flex flex-col gap-4 w-full">
+                                <div className="flex items-start gap-3">
+                                    <div className="text-2xl mt-1">📁</div>
+                                    <div className="flex flex-col gap-2">
+                                        <Typography variant="muted">
+                                            We found your previous workspace
+                                        </Typography>
+                                        <Typography variant="small" className="text-muted-foreground/70">
+                                            It looks like you've used Renaissance before. We found your existing workspace folder.
+                                        </Typography>
+                                    </div>
+                                </div>
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={authenticated ? performAuthenticatedSetup : performSetup}
+                                >
+                                    Still Continue
                                 </Button>
                             </div>
                         ) : setupStatus === 'doing_setup' ? (
@@ -240,17 +323,21 @@ export default function Welcome(): React.JSX.Element {
                                     Retry Setup
                                 </Button>
                             </div>
-                        ) : (
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={handleContinue}
-                            >
-                                Continue to Dashboard
-                            </Button>
-                        )}
+                        ) : null}
+                    </div>
+                ) : authenticated ? (
+                    // Authenticated user with idle status
+                    <div className="flex flex-col justify-start items-start gap-6 mt-8">
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={handleContinue}
+                        >
+                            Continue to Dashboard
+                        </Button>
                     </div>
                 ) : (
+                    // Not authenticated with idle status - show sign in options
                     <div className="flex flex-col gap-6 mt-8">
                         <div className="h-px bg-foreground/10 w-full"></div>
                         <div className="flex justify-start items-center gap-4">
@@ -265,10 +352,9 @@ export default function Welcome(): React.JSX.Element {
                             <Button
                                 variant="secondary"
                                 size="sm"
-                                href={config.getRenaissanceJoinURL}
-                                external
+                                onClick={handleContinueWithoutAccount}
                             >
-                                Sign up
+                                Continue without Account
                             </Button>
                         </div>
                     </div>

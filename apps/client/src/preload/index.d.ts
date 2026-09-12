@@ -16,7 +16,8 @@ declare global {
       folderExists: (folderName: string) => Promise<boolean>
       checkGitInstalled: () => Promise<boolean>
       checkFolderExists: (folderPath: string) => Promise<boolean>
-      doSetup: () => Promise<{ success: boolean; error?: string }>
+      checkLeftovers: () => Promise<boolean>
+      doSetup: (withAccount: boolean) => Promise<{ success: boolean; error?: string; workspacePath?: string }>
     }
   }
 }

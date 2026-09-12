@@ -201,10 +201,30 @@ app.whenReady().then(() => {
     }
   })
 
-  // Do setup: create renaissance folder and git init
-  ipcMain.handle('do-setup', async () => {
+  // Check for leftovers: renaissance folder with workspace or workspace-temp inside
+  ipcMain.handle('check-leftovers', async () => {
     try {
       const renaissancePath = path.join(os.homedir(), 'renaissance')
+      const workspacePath = path.join(renaissancePath, 'workspace')
+      const workspaceTempPath = path.join(renaissancePath, 'workspace-temp')
+      
+      const hasRenaissance = fs.existsSync(renaissancePath) && fs.statSync(renaissancePath).isDirectory()
+      const hasWorkspace = fs.existsSync(workspacePath) && fs.statSync(workspacePath).isDirectory()
+      const hasWorkspaceTemp = fs.existsSync(workspaceTempPath) && fs.statSync(workspaceTempPath).isDirectory()
+      
+      return hasRenaissance && (hasWorkspace || hasWorkspaceTemp)
+    } catch (error) {
+      console.error('Error checking leftovers:', error)
+      return false
+    }
+  })
+
+  // Do setup: create renaissance folder and git init
+  ipcMain.handle('do-setup', async (_, withAccount: boolean) => {
+    try {
+      const renaissancePath = path.join(os.homedir(), 'renaissance')
+      const workspaceName = withAccount ? 'workspace' : 'workspace-temp'
+      const workspacePath = path.join(renaissancePath, workspaceName)
       
       // Create renaissance folder if it doesn't exist
       if (!fs.existsSync(renaissancePath)) {
@@ -212,11 +232,17 @@ app.whenReady().then(() => {
         console.log('Created renaissance folder:', renaissancePath)
       }
       
-      // Initialize git repository
+      // Create workspace folder
+      if (!fs.existsSync(workspacePath)) {
+        fs.mkdirSync(workspacePath, { recursive: true })
+        console.log('Created workspace folder:', workspacePath)
+      }
+      
+      // Initialize git repository in renaissance folder
       await execAsync('git init', { cwd: renaissancePath, timeout: 10000 })
       console.log('Git initialized in:', renaissancePath)
       
-      return { success: true }
+      return { success: true, workspacePath }
     } catch (error) {
       console.error('Setup failed:', error)
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
