@@ -82,5 +82,10 @@ export const Errors = {
     UNAUTHORIZED: {
         code: "UNAUTHORIZED",
         message: "Unauthorized access"
+    },
+
+    CHAPTER_SAVE_FAILED: {
+        code: "CHAPTER_SAVE_FAILED",
+        message: "Failed to save chapter"
     }
 } as const;

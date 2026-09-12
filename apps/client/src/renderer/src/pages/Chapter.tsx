@@ -13,18 +13,29 @@ type EditorNode = {
 }
 
 export default function Chapter() {
-  const { projectId, chapterId } = useParams<{ projectId: string; chapterId: string }>()
+  const { projectId, chapterId } = useParams<{
+    projectId: string
+    chapterId: string
+  }>()
+
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const mode = searchParams.get("mode")
 
   const [content, setContent] = useState<EditorNode[]>([])
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   const chapterNumber = 1
   const totalChapters = 20
   const isWriteMode = mode === "write"
+
+  const draftKey =
+    projectId && chapterId
+      ? `renaissance:chapter:${projectId}:${chapterId}`
+      : null
 
   useEffect(() => {
     const fetchChapter = async () => {
@@ -35,6 +46,28 @@ export default function Chapter() {
       }
 
       try {
+        const localDraft = localStorage.getItem(
+          `renaissance:chapter:${projectId}:${chapterId}`
+        )
+
+        if (localDraft) {
+          try {
+            const parsedDraft: EditorNode[] = JSON.parse(localDraft)
+
+            if (Array.isArray(parsedDraft)) {
+              setContent(parsedDraft)
+              setLoading(false)
+              return
+            }
+          } catch (error) {
+            console.error("Failed to parse local chapter draft:", error)
+
+            localStorage.removeItem(
+              `renaissance:chapter:${projectId}:${chapterId}`
+            )
+          }
+        }
+
         const response = await fetch(
           `${config.serverUrl}/api/v1/user/data/chapter/get`,
           {
@@ -74,17 +107,24 @@ export default function Chapter() {
 
   const handlePrevious = () => {
     if (chapterNumber > 1) {
-      navigate(`/project/${projectId}/chapter/${chapterNumber - 1}?mode=${mode}`)
+      navigate(
+        `/project/${projectId}/chapter/${chapterNumber - 1}?mode=${mode}`
+      )
     }
   }
 
   const handleNext = () => {
     if (chapterNumber < totalChapters) {
-      navigate(`/project/${projectId}/chapter/${chapterNumber + 1}?mode=${mode}`)
+      navigate(
+        `/project/${projectId}/chapter/${chapterNumber + 1}?mode=${mode}`
+      )
     }
   }
 
   const handleEdit = () => {
+    setError(null)
+    setSuccess(null)
+
     navigate(`/project/${projectId}/chapter/${chapterId}?mode=write`)
   }
 
@@ -92,26 +132,103 @@ export default function Chapter() {
     console.log("Delete chapter", chapterId)
   }
 
-  const handleSave = () => {
-    console.log("Save chapter", content)
-    navigate(`/project/${projectId}/chapter/${chapterId}?mode=read`)
+  const handleSave = async () => {
+    if (!projectId || !chapterId || !config.serverUrl) {
+      setError("Chapter information is missing")
+      return
+    }
+
+    setSaving(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const response = await fetch(
+        `${config.serverUrl}/api/v1/user/data/chapter/save`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            project: projectId,
+            id: chapterId,
+            content
+          })
+        }
+      )
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(
+          result.error?.message ||
+          result.error ||
+          `Failed to save chapter: ${response.status}`
+        )
+      }
+
+      // The server now has the latest version, so the local
+      // draft is no longer needed.
+      if (draftKey) {
+        localStorage.removeItem(draftKey)
+      }
+
+      setSuccess("Chapter saved successfully")
+
+      // Return to read mode after a successful save.
+      navigate(
+        `/project/${projectId}/chapter/${chapterId}?mode=read`
+      )
+    } catch (error) {
+      console.error("Failed to save chapter:", error)
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to save chapter"
+      )
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleCancel = () => {
-    navigate(`/project/${projectId}/chapter/${chapterId}?mode=read`)
+    if (draftKey) {
+      localStorage.removeItem(draftKey)
+    }
+
+    navigate(
+      `/project/${projectId}/chapter/${chapterId}?mode=read`
+    )
   }
 
   const handleContentChange = (value: string) => {
     try {
       const parsedContent: EditorNode[] = JSON.parse(value)
+
       setContent(parsedContent)
+      setError(null)
+      setSuccess(null)
+
+      if (draftKey) {
+        localStorage.setItem(
+          draftKey,
+          JSON.stringify(parsedContent)
+        )
+      }
     } catch (error) {
       console.error("Failed to parse editor content:", error)
+      setError("Failed to process editor content")
     }
   }
 
   const readerContent = content
-    .map(node => node.children.map(child => child.text).join(""))
+    .map(node =>
+      node.children
+        .map(child => child.text)
+        .join("")
+    )
     .join("\n\n")
 
   return (
@@ -138,9 +255,27 @@ export default function Chapter() {
         />
       </div>
 
+      {saving && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          Saving chapter...
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 text-sm text-green-600">
+          {success}
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-4 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
       {loading ? (
         <div>Loading chapter...</div>
-      ) : error ? (
+      ) : error && !content.length ? (
         <div>{error}</div>
       ) : isWriteMode ? (
         <ChapterWriteView

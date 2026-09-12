@@ -30,9 +30,13 @@ export class GitProvider implements VandcService {
         }
     }
 
-    async scopedSaved(scopePath: string): Promise<void> {
+    async scopedSaved(scopePath: string, content: string, encoding?: BufferEncoding): Promise<void> {
         try {
-            await execFileAsync("git", ["add", "."], { cwd: scopePath });
+            await fs.writeFile(scopePath, content, encoding);
+            const { stdout } = await execFileAsync( "git", ["rev-parse", "--show-toplevel"], { cwd: path.dirname(scopePath) } );
+            const repoPath = stdout.trim();
+            await execFileAsync( "git", ["add", "--", scopePath], { cwd: repoPath } );
+            await execFileAsync( "git", [ "commit", "-m", `Update ${path.basename(scopePath)}` ], { cwd: repoPath } );
         } catch (error) {
             console.error(`Failed to save scope changes at ${scopePath}:`, error);
             throw error;

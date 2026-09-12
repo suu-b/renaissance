@@ -10,6 +10,7 @@ import {
     SearchChapterRequestSchema,
     CreateChapterRequestSchema,
     GetChapterRequestSchema,
+    SaveChapterRequestSchema,
     ChapterObject,
     CARResponses,
     sendSuccess,
@@ -229,4 +230,55 @@ export async function chapterRouter(app: FastifyInstance) {
                 .send(sendError(Errors.CHAPTER_CREATE_FAILED));
         }
     });
+
+    // POST /api/v1/user/data/chapter/save
+    typedApp.post("/save", {
+        schema: {
+            body: SaveChapterRequestSchema,
+            tags: ["User Data"]
+        }
+    }, async (request, reply) => {
+        try {
+            const {
+                project: projectId,
+                id: chapterId,
+                content 
+            } = request.body;
+
+            const workspacePath = app.appPaths.workspacePath;
+
+            const projectPath = path.join(
+                workspacePath,
+                projectId
+            );
+
+            const chapterFilePath = path.join(
+                projectPath,
+                `${chapterId}.json`
+            );
+
+            const chapterData = {
+                id: chapterId,
+                content
+            };
+
+            await app.vandcService.scopedSaved(
+                chapterFilePath,
+                JSON.stringify(chapterData, null, 2),"utf-8");
+
+            return reply
+                .status(200)
+                .send(sendSuccess({
+                    id: chapterId
+                }));
+
+        } catch (error) {
+            console.error("Failed to save chapter:", error);
+
+        return reply
+            .status(500)
+            .send(sendError(Errors.CHAPTER_SAVE_FAILED));
+    }
+});
+
 }

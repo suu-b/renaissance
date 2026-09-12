@@ -36,3 +36,23 @@ export const GetChapterRequestSchema = z.object({
 });
 
 export type GetChapterRequestObject = z.infer<typeof GetChapterRequestSchema>;
+
+
+export const SaveChapterRequestSchema = z.object({
+    project: z.uuid(),
+    id: z.uuid(),
+    content: z.array(
+        z.object({
+            type: z.string(),
+            children: z.array(
+                z.object({
+                    text: z.string()
+                })
+            )
+        })
+    )
+});
+
+export type SaveChapterRequest = z.infer<
+    typeof SaveChapterRequestSchema
+>;
