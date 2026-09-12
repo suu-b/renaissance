@@ -29,3 +29,10 @@ export const SearchChapterRequestSchema = z.object({
 });
 
 export type SearchChapterRequestObject = z.infer<typeof SearchChapterRequestSchema>;
+
+export const GetChapterRequestSchema = z.object({ 
+    project: z.uuid(), 
+    id: z.uuid() 
+});
+
+export type GetChapterRequestObject = z.infer<typeof GetChapterRequestSchema>;

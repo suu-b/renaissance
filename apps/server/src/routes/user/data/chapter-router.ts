@@ -9,6 +9,7 @@ import { stringify } from "csv-stringify/sync";
 import {
     SearchChapterRequestSchema,
     CreateChapterRequestSchema,
+    GetChapterRequestSchema,
     ChapterObject,
     CARResponses,
     sendSuccess,
@@ -30,16 +31,23 @@ export async function chapterRouter(app: FastifyInstance) {
         }
     }, async (request, reply) => {
         try {
-            const {project: projectId, limit, offset, sort, filters, fields} = request.body;
+            const {
+                project: projectId,
+                limit,
+                offset,
+                sort,
+                filters,
+                fields
+            } = request.body;
 
             const workspacePath = app.appPaths.workspacePath;
             const projectPath = path.join(workspacePath, projectId);
-            const chaptersFilePath = path.join(
-                projectPath,
-                "chapters.csv"
-            );
+            const chaptersFilePath = path.join(projectPath, "chapters.csv");
 
-            const fileContent = await fs.readFile(chaptersFilePath,"utf-8");
+            const fileContent = await fs.readFile(
+                chaptersFilePath,
+                "utf-8"
+            );
 
             const records = parse(fileContent, {
                 skip_empty_lines: true,
@@ -53,7 +61,7 @@ export async function chapterRouter(app: FastifyInstance) {
                     return {
                         id,
                         project: projectId,
-                        name,                        
+                        name,
                         createdAt: new Date(createdAt),
                         updatedAt: new Date(updatedAt)
                     };
@@ -79,6 +87,53 @@ export async function chapterRouter(app: FastifyInstance) {
 
         } catch (error) {
             console.error("Failed to search chapters:", error);
+
+            return reply
+                .status(500)
+                .send(sendError(Errors.CHAPTER_GET_FAILED));
+        }
+    });
+
+    // POST /api/v1/user/data/chapter/get
+    typedApp.post("/get", {
+        schema: {
+            body: GetChapterRequestSchema,
+            response: CARResponses,
+            tags: ["User Data"]
+        }
+    }, async (request, reply) => {
+        try {
+            const {
+                project: projectId,
+                id: chapterId
+            } = request.body;
+
+            const workspacePath = app.appPaths.workspacePath;
+            const projectPath = path.join(workspacePath, projectId);
+            const chapterFilePath = path.join(
+                projectPath,
+                `${chapterId}.json`
+            );
+
+            const fileContent = await fs.readFile(
+                chapterFilePath,
+                "utf-8"
+            );
+
+            const chapterData = JSON.parse(fileContent);
+
+            return reply
+                .status(200)
+                .send(sendSuccess({
+                    chapter: {
+                        id: chapterId,
+                        project: projectId,
+                        content: chapterData.content
+                    }
+                }));
+
+        } catch (error) {
+            console.error("Failed to get chapter:", error);
 
             return reply
                 .status(500)
@@ -113,7 +168,7 @@ export async function chapterRouter(app: FastifyInstance) {
             );
             const chapterFilePath = path.join(
                 projectPath,
-                `${id}.txt`
+                `${id}.json`
             );
 
             try {
@@ -146,9 +201,19 @@ export async function chapterRouter(app: FastifyInstance) {
                 "utf-8"
             );
 
+            const initialContent = {
+                id,
+                content: [
+                    {
+                        type: "paragraph",
+                        children: [{ text: "Hey Boy, start writing from here..." }]
+                    }
+                ]
+            };
+
             app.vandcService.createFile(
                 chapterFilePath,
-                "Hey",
+                JSON.stringify(initialContent, null, 2),
                 "utf-8"
             );
 

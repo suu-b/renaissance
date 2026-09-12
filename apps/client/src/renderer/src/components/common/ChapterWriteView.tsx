@@ -18,7 +18,6 @@ export default function ChapterWriteView({
 }: ChapterWriteViewProps) {
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Chapter Header */}
       <div className="mb-8">
         <Typography variant="small" className="text-muted-foreground uppercase tracking-wider mb-2">
           Chapter {chapterNumber} of {totalChapters}
@@ -28,7 +27,6 @@ export default function ChapterWriteView({
         </Typography>
       </div>
 
-      {/* Chapter Content Editor */}
       <div className="leading-relaxed text-lg">
         <div className="min-h-[500px]">
           <TextEditor
