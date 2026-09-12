@@ -148,9 +148,7 @@ app.whenReady().then(() => {
                 },
                 body: JSON.stringify({ callbackUrl: url }),
               })
-
               console.debug("Response:", response);
-              
               if (response.ok) {
                 console.debug("Response is ok");
                 const data = await response.json()
@@ -171,10 +169,7 @@ app.whenReady().then(() => {
         }
       }
     }
-
-    // authWindow.webContents.on('will-redirect', handleNavigation)
     authWindow.webContents.on('will-navigate', handleNavigation)
-
     authWindow.on('closed', () => {
       console.log('OAuth window closed')
     })

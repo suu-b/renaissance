@@ -16,6 +16,14 @@ interface OAuthCallbackResponse {
   };
 }
 
+interface SessionCheckResponse {
+  success: boolean;
+  data: {
+    status: 'not_logged_in' | 'logged_in';
+    email?: string;
+  };
+}
+
 export class OAuthService {
   private static instance: OAuthService;
 
@@ -28,10 +36,6 @@ export class OAuthService {
     return OAuthService.instance;
   }
 
-  /**
-   * Start OAuth flow by calling local server
-   * Local server handles PKCE generation and returns auth URL
-   */
   async startOAuthFlow(email?: string): Promise<string> {
     if (!config.serverUrl) {
       throw new Error('Local server is not available');
@@ -57,11 +61,6 @@ export class OAuthService {
     return data.data.authUrl;
   }
 
-  /**
-   * Handle OAuth callback by sending to local server
-   * Local server handles token exchange and secure storage
-   * Renderer never handles sensitive tokens
-   */
   async handleCallback(callbackUrl: string): Promise<OAuthCallbackResponse> {
     if (!config.serverUrl) {
       throw new Error('Local server is not available');
@@ -88,26 +87,6 @@ export class OAuthService {
     return data;
   }
 
-  /**
-   * Check authentication status via local server
-   */
-  async checkAuthStatus(email: string): Promise<boolean> {
-    if (!config.serverUrl) {
-      return false;
-    }
-
-    try {
-      const response = await fetch(`${config.serverUrl}/api/v1/user/auth/me?email=${encodeURIComponent(email)}`);
-      return response.ok;
-    } catch (error) {
-      console.error('Failed to check auth status:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Logout via local server
-   */
   async logout(email: string): Promise<boolean> {
     if (!config.serverUrl) {
       return false;
@@ -124,6 +103,40 @@ export class OAuthService {
       return response.ok;
     } catch (error) {
       console.error('Failed to logout:', error);
+      return false;
+    }
+  }
+
+  async checkAuthStatus(email: string): Promise<boolean> {
+    if (!config.serverUrl) {
+      return false;
+    }
+
+    try {
+      const response = await fetch(`${config.serverUrl}/api/v1/user/auth/session/check`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        console.error('Session check failed:', response.status);
+        return false;
+      }
+
+      const data: SessionCheckResponse = await response.json();
+
+      if (!data.success) {
+        console.error('Session check returned unsuccessful');
+        return false;
+      }
+
+      // Return true only if status is 'logged_in'
+      return data.data.status === 'logged_in';
+    } catch (error) {
+      console.error('Failed to check auth status:', error);
       return false;
     }
   }

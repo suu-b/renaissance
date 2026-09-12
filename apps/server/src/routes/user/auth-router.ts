@@ -40,6 +40,14 @@ const StartOAuthResponseSchema = z.object({
   }),
 });
 
+const StartOAuthErrorResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    authUrl: z.string(),
+    state: z.string(),
+  }),
+});
+
 const OAuthCallbackRequestSchema = z.object({
   callbackUrl: z.string(),
 });
@@ -52,6 +60,20 @@ const OAuthCallbackResponseSchema = z.object({
   }),
 });
 
+const OAuthCallbackErrorResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    authenticated: z.boolean(),
+  }),
+});
+
+const OAuthCallbackBadRequestSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    authenticated: z.boolean(),
+  }),
+});
+
 const RefreshTokenRequestSchema = z.object({
   email: z.string().email(),
   refreshToken: z.string(),
@@ -61,11 +83,58 @@ const LogoutRequestSchema = z.object({
   email: z.string().email(),
 });
 
+const LogoutResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    message: z.string(),
+  }),
+});
+
+const LogoutErrorResponseSchema = z.object({
+  success: z.boolean(),
+  error: z.object({
+    message: z.string(),
+  }),
+});
+
+const AuthMeErrorResponseSchema = z.object({
+  success: z.boolean(),
+  error: z.object({
+    message: z.string(),
+  }),
+});
+
+const RefreshErrorResponseSchema = z.object({
+  success: z.boolean(),
+  error: z.object({
+    message: z.string(),
+  }),
+});
+
 const MigrateTokensRequestSchema = z.object({
   email: z.string().email(),
   access_token: z.string(),
   refresh_token: z.string(),
   user_id: z.string(),
+});
+
+const SessionCheckRequestSchema = z.object({
+  email: z.string().email(),
+});
+
+const SessionCheckResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    status: z.enum(["not_logged_in", "logged_in"]),
+    email: z.string().optional(),
+  }),
+});
+
+const ErrorResponseSchema = z.object({
+  success: z.boolean(),
+  error: z.object({
+    message: z.string(),
+  }),
 });
 
 export async function authRouter(app: FastifyInstance) {
@@ -79,6 +148,7 @@ export async function authRouter(app: FastifyInstance) {
         body: StartOAuthRequestSchema,
         response: {
           200: StartOAuthResponseSchema,
+          500: StartOAuthErrorResponseSchema,
         },
         tags: ["Authentication"],
       },
@@ -162,6 +232,8 @@ export async function authRouter(app: FastifyInstance) {
         body: OAuthCallbackRequestSchema,
         response: {
           200: OAuthCallbackResponseSchema,
+          400: OAuthCallbackBadRequestSchema,
+          500: OAuthCallbackErrorResponseSchema,
         },
         tags: ["Authentication"],
       },
@@ -419,7 +491,6 @@ export async function authRouter(app: FastifyInstance) {
           },
         });
       } catch (error) {
-        // Use `err`, not `error`, so Pino serializes the Error properly.
         app.log.error(
           { err: error },
           "OAuth callback failed"
@@ -436,13 +507,16 @@ export async function authRouter(app: FastifyInstance) {
   );
 
   // GET /api/v1/user/auth/me
-  typedApp.get(
-    "/me",
-    {
+  typedApp.get("/me", {
       schema: {
         querystring: z.object({
           email: z.string().email(),
         }),
+        response: {
+          200: z.any(), // User data from remote service
+          401: AuthMeErrorResponseSchema,
+          500: AuthMeErrorResponseSchema,
+        },
         tags: ["Authentication"],
       },
     },
@@ -521,6 +595,11 @@ export async function authRouter(app: FastifyInstance) {
     {
       schema: {
         body: RefreshTokenRequestSchema,
+        response: {
+          200: z.any(), // Refresh data from remote service
+          401: RefreshErrorResponseSchema,
+          500: RefreshErrorResponseSchema,
+        },
         tags: ["Authentication"],
       },
     },
@@ -616,6 +695,10 @@ export async function authRouter(app: FastifyInstance) {
     {
       schema: {
         body: LogoutRequestSchema,
+        response: {
+          200: LogoutResponseSchema,
+          500: LogoutErrorResponseSchema,
+        },
         tags: ["Authentication"],
       },
     },
@@ -652,73 +735,191 @@ export async function authRouter(app: FastifyInstance) {
     }
   );
 
-  // POST /api/v1/user/auth/migrate
+  // POST /api/v1/user/auth/session/check
   typedApp.post(
-    "/migrate",
+    "/session/check",
     {
       schema: {
-        body: MigrateTokensRequestSchema,
+        body: SessionCheckRequestSchema,
+        response: {
+          200: SessionCheckResponseSchema,
+          500: ErrorResponseSchema,
+        },
         tags: ["Authentication"],
       },
     },
     async (request, reply) => {
       try {
-        const {
-          email,
-          access_token,
-          refresh_token,
-          user_id,
-        } = request.body;
+        const { email } = request.body;
 
-        const success =
-          await app.tokenStorageService.migrateFromLocalStorage(
-            email,
-            {
-              access_token,
-              refresh_token,
-              user_id,
-              email,
-            }
-          );
+        app.log.debug(
+          { email },
+          "Session check requested"
+        );
 
-        if (success) {
+        // Check if tokens exist in credential store
+        const hasTokens = await app.tokenStorageService.hasTokens(email);
+
+        if (!hasTokens) {
           app.log.info(
             { email },
-            "Tokens migrated successfully from localStorage"
+            "No credentials found - user not logged in"
           );
 
           return reply.status(200).send({
             success: true,
             data: {
-              message: "Tokens migrated successfully",
+              status: "not_logged_in",
             },
           });
         }
 
-        app.log.error(
-          { email },
-          "Token migration failed"
-        );
+        // Try to get tokens and validate them
+        const tokens = await app.tokenStorageService.getTokens(email);
 
-        return reply.status(500).send({
-          success: false,
-          error: {
-            message: "Token migration failed",
-          },
-        });
+        if (!tokens || !tokens.access_token || !tokens.refresh_token) {
+          app.log.warn(
+            { email },
+            "Invalid token data - clearing credentials"
+          );
+
+          // Clear invalid credentials
+          await app.tokenStorageService.deleteTokens(email);
+
+          return reply.status(200).send({
+            success: true,
+            data: {
+              status: "not_logged_in",
+            },
+          });
+        }
+
+        // Check if access token is expired by decoding JWT
+        try {
+          const decoded = JSON.parse(
+            Buffer.from(tokens.access_token.split('.')[1], 'base64').toString()
+          );
+          
+          const currentTime = Math.floor(Date.now() / 1000);
+          const expirationTime = decoded.exp;
+
+          if (expirationTime && expirationTime < currentTime) {
+            app.log.info(
+              { email, expirationTime, currentTime },
+              "Access token expired - attempting refresh"
+            );
+
+            // Try to refresh the token
+            const remoteServiceUrl =
+              process.env.REMOTE_SERVICE_URL ||
+              "http://localhost:8080";
+
+            const refreshResponse = await fetch(
+              `${remoteServiceUrl}/api/v1/user/auth/refresh`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  refresh_token: tokens.refresh_token,
+                }),
+              }
+            );
+
+            if (refreshResponse.ok) {
+              const refreshData = await refreshResponse.json();
+
+              if (refreshData.success && refreshData.data) {
+                const {
+                  access_token,
+                  refresh_token: new_refresh_token,
+                } = refreshData.data;
+
+                // Update stored tokens with new ones
+                tokens.access_token = access_token;
+
+                if (new_refresh_token) {
+                  tokens.refresh_token = new_refresh_token;
+                }
+
+                await app.tokenStorageService.saveTokens(email, tokens);
+
+                app.log.info(
+                  { email },
+                  "Token refresh successful - user logged in"
+                );
+
+                return reply.status(200).send({
+                  success: true,
+                  data: {
+                    status: "logged_in",
+                    email,
+                  },
+                });
+              }
+            }
+
+            // Refresh failed - credentials are invalid
+            app.log.warn(
+              { email },
+              "Token refresh failed - clearing credentials"
+            );
+
+            // Clear invalid credentials
+            await app.tokenStorageService.deleteTokens(email);
+
+            return reply.status(200).send({
+              success: true,
+              data: {
+                status: "not_logged_in",
+              },
+            });
+          }
+
+          // Access token is still valid
+          app.log.info(
+            { email },
+            "Access token valid - user logged in"
+          );
+
+          return reply.status(200).send({
+            success: true,
+            data: {
+              status: "logged_in",
+              email,
+            },
+          });
+        } catch (decodeError) {
+          app.log.error(
+            { err: decodeError },
+            "Failed to decode access token - treating as invalid"
+          );
+
+          // Clear invalid credentials
+          await app.tokenStorageService.deleteTokens(email);
+
+          return reply.status(200).send({
+            success: true,
+            data: {
+              status: "not_logged_in",
+            },
+          });
+        }
       } catch (error) {
         app.log.error(
           { err: error },
-          "Token migration failed"
+          "Session check failed"
         );
 
         return reply.status(500).send({
           success: false,
           error: {
-            message: "Token migration failed",
+            message: "Session check failed",
           },
         });
       }
     }
   );
 }
+
