@@ -49,7 +49,9 @@ if (process.contextIsolated) {
       checkGitInstalled: (): Promise<boolean> => ipcRenderer.invoke('check-git-installed'),
       checkFolderExists: (folderPath: string): Promise<boolean> => ipcRenderer.invoke('check-folder-exists', folderPath),
       checkLeftovers: (): Promise<boolean> => ipcRenderer.invoke('check-leftovers'),
-      doSetup: (withAccount: boolean): Promise<{ success: boolean; error?: string; workspacePath?: string }> => ipcRenderer.invoke('do-setup', withAccount)
+      doSetup: (withAccount: boolean): Promise<{ success: boolean; error?: string; workspacePath?: string }> => ipcRenderer.invoke('do-setup', withAccount),
+      saveUserProfile: (profile: object): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('save-user-profile', profile),
+      loadUserProfile: (): Promise<{ success: boolean; profile?: object; error?: string }> => ipcRenderer.invoke('load-user-profile')
     })
   } catch (error) {
     console.error(error)
@@ -76,6 +78,8 @@ if (process.contextIsolated) {
     checkGitInstalled: (): Promise<boolean> => ipcRenderer.invoke('check-git-installed'),
     checkFolderExists: (folderPath: string): Promise<boolean> => ipcRenderer.invoke('check-folder-exists', folderPath),
     checkLeftovers: (): Promise<boolean> => ipcRenderer.invoke('check-leftovers'),
-    doSetup: (withAccount: boolean): Promise<{ success: boolean; error?: string; workspacePath?: string }> => ipcRenderer.invoke('do-setup', withAccount)
+    doSetup: (withAccount: boolean): Promise<{ success: boolean; error?: string; workspacePath?: string }> => ipcRenderer.invoke('do-setup', withAccount),
+    saveUserProfile: (profile: object): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('save-user-profile', profile),
+    loadUserProfile: (): Promise<{ success: boolean; profile?: object; error?: string }> => ipcRenderer.invoke('load-user-profile')
   }
 }

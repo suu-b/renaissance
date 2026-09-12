@@ -8,7 +8,8 @@ export const ProjectSchema = z.object({
     isPrivate: z.boolean(),
     updatedAt: z.coerce.date(),
     createdAt: z.coerce.date(),
-    authors: z.array(UserSchema)
+    owner: UserSchema,
+    contributors: z.array(UserSchema).default([])
 });
 
 export type ProjectObject = z.infer<typeof ProjectSchema>;

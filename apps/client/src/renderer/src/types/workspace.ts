@@ -4,6 +4,8 @@ import { ReactNode } from "react";
 export type WorkspaceContextType = {
     workspacePath: string | null;
     setWorkspacePath: (path: string | null) => void;
+    indexFilePath: string | null;
+    setIndexFilePath: (path: string | null) => void;
 };
 
 export type WorkspaceProviderProps = {

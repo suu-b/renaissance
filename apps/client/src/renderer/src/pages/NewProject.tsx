@@ -12,23 +12,32 @@ import FormMessage from '../components/ui/FormMessage'
 import Typography from '../components/ui/Typography'
 import BackLink from '../components/ui/BackLink'
 
+import { config } from '../config';
+
 export default function NewProject(): React.JSX.Element {
   const navigate = useNavigate()
-  
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     is_private: true
   })
+
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target
+
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]:
+        type === 'checkbox'
+          ? (e.target as HTMLInputElement).checked
+          : value
     })
   }
 
@@ -50,19 +59,35 @@ export default function NewProject(): React.JSX.Element {
     }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
+      const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/new`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          description: formData.description.trim(),
+          isPrivate: formData.is_private
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to create project: ${response.status}`)
+      }
+
       setSuccess(true)
-      
+
       setTimeout(() => {
         navigate('/dashboard')
       }, 2000)
     } catch (err) {
+      console.error('Failed to create project:', err)
       setError('Failed to create project. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
+
   if (success) {
     return (
       <Page alignment="center">
@@ -70,11 +95,15 @@ export default function NewProject(): React.JSX.Element {
           <div className="flex items-center gap-4 mb-2">
             <BackLink fallbackPath="/dashboard" />
           </div>
+
           <Typography variant="h1">Project Created</Typography>
+
           <Typography variant="muted">
-            Your project "{formData.name}" has been created successfully. You can now begin your literary journey.
+            Your project "{formData.name}" has been created successfully.
+            You can now begin your literary journey.
           </Typography>
-          <Button 
+
+          <Button
             onClick={() => navigate('/dashboard')}
             className="mt-4"
           >
@@ -91,19 +120,23 @@ export default function NewProject(): React.JSX.Element {
         <div className="flex items-center gap-2 mb-2">
           <BackLink fallbackPath="/dashboard" />
         </div>
+
         <div className="text-center">
           <Typography variant="h1">Create New Project</Typography>
         </div>
-        
-        <form className="flex flex-col gap-4 mt-6" onSubmit={handleSubmit}>
+
+        <form
+          className="flex flex-col gap-4 mt-6"
+          onSubmit={handleSubmit}
+        >
           <FormField
             label="Project Name"
             htmlFor="name"
             required
           >
-            <Input 
-              type="text" 
-              id="name" 
+            <Input
+              type="text"
+              id="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
@@ -111,14 +144,14 @@ export default function NewProject(): React.JSX.Element {
               required
             />
           </FormField>
-          
+
           <FormField
             label="Description"
             htmlFor="description"
             required
           >
-            <Textarea 
-              id="description" 
+            <Textarea
+              id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
@@ -127,7 +160,7 @@ export default function NewProject(): React.JSX.Element {
               required
             />
           </FormField>
-          
+
           <FormField
             label="Privacy Settings"
             htmlFor="is_private"
@@ -139,25 +172,32 @@ export default function NewProject(): React.JSX.Element {
                 checked={formData.is_private}
                 onChange={handleChange}
               />
+
               <Typography variant="muted" className="text-sm">
                 Make this project private (only you can see it)
               </Typography>
             </div>
           </FormField>
-          
-          {error && <FormMessage variant="error">{error}</FormMessage>}
-          
-          <Button 
-            type="submit" 
+
+          {error && (
+            <FormMessage variant="error">
+              {error}
+            </FormMessage>
+          )}
+
+          <Button
+            type="submit"
             disabled={isLoading}
             className="mt-2"
           >
-            {isLoading ? 'Creating...' : 'Create Project'} <FiArrowUpRight size={15} />
+            {isLoading ? 'Creating...' : 'Create Project'}
+            <FiArrowUpRight size={15} />
           </Button>
         </form>
-        
+
         <FormMessage variant="note">
-          Your project will be a quiet space for your literary work. Take your time to craft something meaningful.
+          Your project will be a quiet space for your literary work.
+          Take your time to craft something meaningful.
         </FormMessage>
       </div>
     </Page>

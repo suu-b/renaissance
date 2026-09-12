@@ -101,7 +101,7 @@ app.whenReady().then(() => {
   // OAuth handler using embedded browser window
   ipcMain.on('start-oauth', (event, url: string) => {
     console.log('Starting OAuth flow with embedded window URL:', url)
-    
+
     const authWindow = new BrowserWindow({
       width: 600,
       height: 700,
@@ -124,7 +124,7 @@ app.whenReady().then(() => {
       if (url.startsWith('renaissance://auth/callback')) {
         _event.preventDefault()
         authWindow.close()
-        
+
         // Send callback to local server for token handling
         try {
           console.debug("Trying to call the local server now");
@@ -137,7 +137,7 @@ app.whenReady().then(() => {
               console.debug("I found the port:", port)
               const localServerUrl = `http://127.0.0.1:${port}/api/v1/user/auth/oauth/callback`
               console.debug("Local server URL:", localServerUrl);
-              
+
               // Use dynamic import for node-fetch (needed for older Node versions)
               const { default: fetch } = await import('node-fetch')
 
@@ -156,16 +156,16 @@ app.whenReady().then(() => {
                 mainWindow?.webContents.send('oauth-callback', data)
               } else {
                 console.error('Local server returned error for OAuth callback')
-                mainWindow?.webContents.send('oauth-callback', {success: false}) // Send for error handling
+                mainWindow?.webContents.send('oauth-callback', { success: false }) // Send for error handling
               }
             }
           } else {
             console.error('Local server port file not found')
-            mainWindow?.webContents.send('oauth-callback', {success: false}) // Send for error handling
+            mainWindow?.webContents.send('oauth-callback', { success: false }) // Send for error handling
           }
         } catch (error) {
           console.error('Failed to send OAuth callback to local server:', error)
-          mainWindow?.webContents.send('oauth-callback', {success: false}) // Send for error handling
+          mainWindow?.webContents.send('oauth-callback', { success: false }) // Send for error handling
         }
       }
     }
@@ -207,11 +207,11 @@ app.whenReady().then(() => {
       const renaissancePath = path.join(os.homedir(), 'renaissance')
       const workspacePath = path.join(renaissancePath, 'workspace')
       const workspaceTempPath = path.join(renaissancePath, 'workspace-temp')
-      
+
       const hasRenaissance = fs.existsSync(renaissancePath) && fs.statSync(renaissancePath).isDirectory()
       const hasWorkspace = fs.existsSync(workspacePath) && fs.statSync(workspacePath).isDirectory()
       const hasWorkspaceTemp = fs.existsSync(workspaceTempPath) && fs.statSync(workspaceTempPath).isDirectory()
-      
+
       return hasRenaissance && (hasWorkspace || hasWorkspaceTemp)
     } catch (error) {
       console.error('Error checking leftovers:', error)
@@ -225,26 +225,67 @@ app.whenReady().then(() => {
       const renaissancePath = path.join(os.homedir(), 'renaissance')
       const workspaceName = withAccount ? 'workspace' : 'workspace-temp'
       const workspacePath = path.join(renaissancePath, workspaceName)
-      
+
       // Create renaissance folder if it doesn't exist
       if (!fs.existsSync(renaissancePath)) {
         fs.mkdirSync(renaissancePath, { recursive: true })
         console.log('Created renaissance folder:', renaissancePath)
       }
-      
+
       // Create workspace folder
       if (!fs.existsSync(workspacePath)) {
         fs.mkdirSync(workspacePath, { recursive: true })
         console.log('Created workspace folder:', workspacePath)
       }
-      
+
       // Initialize git repository in workspace(-temp) folder
       await execAsync('git init', { cwd: workspacePath, timeout: 10000 })
       console.log('Git initialized in:', workspacePath)
-      
-      return { success: true, workspacePath }
+
+      const indexFilePath = path.join(workspacePath, 'index.csv')
+      const headers = ["id", "name", "description", "isPrivate", "createdAt", "updatedAt", "owner", "contributers"];
+      if (!fs.existsSync(indexFilePath)) {
+        fs.writeFileSync(indexFilePath, headers.join(',') + "\n")
+      }
+
+      console.log('Created index file at:', indexFilePath);
+
+      return { success: true, workspacePath, indexFilePath }
     } catch (error) {
       console.error('Setup failed:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  })
+
+  // Save user profile to ~/.renaissance/user.json
+  ipcMain.handle('save-user-profile', (_, profile: object) => {
+    try {
+      const renaissanceDir = path.join(os.homedir(), '.renaissance')
+      if (!fs.existsSync(renaissanceDir)) {
+        fs.mkdirSync(renaissanceDir, { recursive: true })
+      }
+      const userFilePath = path.join(renaissanceDir, 'user.json')
+      fs.writeFileSync(userFilePath, JSON.stringify(profile, null, 2), 'utf-8')
+      console.log('User profile saved to:', userFilePath)
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to save user profile:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  })
+
+  // Load user profile from ~/.renaissance/user.json
+  ipcMain.handle('load-user-profile', () => {
+    try {
+      const userFilePath = path.join(os.homedir(), '.renaissance', 'user.json')
+      if (!fs.existsSync(userFilePath)) {
+        return { success: false, error: 'No profile found' }
+      }
+      const raw = fs.readFileSync(userFilePath, 'utf-8')
+      const profile = JSON.parse(raw)
+      return { success: true, profile }
+    } catch (error) {
+      console.error('Failed to load user profile:', error)
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
     }
   })

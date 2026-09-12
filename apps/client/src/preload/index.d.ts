@@ -17,7 +17,9 @@ declare global {
       checkGitInstalled: () => Promise<boolean>
       checkFolderExists: (folderPath: string) => Promise<boolean>
       checkLeftovers: () => Promise<boolean>
-      doSetup: (withAccount: boolean) => Promise<{ success: boolean; error?: string; workspacePath?: string }>
+      doSetup: (withAccount: boolean) => Promise<{ success: boolean; error?: string; workspacePath?: string, indexFilePath?: string}>
+      saveUserProfile: (profile: object) => Promise<{ success: boolean; error?: string }>
+      loadUserProfile: () => Promise<{ success: boolean; profile?: object; error?: string }>
     }
   }
 }

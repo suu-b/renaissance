@@ -13,6 +13,9 @@ declare module "fastify" {
             projects: string;
             remoteUrl: string;
             remotePath: string;
+            renaissancePath: string;
+            workspacePath: string;
+            indexFilePath: string;
         };
     }
 }

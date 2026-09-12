@@ -14,5 +14,10 @@ export default fp(async (app) => {
         // TODO: need to replace with user specific username
         remotePath: "tmp",
         projects: projectsPath,
+
+        // local paths. need to replace
+        renaissancePath: "/home/suub/renaissance",
+        workspacePath: "/home/suub/renaissance/workspace-temp",
+        indexFilePath: "/home/suub/renaissance/workspace-temp/index.csv"
     });
 });

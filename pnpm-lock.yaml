@@ -16,6 +16,9 @@ importers:
       '@electron-toolkit/utils':
         specifier: ^4.0.0
         version: 4.0.0(electron@39.8.10)
+      '@renaissance/shared':
+        specifier: workspace:*
+        version: link:../../shared
       '@supabase/supabase-js':
         specifier: ^2.110.1
         version: 2.110.1
@@ -177,6 +180,12 @@ importers:
       '@renaissance/shared':
         specifier: workspace:*
         version: link:../../shared
+      csv-parse:
+        specifier: ^7.0.2
+        version: 7.0.2
+      csv-stringify:
+        specifier: ^6.8.3
+        version: 6.8.3
       env-paths:
         specifier: ^4.0.0
         version: 4.0.0
@@ -1545,6 +1554,12 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  csv-parse@7.0.2:
+    resolution: {integrity: sha512-uKZghv9UmPkMVLYy//KZ9HFAIJsl7wkhoEdIL0+rhuSY9pZQlhaeGEDPIe+/w7eh81MOql8Q/9+inAGWG6ZHYA==}
+
+  csv-stringify@6.8.3:
+    resolution: {integrity: sha512-gIeSCvq5F4VtXV3naV3VAewLhBkiZBz+PPhTOA8H3Y8h/ELa+R1ml0GZck/4/Nzo9ep2lvOluilJ6MJlbZsKMA==}
 
   data-uri-to-buffer@4.0.1:
     resolution: {integrity: sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==}
@@ -4790,6 +4805,10 @@ snapshots:
   crypto-js@4.2.0: {}
 
   csstype@3.2.3: {}
+
+  csv-parse@7.0.2: {}
+
+  csv-stringify@6.8.3: {}
 
   data-uri-to-buffer@4.0.1: {}
 

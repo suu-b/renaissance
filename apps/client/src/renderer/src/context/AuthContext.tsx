@@ -11,6 +11,31 @@ import { AuthContextType, AuthProviderProps, UserProfile } from "../types/auth";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+async function persistUserProfile(profile: object): Promise<void> {
+    try {
+        await window.api.saveUserProfile(profile);
+    } catch (err) {
+        console.error("Failed to persist user profile:", err);
+    }
+}
+
+function buildGuestProfile() {
+    let guestId = localStorage.getItem("guest_id");
+    if (!guestId) {
+        guestId = crypto.randomUUID();
+        localStorage.setItem("guest_id", guestId);
+    }
+
+    return {
+        id: guestId,
+        username: "user",
+        displayName: "User",
+        avatarUrl: `https://picsum.photos/seed/${guestId}/200/200`,
+        email: "guest@local.pc",
+        createdAt: new Date().toISOString(),
+    };
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
     const [authenticated, setAuthenticated] = useState<boolean | null>(null);
     const [user, setUser] = useState<UserProfile | null>(null);
@@ -37,6 +62,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     setUser(user);
                     console.log("Authenticated:", true);
                     console.log("user:", user);
+
+                    // Persist the real user profile
+                    await persistUserProfile({
+                        id: user.id || crypto.randomUUID(),
+                        username: user.username,
+                        displayName: user.name,
+                        avatarUrl: user.avatar ?? `https://picsum.photos/seed/${user.id}/200/200`,
+                        email: user.email,
+                        createdAt: new Date().toISOString(),
+                    });
                 } else {
                     // If not authenticated, clear the stored email and user data
                     // This handles the "not_logged_in" state
@@ -44,10 +79,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     setEmail(null);
                     setUser(null);
                     console.log("Authenticated:", false);
+
+                    // Persist guest profile
+                    await persistUserProfile(buildGuestProfile());
                 }
             } else {
                 setAuthenticated(false);
                 console.log("Authenticated:", false);
+
+                // Persist guest profile for users entering without an account
+                await persistUserProfile(buildGuestProfile());
             }
         } catch (error) {
             console.error("Authentication check failed:", error);
@@ -56,6 +97,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             localStorage.removeItem('user_email');
             setEmail(null);
             setUser(null);
+
+            // Still persist a guest profile so user.json always exists
+            await persistUserProfile(buildGuestProfile());
         }
     }
 
@@ -70,11 +114,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const oauthService = OAuthService.getInstance();
             await oauthService.logout(email);
         }
-        
+
         setEmail(null);
         localStorage.removeItem('user_email');
         setAuthenticated(false);
         setUser(null);
+
+        // On logout, write a guest profile
+        await persistUserProfile(buildGuestProfile());
     }
 
     return (

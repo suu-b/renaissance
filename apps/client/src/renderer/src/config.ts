@@ -13,4 +13,9 @@ export const config = {
   getRenaissanceJoinURL: `${getRenaissanceURL}/join`,
   getRenaissanceFeedbackURL: `${getRenaissanceURL}/feedback`,
   serverUrl,
+
+
+  // we have to look into this
+  workspacePath: "home/suub/renaissance/workspace",
+  indexFilePath: "home/suub/renaissance/workspace/index.csv"
 };

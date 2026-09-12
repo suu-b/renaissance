@@ -1,39 +1,13 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { useLocation } from "react-router-dom"
-import { cva, type VariantProps } from "class-variance-authority"
-import { FiPlus, FiInbox } from "react-icons/fi"
-import Card from "../ui/Card"
-import Button from "../ui/Button"
-import Pagination from "../ui/Pagination"
-import Typography from "../ui/Typography"
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { cva, type VariantProps } from "class-variance-authority";
+import { FiPlus } from "react-icons/fi";
 
-export type Project = {
-  id: number
-  title: string
-  subtitle: string
-  lastUpdatedBy?: string
-  lastUpdatedAt?: string
-  status?: string
-  priority?: number
-  createdDate?: string
-  owner?: string
-}
-
-export const staticProjects: Project[] = Array.from({ length: 20 }, (_, i) => {
-  const owners = ["Shubham", "Alice", "Bob", "Charlie", "Diana"]
-  return {
-    id: i + 1,
-    title: `Project ${i + 1}`,
-    subtitle: `Description for project ${i + 1}. This is a placeholder project description.`,
-    lastUpdatedBy: "Shubham",
-    lastUpdatedAt: `${Math.floor(Math.random() * 24) + 1}h ago`,
-    status: i % 3 === 0 ? "active" : i % 3 === 1 ? "inactive" : "archived",
-    priority: (i % 5) + 1,
-    createdDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    owner: owners[i % owners.length],
-  }
-})
+import Card from "../ui/Card";
+import Button from "../ui/Button";
+import Pagination from "../ui/Pagination";
+import Typography from "../ui/Typography";
+import type { ProjectObject } from "@renaissance/shared";
 
 const projectListVariants = cva("flex flex-col", {
   variants: {
@@ -46,44 +20,48 @@ const projectListVariants = cva("flex flex-col", {
   defaultVariants: {
     size: "md",
   },
-})
+});
 
 type ProjectListProps = VariantProps<typeof projectListVariants> & {
-  itemsPerPage?: number
-  className?: string
-  projects?: Project[]
-}
+  itemsPerPage?: number;
+  className?: string;
+  projects?: ProjectObject[];
+};
 
 export default function ProjectList({
   size,
   itemsPerPage = 10,
   className,
-  projects = staticProjects,
+  projects = [],
 }: ProjectListProps) {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const path = location.pathname
-  const [currentPage, setCurrentPage] = useState(1)
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const totalPages = Math.ceil(projects.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const currentProjects = projects.slice(startIndex, endIndex)
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(projects.length / itemsPerPage);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  const currentProjects = projects.slice(startIndex, endIndex);
 
   const handlePrevious = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1))
-  }
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
 
   const handleNext = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-  }
+    setCurrentPage((prev) =>
+      Math.min(prev + 1, totalPages)
+    );
+  };
 
   const cardGap =
     size === "sm"
       ? "gap-1"
       : size === "lg"
         ? "gap-6"
-        : "gap-4"
+        : "gap-4";
 
   return (
     <div className={`${projectListVariants({ size })} ${className ?? ""}`}>
@@ -96,18 +74,29 @@ export default function ProjectList({
           onPrevious={handlePrevious}
           onNext={handleNext}
         />
+
         <div className="flex gap-2">
-          <Button variant="primary" size="sm" onClick={() => navigate('/new-project')}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => navigate("/new-project")}
+          >
             Create
             <FiPlus />
           </Button>
-          {
-            (path !== '/my-projects' && path !== '/projects') && (
-              <Button variant="secondary" size="sm" onClick={() => navigate('/my-projects')}>
+
+          {location.pathname !== "/my-projects" &&
+            location.pathname !== "/projects" && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  navigate("/my-projects")
+                }
+              >
                 See All
               </Button>
-            )
-          }
+            )}
         </div>
       </div>
 
@@ -123,10 +112,15 @@ export default function ProjectList({
             <Card
               key={project.id}
               size={size}
-              title={project.title}
-              subtitle={project.subtitle}
-              lastUpdatedBy={project.lastUpdatedBy}
-              lastUpdatedAt={project.lastUpdatedAt}
+              title={project.name}
+              subtitle={
+                project.description ||
+                "No description"
+              }
+              lastUpdatedBy={
+                project.owner.displayName
+              }
+              lastUpdatedAt={project.updatedAt.toLocaleDateString()}
               button={
                 <div className="flex gap-2">
                   <Button variant="primary" size="sm" onClick={() => navigate(`/project/${project.id}`)}>
@@ -139,5 +133,5 @@ export default function ProjectList({
         )}
       </div>
     </div>
-  )
+  );
 }

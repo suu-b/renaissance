@@ -11,7 +11,7 @@ import Typography from "../components/ui/Typography"
 
 export default function Welcome(): React.JSX.Element {
     const { authenticated, checkAuth, setAuthenticatedUser } = useAuth();
-    const { setWorkspacePath } = useWorkspace();
+    const { setWorkspacePath, setIndexFilePath } = useWorkspace();
 
     const navigate = useNavigate();
     const [setupStatus, setSetupStatus] = useState<'idle' | 'checking' | 'setup_needed' | 'doing_setup' | 'complete' | 'error' | 'leftovers_detected'>('idle');
@@ -105,6 +105,7 @@ export default function Welcome(): React.JSX.Element {
                 // Setup successful, verify again
                 await checkUserSetup();
                 setWorkspacePath(result.workspacePath || null);
+                setIndexFilePath(result.indexFilePath || null);
             } else {
                 setSetupStatus('error');
                 setErrorMessage(result.error || 'Setup failed');
@@ -128,6 +129,7 @@ export default function Welcome(): React.JSX.Element {
                 // Setup successful, verify again
                 await checkUserSetup();
                 setWorkspacePath(result.workspacePath || null);
+                setIndexFilePath(result.indexFilePath || null);
             } else {
                 setSetupStatus('error');
                 setErrorMessage(result.error || 'Setup failed');
