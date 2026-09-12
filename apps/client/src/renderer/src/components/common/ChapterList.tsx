@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { cva, type VariantProps } from "class-variance-authority"
-import { FiPlus, FiInbox } from "react-icons/fi"
+import { FiInbox } from "react-icons/fi"
 import Card from "../ui/Card"
 import Button from "../ui/Button"
 import Pagination from "../ui/Pagination"
@@ -47,16 +47,17 @@ export default function ChapterList({
   size,
   itemsPerPage = 10,
   className,
-  chapters = staticChapters,
+  chapters,
   projectId,
 }: ChapterListProps) {
+  const displayChapters = chapters ?? [];
   const navigate = useNavigate()
   const [currentPage, setCurrentPage] = useState(1)
 
-  const totalPages = Math.ceil(chapters.length / itemsPerPage)
+  const totalPages = Math.ceil(displayChapters.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const currentChapters = chapters.slice(startIndex, endIndex)
+  const currentChapters = displayChapters.slice(startIndex, endIndex)
 
   const handlePrevious = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1))
@@ -79,7 +80,7 @@ export default function ChapterList({
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={chapters.length}
+          totalItems={displayChapters.length}
           itemsPerPage={itemsPerPage}
           onPrevious={handlePrevious}
           onNext={handleNext}
@@ -88,9 +89,10 @@ export default function ChapterList({
 
       <div className={`flex flex-col ${cardGap}`}>
         {currentChapters.length === 0 ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex flex-col items-center justify-center py-8">
+            <FiInbox className="text-3xl text-muted-foreground mb-2" />
             <Typography variant="muted" className="text-muted-foreground text-sm">
-              No Chapter Yet! Damn - create one!
+              No chapters yet. Create your first chapter to get started!
             </Typography>
           </div>
         ) : (

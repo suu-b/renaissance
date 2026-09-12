@@ -11,6 +11,7 @@ import { config } from "../config";
 
 export default function Projects(): React.JSX.Element {
     const [projects, setProjects] = useState<ProjectObject[]>([]);
+    const [totalProjects, setTotalProjects] = useState(0);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -32,10 +33,13 @@ export default function Projects(): React.JSX.Element {
                     );
                 }
                 const result = await response.json();
+                const projectsData = result.data?.projects || result.projects || [];
+                const totalCount = result.data?.total || result.total || projectsData.length;
                 const parsedProjects = ProjectSchema
                     .array()
-                    .parse(result.data);
+                    .parse(projectsData);
                 setProjects(parsedProjects);
+                setTotalProjects(totalCount);
             } catch (error) {
                 console.error("Failed to fetch projects:", error);
                 setProjects([]);
@@ -79,7 +83,7 @@ export default function Projects(): React.JSX.Element {
                             />
 
                             <div className="mt-4 text-sm text-muted-foreground">
-                                Showing {projects.length} projects
+                                Showing {projects.length} of {totalProjects} projects
                             </div>
                         </>
                     )}

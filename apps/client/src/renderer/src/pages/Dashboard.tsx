@@ -21,6 +21,12 @@ export default function Dashboard(): React.JSX.Element {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
+        if (!config.serverUrl) {
+          console.error("Server URL is not configured");
+          setLoading(false);
+          return;
+        }
+
         const response = await fetch(
           `${config.serverUrl}/api/v1/user/data/project/search/mine`,
           {
@@ -38,8 +44,9 @@ export default function Dashboard(): React.JSX.Element {
           );
         }
         const result = await response.json();
+        const projectsData = result.data?.projects || result.projects || [];
         const parsedProjects =
-          ProjectSchema.array().parse(result.data);
+          ProjectSchema.array().parse(projectsData);
         setProjects(parsedProjects);
       } catch (error) {
         console.error(
