@@ -60,11 +60,11 @@ export class GitProvider implements VandcService {
         }
     }
 
-    async createFile(filePath: string): Promise<void> {
+    async createFile(filePath: string, content: string, encoding?: BufferEncoding): Promise<void> {
         try {
             const dir = path.dirname(filePath);
             await fs.mkdir(dir, { recursive: true });
-            await fs.writeFile(filePath, "dummy");
+            await fs.writeFile(filePath, content, encoding);
         } catch (error) {
             console.error(`Failed to create file at ${filePath}:`, error);
             throw error;

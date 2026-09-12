@@ -19,6 +19,6 @@ export interface VandcService {
     // Create a folder at the specified path
     createFolder(path: string): Promise<void>;
 
-    // Create a file at the specified path with dummy content
-    createFile(path: string): Promise<void>;
+    // Create a file at the specified path with the given content
+    createFile(path: string, content: string, encoding?: BufferEncoding): Promise<void>;
 }

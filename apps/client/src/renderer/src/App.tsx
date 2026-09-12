@@ -6,6 +6,7 @@ import { FiLayout, FiFolder, FiGrid } from "react-icons/fi"
 import Welcome from "./pages/Welcome"
 import Dashboard from "./pages/Dashboard"
 import NewProject from "./pages/NewProject"
+import NewChapter from "./pages/NewChapter"
 
 import TopBar from "./components/common/TopBar"
 import Sidebar, { SidebarItem } from "./components/common/Sidebar"
@@ -79,6 +80,14 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
       const segments = path.split('/').filter(Boolean)
       const projectId = segments[1]
       
+      if (segments.length > 2 && segments[2] === 'new-chapter') {
+        return [
+          { label: 'Dashboard', path: '/dashboard' },
+          { label: `Project ${projectId}`, path: `/project/${projectId}` },
+          { label: 'New Chapter' }
+        ]
+      }
+      
       if (segments.length > 2 && segments[2] === 'chapter') {
         const chapterId = segments[3]
         const chapterNumber = parseInt(chapterId || "1")
@@ -123,9 +132,10 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
             <Route path="/" element={<Welcome />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/new-project" element={<NewProject />} />
+            <Route path="/project/:projectId/new-chapter" element={<NewChapter />} />
             <Route path="/project/:id" element={<Project />} />
             <Route path="/projects" element={<Projects />} />
-            <Route path="/my-projects" element={<Projects mine={true} />} />
+            <Route path="/my-projects" element={<Projects />} />
             <Route path="/project/:projectId/chapter/:chapterId" element={<Chapter />} />
           </Routes>
         </main>

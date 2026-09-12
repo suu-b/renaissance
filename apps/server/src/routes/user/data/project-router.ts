@@ -213,7 +213,7 @@ export async function projectRouter(app: FastifyInstance) {
                 const updatedAt = new Date();
                 const indexFilePath = app.appPaths.indexFilePath;
                 const workspacePath = app.appPaths.workspacePath;
-                const localProjectPath = path.join(workspacePath, name);
+                const localProjectPath = path.join(workspacePath, id);
                 const userProfile = getUserProfile();
 
                 // id, name, description, isPrivate, createdAt, updatedAt, owner, contributors
@@ -224,6 +224,9 @@ export async function projectRouter(app: FastifyInstance) {
                     stringify([indexEntry]),
                     "utf-8"
                 );
+                const chaptersFilePath = path.join(localProjectPath, 'chapters.csv')
+                const headers = ["id", "name", "createdAt", "updatedAt"];
+                await fs.writeFile(chaptersFilePath, headers.join(',') + "\n")
                 return reply
                     .status(201)
                     .send(sendSuccess({ id }));

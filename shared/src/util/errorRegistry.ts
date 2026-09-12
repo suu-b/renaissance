@@ -34,6 +34,21 @@ export const Errors = {
         message: "You do not have permission to read this project.",
     },
 
+    CHAPTER_CREATE_FAILED: {
+        code: "CHAPTER_CREATE_FAILED",
+        message: "Failed to create chapter.",
+    },
+
+    CHAPTER_GET_FAILED: {
+        code: "CHAPTER_GET_FAILED",
+        message: "Failed to get chapter.",
+    },
+
+    CHAPTER_NOT_FOUND: {
+        code: "CHAPTER_NOT_FOUND",
+        message: "Chapter not found.",
+    },
+
     USERS_SEARCH_FAILED: {
         code: "USERS_SEARCH_FAILED",
         message: "Failed to search users.",
