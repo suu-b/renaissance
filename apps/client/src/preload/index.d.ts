@@ -11,7 +11,7 @@ declare global {
       toggleMaximizeWindow: () => void
       openExternal: (url: string) => void
       startOAuth: (url: string) => void
-      onOAuthCallback: (callback: (url: string) => void) => void
+      onOAuthCallback: (callback: (result: any) => void) => void
       removeOAuthCallback: () => void
       folderExists: (folderName: string) => Promise<boolean>
       checkGitInstalled: () => Promise<boolean>

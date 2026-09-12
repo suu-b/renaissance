@@ -12,11 +12,15 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@fastify/cors": "^10.1.0",
+    "@fastify/swagger": "^9.8.1",
+    "@fastify/swagger-ui": "^6.1.1",
     "@renaissance/shared": "workspace:*",
     "env-paths": "^4.0.0",
     "fastify": "^5.8.5",
     "fastify-plugin": "^6.0.0",
     "fastify-type-provider-zod": "^7.0.0",
+    "keytar": "^7.9.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

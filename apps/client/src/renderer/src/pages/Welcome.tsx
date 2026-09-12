@@ -10,7 +10,7 @@ import Button from "../components/ui/Button"
 import Typography from "../components/ui/Typography"
 
 export default function Welcome(): React.JSX.Element {
-    const { authenticated, checkAuth } = useAuth();
+    const { authenticated, checkAuth, setAuthenticatedUser } = useAuth();
     const navigate = useNavigate();
     const [setupStatus, setSetupStatus] = useState<'idle' | 'checking' | 'setup_needed' | 'doing_setup' | 'complete' | 'error'>('idle');
     const [setupStep, setSetupStep] = useState<string>('');
@@ -81,8 +81,7 @@ export default function Welcome(): React.JSX.Element {
     const handleSignIn = async () => {
         try {
             const oauthService = OAuthService.getInstance();
-            const authUrl = oauthService.startOAuthFlow();
-    
+            const authUrl = await oauthService.startOAuthFlow();
             window.api.startOAuth(authUrl);
         } catch (error) {
             console.error("Error starting OAuth flow:", error);
@@ -90,25 +89,37 @@ export default function Welcome(): React.JSX.Element {
     };
 
     useEffect(() => {
-        const handleOAuthCallback = (callbackUrl: string) => {
-            console.log('OAuth callback received in renderer:', callbackUrl);
-            const oauthService = OAuthService.getInstance();
-            oauthService.handleCallback(callbackUrl)
-                .then(({ access_token, refresh_token, user_id, email }) => {
-                    console.log('OAuth callback successful, storing tokens');
-                    // store tokens securely
-                    localStorage.setItem('access_token', access_token)
-                    localStorage.setItem('refresh_token', refresh_token)
-                    localStorage.setItem('user_id', user_id)
-                    localStorage.setItem('email', email)
-
-                    checkAuth();
-                })
-                .catch((error) => {
-                    console.error("OAuth callback failed:", error);
-                })
+        const handleOAuthCallback = async (result: {
+        success: boolean;
+        data?: {
+            authenticated?: boolean;
+            email?: string;
         };
+    }) => {
+            console.debug('OAuth result received in renderer:', result);
+            if (
+            result.success &&
+            result.data?.authenticated &&
+            result.data?.email
+            ) {
+                console.log('OAuth callback successful, authenticated via local server');
+                await setAuthenticatedUser(result.data.email);
+            } else {
+                console.error('OAuth callback failed: authentication unsuccessful');
+            } 
 
+            if (window.api?.onOAuthCallback) {
+                console.log('Setting up OAuth callback listener');
+                window.api.onOAuthCallback(handleOAuthCallback);
+            }
+
+            return () => {
+                if(window.api?.removeOAuthCallback) {
+                    window.api.removeOAuthCallback();
+                }
+            }
+        };
+        
         if (window.api?.onOAuthCallback) {
             console.log('Setting up OAuth callback listener');
             window.api.onOAuthCallback(handleOAuthCallback);
@@ -118,14 +129,15 @@ export default function Welcome(): React.JSX.Element {
             if(window.api?.removeOAuthCallback) {
                 window.api.removeOAuthCallback();
             }
-        }
-    }, [checkAuth]);
+        };
+    }, [setAuthenticatedUser]);
+
 
     useEffect(() => {
         if (authenticated && setupStatus === 'idle') {
             checkUserSetup();
         }
-    }, [authenticated, setupStatus]);
+    }, [authenticated, setupStatus, checkUserSetup]);
 
     return (
         <Page alignment="center" showSkeleton={false}>

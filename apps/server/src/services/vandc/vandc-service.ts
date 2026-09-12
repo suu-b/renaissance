@@ -14,4 +14,11 @@ export interface VandcService {
     // Global methods
     // Global methods operate at the global repo level in a similar way like scoped ones.
     globalSaved(): Promise<void>;
+
+    // Local file system operations
+    // Create a folder at the specified path
+    createFolder(path: string): Promise<void>;
+
+    // Create a file at the specified path with dummy content
+    createFile(path: string): Promise<void>;
 }

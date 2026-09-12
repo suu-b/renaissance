@@ -1,4 +1,8 @@
 import Fastify from "fastify";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
+import cors from "@fastify/cors";
+
 import {
     serializerCompiler,
     validatorCompiler,
@@ -11,11 +15,31 @@ import configPlugin from "./plugins/config.js";
 
 export function buildApp() {
     const app = Fastify({
-        logger: true
+        logger: {
+            level: 'debug'
+    }
     }).withTypeProvider<ZodTypeProvider>();
 
     app.setValidatorCompiler(validatorCompiler)
     app.setSerializerCompiler(serializerCompiler)
+
+    app.register(swagger, {
+        openapi: {
+            info: {
+                title: "Renaissance local server",
+                description: "Local Node process to serve Renaissance Desktop client",
+                version: "1.0.0",
+            },
+        },
+    });
+
+    app.register(swaggerUi, {
+        routePrefix: "/docs",
+    });
+    app.register(cors, {
+            origin: "*",
+            credentials: true,
+    });
 
     // Registering Services
     app.register(configPlugin)

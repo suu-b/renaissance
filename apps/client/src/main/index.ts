@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, protocol } from 'electron'
+import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -18,16 +18,10 @@ const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
   app.quit()
 } else {
-  app.on('second-instance', (_event, commandLine) => {
-    console.log('second-instance event received:', commandLine)
+  app.on('second-instance', () => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore()
       mainWindow.focus()
-    }
-    const url = commandLine.find((arg) => arg.startsWith('renaissance://'))
-    if (url && url.startsWith('renaissance://auth/callback')) {
-      console.log('Sending oauth-callback to renderer:', url)
-      mainWindow?.webContents.send('oauth-callback', url)
     }
   })
 }
@@ -50,11 +44,6 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
-    const initialUrl = process.argv.find((arg) => arg.startsWith('renaissance://'))
-    if (initialUrl && initialUrl.startsWith('renaissance://auth/callback')) {
-      console.log('Sending initial oauth-callback to renderer:', initialUrl)
-      mainWindow?.webContents.send('oauth-callback', initialUrl)
-    }
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -72,26 +61,6 @@ function createWindow(): void {
 }
 
 app.setName("Renaissance")
-
-if (process.defaultApp) {
-  if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('renaissance', process.execPath, [join(__dirname, '../main/index.js')])
-  }
-} else {
-  app.setAsDefaultProtocolClient('renaissance')
-}
-
-// a custom protocol for oatuh callback
-protocol.registerSchemesAsPrivileged([
-  {
-    scheme: 'renaissance',
-    privileges: {
-      secure: true,
-      standard: true,
-      supportFetchAPI: true,
-    },
-  },
-])
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -150,17 +119,60 @@ app.whenReady().then(() => {
 
     authWindow.loadURL(url)
 
-    const handleNavigation = (_event: Electron.Event, url: string) => {
+    const handleNavigation = async (_event: Electron.Event, url: string) => {
       console.log('OAuth window redirect/navigate:', url)
       if (url.startsWith('renaissance://auth/callback')) {
         _event.preventDefault()
         authWindow.close()
-        console.log('Sending oauth-callback to renderer:', url)
-        mainWindow?.webContents.send('oauth-callback', url)
+        
+        // Send callback to local server for token handling
+        try {
+          console.debug("Trying to call the local server now");
+          const portFilePath = path.join(os.homedir(), '.renaissance', 'server-port.txt')
+          console.debug("Port file to read:", portFilePath);
+          if (fs.existsSync(portFilePath)) {
+            console.debug("Port file path is there")
+            const port = parseInt(fs.readFileSync(portFilePath, 'utf-8').trim())
+            if (!isNaN(port)) {
+              console.debug("I found the port:", port)
+              const localServerUrl = `http://127.0.0.1:${port}/api/v1/user/auth/oauth/callback`
+              console.debug("Local server URL:", localServerUrl);
+              
+              // Use dynamic import for node-fetch (needed for older Node versions)
+              const { default: fetch } = await import('node-fetch')
+
+              const response = await fetch(localServerUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ callbackUrl: url }),
+              })
+
+              console.debug("Response:", response);
+              
+              if (response.ok) {
+                console.debug("Response is ok");
+                const data = await response.json()
+                console.debug('OAuth callback sent to local server successfully:', data)
+                mainWindow?.webContents.send('oauth-callback', data)
+              } else {
+                console.error('Local server returned error for OAuth callback')
+                mainWindow?.webContents.send('oauth-callback', {success: false}) // Send for error handling
+              }
+            }
+          } else {
+            console.error('Local server port file not found')
+            mainWindow?.webContents.send('oauth-callback', {success: false}) // Send for error handling
+          }
+        } catch (error) {
+          console.error('Failed to send OAuth callback to local server:', error)
+          mainWindow?.webContents.send('oauth-callback', {success: false}) // Send for error handling
+        }
       }
     }
 
-    authWindow.webContents.on('will-redirect', handleNavigation)
+    // authWindow.webContents.on('will-redirect', handleNavigation)
     authWindow.webContents.on('will-navigate', handleNavigation)
 
     authWindow.on('closed', () => {
@@ -213,26 +225,6 @@ app.whenReady().then(() => {
     } catch (error) {
       console.error('Setup failed:', error)
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
-    }
-  })
-
-  // handle oauth callback from custom protocol
-  app.on('open-url', (_event, url) => {
-    console.log('open-url event received:', url)
-    _event.preventDefault()
-    if (url.startsWith('renaissance://auth/callback')) {
-      console.log('Sending oauth-callback to renderer:', url)
-      mainWindow?.webContents.send('oauth-callback', url)
-    }
-  })
-
-  // For Windows/Linux, handle protocol activation
-  app.on('second-instance', (event, commandLine, workingDirectory) => {
-    console.log('second-instance event received:', commandLine)
-    const url = commandLine.find(arg => arg.startsWith('renaissance://'))
-    if (url && url.startsWith('renaissance://auth/callback')) {
-      console.log('Sending oauth-callback to renderer:', url)
-      mainWindow?.webContents.send('oauth-callback', url)
     }
   })
 

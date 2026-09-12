@@ -1,26 +1,24 @@
-import { generic_client } from "./genericClient";
+import { config } from "../config";
 import { UserProfile } from "../types/auth";
 
 export async function getAuthStatus(): Promise<boolean> {
-  const token = localStorage.getItem('access_token');
-  return !!token;
+  const email = localStorage.getItem('user_email');
+  return !!email;
 }
 
 export async function getCurrentUser(): Promise<UserProfile> {
-  const token = localStorage.getItem('access_token');
-  const userId = localStorage.getItem('user_id');
-  const email = localStorage.getItem('email');
+  const email = localStorage.getItem('user_email');
   
-  if (!token) {
-    throw new Error('No access token found');
+  if (!email) {
+    throw new Error('No user email found');
+  }
+
+  if (!config.serverUrl) {
+    throw new Error('Local server is not available');
   }
 
   try {
-    const response = await fetch('http://localhost:8080/api/v1/user/auth/me', {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    const response = await fetch(`${config.serverUrl}/api/v1/user/auth/me?email=${encodeURIComponent(email)}`);
 
     if (!response.ok) {
       throw new Error('Failed to get user data');
@@ -30,7 +28,7 @@ export async function getCurrentUser(): Promise<UserProfile> {
     
     if (data.success && data.data) {
       return {
-        id: data.data.id || userId || '',
+        id: data.data.id || '',
         username: data.data.username || email?.split('@')[0] || '',
         name: data.data.display_name || data.data.username || email?.split('@')[0] || '',
         email: data.data.email || email || '',
@@ -40,9 +38,9 @@ export async function getCurrentUser(): Promise<UserProfile> {
       };
     }
     
-    // Fallback to stored data if API response is unexpected
+    // Fallback to stored email if API response is unexpected
     return {
-      id: userId || '',
+      id: '',
       username: email?.split('@')[0] || '',
       name: email?.split('@')[0] || '',
       email: email || '',
@@ -51,9 +49,9 @@ export async function getCurrentUser(): Promise<UserProfile> {
     };
   } catch (error) {
     console.error('Failed to get current user:', error);
-    // Fallback to stored data
+    // Fallback to stored email
     return {
-      id: userId || '',
+      id: '',
       username: email?.split('@')[0] || '',
       name: email?.split('@')[0] || '',
       email: email || '',
@@ -62,8 +60,3 @@ export async function getCurrentUser(): Promise<UserProfile> {
     };
   }
 }
-
-// OAuth login is now handled by the OAuth flow
-// export function logout() {
-//   return generic_client.post("/auth/logout", null);
-// }

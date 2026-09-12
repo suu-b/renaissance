@@ -37,7 +37,6 @@ export default function OAuthLoginPage() {
     setIsLoading(true)
 
     try {
-      // Step 1: Authenticate with remote service
       const authResponse = await fetch('http://localhost:8080/api/v1/user/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,7 +46,7 @@ export default function OAuthLoginPage() {
         })
       })
 
-      console.log('Auth response status:', authResponse.status, authResponse.statusText)
+      console.debug('Auth response status:', authResponse.status, authResponse.statusText)
 
       if (!authResponse.ok) {
         const errorText = await authResponse.text()
@@ -58,16 +57,16 @@ export default function OAuthLoginPage() {
       }
 
       const authData = await authResponse.json()
-
-      console.log('Auth response:', authData)
+      console.debug('Auth response:', authData)
 
       if (!authData.success) {
-        setError(authData.error?.message || 'Authentication failed')
+        const error = authData.error?.message || 'Authentication failed';
+        console.error("Auth failed:", error);
+        setError(error);
         setIsLoading(false)
         return
       }
 
-      // Validate the response structure
       if (!authData.data?.user?.id || !authData.data?.session?.accessToken) {
         console.error('Invalid auth response structure:', authData)
         setError('Invalid authentication response structure')
@@ -75,7 +74,6 @@ export default function OAuthLoginPage() {
         return
       }
 
-      // Step 2: Generate authorization code
       const authorizeResponse = await fetch('/api/auth/authorize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -92,24 +90,26 @@ export default function OAuthLoginPage() {
       })
 
       const authorizeData = await authorizeResponse.json()
-
-      console.log('Authorize response:', authorizeData)
-
+      console.debug('Authorize response:', authorizeData)
       if (!authorizeData.success) {
-        setError(`Failed to generate authorization code: ${authorizeData.error?.message || 'Unknown error'}`)
+        const error = `Failed to generate authorization code: ${authorizeData.error?.message || 'Unknown error'}`
+        console.error(error);
+        setError(error);
         setIsLoading(false)
         return
       }
 
-      // Step 3: Redirect back to Electron with authorization code
       const callbackUrl = new URL(redirectUri!)
       callbackUrl.searchParams.set('code', authorizeData.data.code)
       callbackUrl.searchParams.set('state', state!)
-      
+
+      console.debug("Callback URL:", callbackUrl);
+    
       const targetUrl = callbackUrl.toString()
       setCallbackLink(targetUrl)
       setIsSuccess(true)
 
+      console.debug("target url:", targetUrl);
       // Attempt automatic redirect
       window.location.href = targetUrl
 

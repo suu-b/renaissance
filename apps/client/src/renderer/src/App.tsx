@@ -20,13 +20,8 @@ type BreadcrumbItem = {
 }
 
 function App(): React.JSX.Element {
-  const port: number | null = window.api.getServerPort()
-  const serverUrl = port ? `http://127.0.0.1:${port}`: null
+  
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false)
-
-  console.log('Server port:', port)
-  console.log('Server URL:', serverUrl)
-
   const sidebarItems: SidebarItem[] = [
     {
       title: "Dashboard",

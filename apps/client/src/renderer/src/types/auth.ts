@@ -16,7 +16,10 @@ export type AuthContextType = {
 
     // data only authenticated user has
     user: UserProfile | null;
+    email: string | null;
     checkAuth: () => Promise<void>;
+    setAuthenticatedUser: (email: string) => Promise<void>;
+    logout: () => Promise<void>;
 };
 
 export type AuthProviderProps = {

@@ -4,6 +4,13 @@ import { writeFileSync, mkdirSync, existsSync } from "fs"
 import { join } from "path";
 import { homedir } from "os";
 
+console.log("=================================");
+console.log("RENAISSANCE SERVER PROCESS START");
+console.log("PID:", process.pid);
+console.log("TIME:", new Date().toISOString());
+console.log("=================================");
+
+
 const app = buildApp();
 
 async function start() {
