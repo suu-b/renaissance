@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { cva, type VariantProps } from "class-variance-authority"
 import { FiInbox } from "react-icons/fi"
@@ -20,16 +20,29 @@ type ChapterListProps = VariantProps<typeof chapterListVariants> & {
     className?: string
     chapters?: ChapterObject[]
     projectId?: string
+    searchTerm?: string
 }
 
-export default function ChapterList({ size, itemsPerPage = 10, className, chapters, projectId }: ChapterListProps) {
+export default function ChapterList({ size, itemsPerPage = 10, className, chapters, projectId, searchTerm = "" }: ChapterListProps) {
     const displayChapters = chapters ?? []
     const navigate = useNavigate()
     const [currentPage, setCurrentPage] = useState(1)
 
-    const totalPages = Math.ceil(displayChapters.length / itemsPerPage)
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchTerm])
+
+    const filteredChapters = useMemo(() => {
+        if (!searchTerm) return displayChapters
+        const lowerSearchTerm = searchTerm.toLowerCase()
+        return displayChapters.filter(chapter =>
+            chapter.name.toLowerCase().includes(lowerSearchTerm)
+        )
+    }, [displayChapters, searchTerm])
+
+    const totalPages = Math.ceil(filteredChapters.length / itemsPerPage)
     const startIndex = (currentPage - 1) * itemsPerPage
-    const currentChapters = displayChapters.slice(startIndex, startIndex + itemsPerPage)
+    const currentChapters = filteredChapters.slice(startIndex, startIndex + itemsPerPage)
 
     const handlePrevious = () => setCurrentPage(prev => Math.max(prev - 1, 1))
     const handleNext = () => setCurrentPage(prev => Math.min(prev + 1, totalPages))
@@ -39,15 +52,15 @@ export default function ChapterList({ size, itemsPerPage = 10, className, chapte
     return (
         <div className={`${chapterListVariants({ size })} ${className ?? ""}`}>
             <div className="mb-2 flex items-center justify-between">
-                <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={displayChapters.length} itemsPerPage={itemsPerPage} onPrevious={handlePrevious} onNext={handleNext} />
+                <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={filteredChapters.length} itemsPerPage={itemsPerPage} onPrevious={handlePrevious} onNext={handleNext} />
             </div>
 
             <div className={`flex flex-col ${cardGap}`}>
-                {currentChapters.length === 0 ? (
+                {filteredChapters.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8">
                         <FiInbox className="text-3xl text-muted-foreground mb-2" />
                         <Typography variant="muted" className="text-muted-foreground text-sm">
-                            No chapters yet. Create your first chapter to get started!
+                            {searchTerm ? "No chapters match your search." : "No chapters yet. Create your first chapter to get started!"}
                         </Typography>
                     </div>
                 ) : (

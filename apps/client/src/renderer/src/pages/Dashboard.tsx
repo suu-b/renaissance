@@ -18,6 +18,7 @@ import {
 export default function Dashboard(): React.JSX.Element {
   const [projects, setProjects] = useState<ProjectObject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -122,9 +123,8 @@ export default function Dashboard(): React.JSX.Element {
         <SearchBar
           placeholder="Search projects..."
           size="md"
-          onChange={() => {
-            console.log("Hey");
-          }}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="my-5"
         />
 
@@ -143,6 +143,7 @@ export default function Dashboard(): React.JSX.Element {
             size="sm"
             className="my-5"
             projects={projects}
+            searchTerm={searchTerm}
           />
         )}
       </div>

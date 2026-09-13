@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cva, type VariantProps } from "class-variance-authority";
 import { FiPlus } from "react-icons/fi";
@@ -26,6 +26,7 @@ type ProjectListProps = VariantProps<typeof projectListVariants> & {
   itemsPerPage?: number;
   className?: string;
   projects?: ProjectObject[];
+  searchTerm?: string;
 };
 
 export default function ProjectList({
@@ -33,18 +34,32 @@ export default function ProjectList({
   itemsPerPage = 10,
   className,
   projects = [],
+  searchTerm = "",
 }: ProjectListProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalPages = Math.ceil(projects.length / itemsPerPage);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const filteredProjects = useMemo(() => {
+    if (!searchTerm) return projects
+    const lowerSearchTerm = searchTerm.toLowerCase()
+    return projects.filter(project =>
+      project.name.toLowerCase().includes(lowerSearchTerm) ||
+      (project.description && project.description.toLowerCase().includes(lowerSearchTerm))
+    )
+  }, [projects, searchTerm])
+
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
-  const currentProjects = projects.slice(startIndex, endIndex);
+  const currentProjects = filteredProjects.slice(startIndex, endIndex);
 
   const handlePrevious = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -69,7 +84,7 @@ export default function ProjectList({
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={projects.length}
+          totalItems={filteredProjects.length}
           itemsPerPage={itemsPerPage}
           onPrevious={handlePrevious}
           onNext={handleNext}
@@ -101,10 +116,10 @@ export default function ProjectList({
       </div>
 
       <div className={`flex flex-col ${cardGap}`}>
-        {currentProjects.length === 0 ? (
+        {filteredProjects.length === 0 ? (
           <div className="flex items-center justify-center py-8">
             <Typography variant="muted" className="text-muted-foreground text-sm">
-              No Project Yet! Damn - create one!
+              {searchTerm ? "No projects match your search." : "No Project Yet! Damn - create one!"}
             </Typography>
           </div>
         ) : (

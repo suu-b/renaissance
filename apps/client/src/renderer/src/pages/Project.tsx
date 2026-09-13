@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { FiPlus } from "react-icons/fi"
 import Page from "../components/layout/Page"
@@ -16,6 +17,7 @@ import Veil from "../components/ui/Veil"
 export default function Project() {
     const navigate = useNavigate()
     const { project, chapters, loading, history, historyLoading } = useProject()
+    const [searchTerm, setSearchTerm] = useState("")
 
     const handleDelete = () => {
         console.log("Delete project", project?.id)
@@ -45,7 +47,8 @@ export default function Project() {
                     <SearchBar
                         placeholder="Search chapters..."
                         size="md"
-                        onChange={() => console.log("Search chapters")}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         className="flex-1"
                     />
 
@@ -63,6 +66,7 @@ export default function Project() {
                     itemsPerPage={5}
                     projectId={project?.id}
                     chapters={chapters}
+                    searchTerm={searchTerm}
                 />
             </div>
 
