@@ -1,11 +1,17 @@
 import React from "react"
 import Typography from "./Typography"
 import Button from "./Button"
+import SlateRenderer from "./SlateRenderer"
 import { FiArrowLeft, FiArrowRight, FiEdit } from "react-icons/fi"
+
+type EditorNode = {
+  type: string
+  children: Array<{ text: string }>
+}
 
 type ChapterReaderProps = {
   title: string
-  content: string
+  content: EditorNode[]
   chapterNumber: number
   totalChapters: number
   onPrevious?: () => void
@@ -71,9 +77,7 @@ export default function ChapterReader({
 
       {/* Chapter Content */}
       <div className="leading-relaxed text-lg">
-        <Typography variant="p" className="text-foreground whitespace-pre-wrap">
-          {content}
-        </Typography>
+        <SlateRenderer content={content} />
       </div>
 
       {/* Chapter Footer Navigation */}

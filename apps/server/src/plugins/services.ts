@@ -14,6 +14,6 @@ import { TokenStorageService } from "../services/token-storage.js";
 export default fp(async (app: FastifyInstance) => {
     const cgsPath = path.join(app.appPaths.projects, app.appPaths.remotePath);
     app.decorate<RepositoryService>("repositoryService", new GitHubProvider(cgsPath, app.appPaths.remoteUrl));
-    app.decorate<VandcService>("vandcService", new GitProvider(app.appPaths.projects));
+    app.decorate<VandcService>("vandcService", new GitProvider(app.appPaths.workspacePath));
     app.decorate("tokenStorageService", new TokenStorageService());
 });

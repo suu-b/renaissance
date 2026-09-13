@@ -16,7 +16,7 @@ export async function localRouter(app: FastifyInstance) {
     }, async (request, reply) => {
         await request.server.vandcService.init()
         return {
-            repositoryPath: request.server.appPaths.projects,
+            repositoryPath: request.server.appPaths.workspacePath,
             createdAt: new Date()
         };
     });

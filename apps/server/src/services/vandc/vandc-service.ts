@@ -21,4 +21,6 @@ export interface VandcService {
 
     // Create a file at the specified path with the given content
     createFile(path: string, content: string, encoding?: BufferEncoding): Promise<void>;
+
+    getScopedHistory(path: string, limit: number): Promise<string[]>;
 }

@@ -5,11 +5,17 @@ import BackLink from "@renderer/components/ui/BackLink"
 import ToolKit from "@renderer/components/common/ToolKit"
 import ChapterReader from "@renderer/components/ui/ChapterReader"
 import ChapterWriteView from "@renderer/components/common/ChapterWriteView"
+import { useProject } from "@renderer/context/ProjectContext"
 import { config } from "@renderer/config"
 
 type EditorNode = {
   type: string
   children: Array<{ text: string }>
+}
+
+type ChapterMetadata = {
+  chaptersNumber: number
+  chapterNumber: number
 }
 
 export default function Chapter() {
@@ -22,20 +28,32 @@ export default function Chapter() {
   const [searchParams] = useSearchParams()
   const mode = searchParams.get("mode")
 
+  const {
+    getPreviousChapter,
+    getNextChapter
+  } = useProject()
+
   const [content, setContent] = useState<EditorNode[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [chapterNumber, setChapterNumber] = useState(0)
+  const [totalChapters, setTotalChapters] = useState(0)
 
-  const chapterNumber = 1
-  const totalChapters = 20
   const isWriteMode = mode === "write"
 
   const draftKey =
     projectId && chapterId
-      ? `renaissance:chapter:${projectId}:${chapterId}`
-      : null
+      ? `renaissance:chapter:${projectId}:${chapterId}` :''
+
+  const previousChapter = chapterId
+    ? getPreviousChapter(chapterId)
+    : null
+
+  const nextChapter = chapterId
+    ? getNextChapter(chapterId)
+    : null
 
   useEffect(() => {
     const fetchChapter = async () => {
@@ -46,31 +64,8 @@ export default function Chapter() {
       }
 
       try {
-        const localDraft = localStorage.getItem(
-          `renaissance:chapter:${projectId}:${chapterId}`
-        )
-
-        if (localDraft) {
-          try {
-            const parsedDraft: EditorNode[] = JSON.parse(localDraft)
-
-            if (Array.isArray(parsedDraft)) {
-              setContent(parsedDraft)
-              setLoading(false)
-              return
-            }
-          } catch (error) {
-            console.error("Failed to parse local chapter draft:", error)
-
-            localStorage.removeItem(
-              `renaissance:chapter:${projectId}:${chapterId}`
-            )
-          }
-        }
-
-        const response = await fetch(
-          `${config.serverUrl}/api/v1/user/data/chapter/get`,
-          {
+        const [chapterResponse, metadataResponse] = await Promise.all([
+          fetch(`${config.serverUrl}/api/v1/user/data/chapter/get`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
@@ -79,44 +74,97 @@ export default function Chapter() {
               project: projectId,
               id: chapterId
             })
-          }
-        )
+          }),
+          fetch(`${config.serverUrl}/api/v1/user/data/chapter/metadata`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              project: projectId,
+              id: chapterId
+            })
+          })
+        ])
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch chapter: ${response.status}`)
+        if (!chapterResponse.ok) {
+          throw new Error(`Failed to fetch chapter: ${chapterResponse.status}`)
         }
 
-        const result = await response.json()
-        const chapter = result.data?.chapter || result.chapter
+        if (!metadataResponse.ok) {
+          throw new Error(
+            `Failed to fetch chapter metadata: ${metadataResponse.status}`
+          )
+        }
+
+        const [chapterResult, metadataResult] = await Promise.all([
+          chapterResponse.json(),
+          metadataResponse.json()
+        ])
+
+        const chapter = chapterResult.data?.chapter || chapterResult.chapter
+        const metadata: ChapterMetadata =
+          metadataResult.data?.metadata || metadataResult.metadata
 
         if (!chapter) {
           throw new Error("Chapter not found")
         }
 
+        if (!metadata) {
+          throw new Error("Chapter metadata not found")
+        }
+
+        setChapterNumber(metadata.chapterNumber)
+        setTotalChapters(metadata.chaptersNumber)
+
+        const localDraft = draftKey
+          ? localStorage.getItem(draftKey)
+          : null
+
+        if (localDraft) {
+          try {
+            const parsedDraft: EditorNode[] = JSON.parse(localDraft)
+
+            if (Array.isArray(parsedDraft)) {
+              setContent(parsedDraft)
+              return
+            }
+
+            localStorage.removeItem(draftKey)
+          } catch (error) {
+            console.error("Failed to parse local chapter draft:", error)
+            localStorage.removeItem(draftKey)
+          }
+        }
+
         setContent(chapter.content || [])
       } catch (error) {
         console.error("Failed to fetch chapter:", error)
-        setError("Failed to load chapter")
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load chapter"
+        )
       } finally {
         setLoading(false)
       }
     }
 
     fetchChapter()
-  }, [projectId, chapterId])
+  }, [projectId, chapterId, draftKey])
 
   const handlePrevious = () => {
-    if (chapterNumber > 1) {
+    if (previousChapter) {
       navigate(
-        `/project/${projectId}/chapter/${chapterNumber - 1}?mode=${mode}`
+        `/project/${projectId}/chapter/${previousChapter.id}?mode=${mode}`
       )
     }
   }
 
   const handleNext = () => {
-    if (chapterNumber < totalChapters) {
+    if (nextChapter) {
       navigate(
-        `/project/${projectId}/chapter/${chapterNumber + 1}?mode=${mode}`
+        `/project/${projectId}/chapter/${nextChapter.id}?mode=${mode}`
       )
     }
   }
@@ -125,7 +173,9 @@ export default function Chapter() {
     setError(null)
     setSuccess(null)
 
-    navigate(`/project/${projectId}/chapter/${chapterId}?mode=write`)
+    navigate(
+      `/project/${projectId}/chapter/${chapterId}?mode=write`
+    )
   }
 
   const handleDelete = () => {
@@ -168,15 +218,12 @@ export default function Chapter() {
         )
       }
 
-      // The server now has the latest version, so the local
-      // draft is no longer needed.
       if (draftKey) {
         localStorage.removeItem(draftKey)
       }
 
       setSuccess("Chapter saved successfully")
 
-      // Return to read mode after a successful save.
       navigate(
         `/project/${projectId}/chapter/${chapterId}?mode=read`
       )
@@ -222,14 +269,6 @@ export default function Chapter() {
       setError("Failed to process editor content")
     }
   }
-
-  const readerContent = content
-    .map(node =>
-      node.children
-        .map(child => child.text)
-        .join("")
-    )
-    .join("\n\n")
 
   return (
     <Page alignment="default" className="max-w-4xl mx-auto">
@@ -288,7 +327,7 @@ export default function Chapter() {
       ) : (
         <ChapterReader
           title={`Chapter ${chapterNumber}: The Beginning`}
-          content={readerContent}
+          content={content}
           chapterNumber={chapterNumber}
           totalChapters={totalChapters}
           onPrevious={handlePrevious}

@@ -13,6 +13,7 @@ import Sidebar, { SidebarItem } from "./components/common/Sidebar"
 import Project from "./pages/Project"
 import Projects from "./pages/Projects"
 import Chapter from "./pages/Chapter"
+import ProjectLayout from "./pages/ProjectLayout"
 
 type BreadcrumbItem = {
   label: string
@@ -132,11 +133,13 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
             <Route path="/" element={<Welcome />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/new-project" element={<NewProject />} />
-            <Route path="/project/:projectId/new-chapter" element={<NewChapter />} />
-            <Route path="/project/:id" element={<Project />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/my-projects" element={<Projects />} />
-            <Route path="/project/:projectId/chapter/:chapterId" element={<Chapter />} />
+            <Route path="/project/:projectId" element={<ProjectLayout />}>
+              <Route index element={<Project />} />
+              <Route path="new-chapter" element={<NewChapter />} />
+              <Route path="chapter/:chapterId" element={<Chapter />} />
+            </Route>
           </Routes>
         </main>
       </div>

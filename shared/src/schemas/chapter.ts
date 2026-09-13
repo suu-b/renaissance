@@ -56,3 +56,9 @@ export const SaveChapterRequestSchema = z.object({
 export type SaveChapterRequest = z.infer<
     typeof SaveChapterRequestSchema
 >;
+
+
+export interface ChaptersData {
+    chaptersNumber: number;
+    chapters: ChapterObject[];
+}

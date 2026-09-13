@@ -22,14 +22,10 @@ export default function ChapterReadView({
   onPrevious,
   onNext,
 }: ChapterReadViewProps) {
-  const textContent = content
-    .map(node => node.children.map(child => child.text).join(""))
-    .join("\n\n")
-
   return (
     <ChapterReader
       title={title}
-      content={textContent}
+      content={content}
       chapterNumber={chapterNumber}
       totalChapters={totalChapters}
       onPrevious={onPrevious}

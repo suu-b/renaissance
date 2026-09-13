@@ -45,3 +45,9 @@ export const PublishProjectRequestSchema = z.object({
 });
 
 export type PublishProjectRequestObject = z.infer<typeof PublishProjectRequestSchema>;
+
+export const ProjectHistorySchema = z.object({
+    projectId: z.string(),
+    limit: z.number()
+});
+export type ProjectHistoryObject = z.infer<typeof ProjectHistorySchema>;

@@ -15,7 +15,7 @@ export async function remoteRouter(app: FastifyInstance) {
         }
     }, async (request, reply) => {
         await request.server.repositoryService.init();
-        const cgsPath = path.join(request.server.appPaths.projects, request.server.appPaths.remotePath);
+        const cgsPath = path.join(request.server.appPaths.workspacePath, request.server.appPaths.remotePath);
         return {
             repositoryPath: cgsPath,
             createdAt: new Date()
