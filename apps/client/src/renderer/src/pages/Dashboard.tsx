@@ -7,6 +7,7 @@ import SearchBar from "../components/ui/SearchBar";
 import Activity from "../components/common/Activity";
 import Explore from "../components/common/Explore";
 import TextHighlight from "../components/ui/TextHighlight";
+import Veil from "../components/ui/Veil";
 
 import { config } from "../config";
 import {
@@ -43,21 +44,23 @@ export default function Dashboard(): React.JSX.Element {
             `Failed to fetch projects: ${response.status}`
           );
         }
+
         const result = await response.json();
-        const projectsData = result.data?.projects || result.projects || [];
+        const projectsData =
+          result.data?.projects || result.projects || [];
+
         const parsedProjects =
           ProjectSchema.array().parse(projectsData);
+
         setProjects(parsedProjects);
       } catch (error) {
-        console.error(
-          "Failed to fetch projects:",
-          error
-        );
+        console.error("Failed to fetch projects:", error);
         setProjects([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProjects();
   }, []);
 
@@ -145,8 +148,13 @@ export default function Dashboard(): React.JSX.Element {
       </div>
 
       <div className="mx-auto w-[25vw]">
-        <Explore className="mb-4" />
-        <Activity className="max-h-[40vh] overflow-y-auto" />
+        <Veil className="rounded-lg">
+          <Explore className="mb-4" />
+        </Veil>
+
+        <Veil className="rounded-lg">
+          <Activity className="max-h-[40vh] overflow-y-auto" />
+        </Veil>
       </div>
     </Page>
   );

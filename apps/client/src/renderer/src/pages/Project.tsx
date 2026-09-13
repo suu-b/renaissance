@@ -11,6 +11,8 @@ import ToolKit from "../components/common/ToolKit"
 import Button from "../components/ui/Button"
 import { useProject } from "../context/ProjectContext"
 
+import Veil from "../components/ui/Veil"
+
 export default function Project() {
     const navigate = useNavigate()
     const { project, chapters, loading, history, historyLoading } = useProject()
@@ -102,13 +104,12 @@ export default function Project() {
                                 {project?.isPrivate ? "Private" : "Public"}
                             </span>
                         </Typography>
-
-                        <Typography variant="muted" className="text-muted-foreground">
-                            Contributors:{" "}
-                            <span className="text-foreground font-semibold">
-                                {project?.contributors?.length || 0}
-                            </span>
-                        </Typography>
+                            <Typography variant="muted" className="text-muted-foreground">
+                                Contributors:{" "}
+                                <span className="text-foreground font-semibold">
+                                    {project?.contributors?.length || 0}
+                                </span>
+                            </Typography>                  
 
                         <Typography variant="muted" className="text-muted-foreground">
                             Chapters:{" "}
@@ -134,6 +135,7 @@ export default function Project() {
 
                 <Stream history={history} className="mb-4" />
 
+                <Veil className="rounded-lg">
                 <Contributions
                     contributors={
                         project?.contributors?.map((c, index) => ({
@@ -147,6 +149,7 @@ export default function Project() {
                         })) || []
                     }
                 />
+                </Veil>
             </div>
         </Page>
     )
