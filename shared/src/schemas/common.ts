@@ -124,3 +124,8 @@ export const CARResponses = {
     "4xx": CARObjectSchema,
     "5xx": CARObjectSchema
 };
+
+export type GitCommit = {
+    hash: string;
+    message: string;
+};

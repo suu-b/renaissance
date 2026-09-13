@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react"
 import type { ReactNode } from "react"
-import { ProjectSchema, type ChapterObject, type ProjectObject } from "@renaissance/shared"
+import { ProjectSchema, type ChapterObject, type ProjectObject, GitCommit } from "@renaissance/shared"
 import { config } from "@renderer/config"
 
 type ProjectContextValue = {
@@ -12,9 +12,9 @@ type ProjectContextValue = {
     getChapterIndex: (chapterId: string) => number
     getPreviousChapter: (chapterId: string) => ChapterObject | null
     getNextChapter: (chapterId: string) => ChapterObject | null
-    history: string[]
+    history: GitCommit[]
     historyLoading: boolean
-    fetchHistory: (path: string, limit: number) => Promise<void>
+    fetchHistory: () => Promise<void>
 }
 
 const ProjectContext = createContext<ProjectContextValue | null>(null)
@@ -32,7 +32,7 @@ export function ProjectProvider({
     const [chapters, setChapters] = useState<ChapterObject[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [history, setHistory] = useState<string[]>([])
+    const [history, setHistory] = useState<GitCommit[]>([])
     const [historyLoading, setHistoryLoading] = useState(false)
 
     const refreshChapters = async () => {
@@ -66,7 +66,6 @@ export function ProjectProvider({
 
     const fetchHistory = useCallback(async () => {
         if (!projectId || !config.serverUrl) return
-
         setHistoryLoading(true)
         try {
             const response = await fetch(
@@ -80,9 +79,7 @@ export function ProjectProvider({
                     })
                 }
             )
-
             const result = await response.json()
-
             if (!response.ok) {
                 throw new Error(
                     result.error?.message ||
@@ -92,7 +89,6 @@ export function ProjectProvider({
             }
 
             const historyData = result.data?.history || result.history || []
-            console.log("History data:", historyData)
             setHistory(historyData)
         } catch (err) {
             console.error("Failed to fetch history:", err)

@@ -94,12 +94,12 @@ app.whenReady().then(() => {
       mainWindow?.maximize()
     }
   })
-  ipcMain.on('open-external', (event, url: string) => {
+  ipcMain.on('open-external', (_event, url: string) => {
     shell.openExternal(url)
   })
 
   // OAuth handler using embedded browser window
-  ipcMain.on('start-oauth', (event, url: string) => {
+  ipcMain.on('start-oauth', (_event, url: string) => {
     console.log('Starting OAuth flow with embedded window URL:', url)
 
     const authWindow = new BrowserWindow({

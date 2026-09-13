@@ -16,7 +16,8 @@ import {
     sendSuccess,
     Errors,
     sendError,
-    ChaptersData
+    ChaptersData,
+    GitCommit
 } from "@renaissance/shared";
 
 import { getUserProfile } from "../../../utils/userProfile.js";
@@ -213,7 +214,7 @@ export async function projectRouter(app: FastifyInstance) {
         try {
             const { projectId, limit } = request.body;
             const projectPath = path.join(app.appPaths.workspacePath, projectId);
-            const history = await app.vandcService.getScopedHistory(projectPath, limit);
+            const history: GitCommit[] = await app.vandcService.getScopedHistory(projectPath, limit);
             return reply.status(200).send(sendSuccess({ history }));
         } catch (error) {
             console.error("Failed to get scoped history:", error);

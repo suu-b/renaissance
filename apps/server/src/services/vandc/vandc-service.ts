@@ -1,3 +1,5 @@
+import { GitCommit } from "@renaissance/shared"
+
 /**
  * VandC Service is an interface for the versioning and collaboration service.
  */
@@ -22,5 +24,5 @@ export interface VandcService {
     // Create a file at the specified path with the given content
     createFile(path: string, content: string, encoding?: BufferEncoding): Promise<void>;
 
-    getScopedHistory(path: string, limit: number): Promise<string[]>;
+    getScopedHistory(path: string, limit: number): Promise<GitCommit[]>;
 }
