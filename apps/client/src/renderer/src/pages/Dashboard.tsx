@@ -8,17 +8,24 @@ import Activity from "../components/common/Activity";
 import Explore from "../components/common/Explore";
 import TextHighlight from "../components/ui/TextHighlight";
 import Veil from "../components/ui/Veil";
+import Modal from "../components/ui/Modal";
 
 import { config } from "../config";
 import {
   ProjectSchema,
   type ProjectObject,
 } from "@renaissance/shared";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard(): React.JSX.Element {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<ProjectObject[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [projectsToDelete, setProjectsToDelete] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -64,6 +71,106 @@ export default function Dashboard(): React.JSX.Element {
 
     fetchProjects();
   }, []);
+
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      const response = await fetch(
+        `${config.serverUrl}/api/v1/user/data/project/delete`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: projectId })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error?.message ||
+          result.error ||
+          `Failed to delete project: ${response.status}`
+        );
+      }
+
+      // Remove the deleted project from the list
+      setProjects(prevProjects => prevProjects.filter(p => p.id !== projectId));
+      setSuccess("Project deleted successfully");
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete project"
+      );
+      
+      // Clear error message after 3 seconds
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  const handleBulkDeleteProjects = async (projectIds: string[]) => {
+    try {
+      // Delete projects one by one
+      for (const projectId of projectIds) {
+        const response = await fetch(
+          `${config.serverUrl}/api/v1/user/data/project/delete`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: projectId })
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            result.error?.message ||
+            result.error ||
+            `Failed to delete project: ${response.status}`
+          );
+        }
+      }
+
+      // Remove the deleted projects from the list
+      setProjects(prevProjects => prevProjects.filter(p => !projectIds.includes(p.id)));
+      setSuccess(`Successfully deleted ${projectIds.length} projects`);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error) {
+      console.error("Failed to bulk delete projects:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete projects"
+      );
+      
+      // Clear error message after 3 seconds
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  const handleBulkDeleteProjectsWithConfirm = (projectIds: string[]) => {
+    if (projectIds.length === 0) return
+    setProjectsToDelete(projectIds)
+    setShowDeleteConfirm(true)
+  }
+
+  const confirmBulkDelete = async () => {
+    setShowDeleteConfirm(false)
+    await handleBulkDeleteProjects(projectsToDelete)
+    setProjectsToDelete([])
+  }
+
+  const cancelBulkDelete = () => {
+    setShowDeleteConfirm(false)
+    setProjectsToDelete([])
+  }
 
   return (
     <Page
@@ -128,6 +235,18 @@ export default function Dashboard(): React.JSX.Element {
           className="my-5"
         />
 
+        {success && (
+          <div className="mb-4 text-sm text-green-600">
+            {success}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-4 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
         {loading ? (
           <div className="my-5 flex items-center justify-center py-8">
             <Typography
@@ -144,6 +263,8 @@ export default function Dashboard(): React.JSX.Element {
             className="my-5"
             projects={projects}
             searchTerm={searchTerm}
+            onDelete={handleDeleteProject}
+            onBulkDelete={handleBulkDeleteProjectsWithConfirm}
           />
         )}
       </div>
@@ -157,6 +278,14 @@ export default function Dashboard(): React.JSX.Element {
           <Activity className="max-h-[40vh] overflow-y-auto" />
         </Veil>
       </div>
+
+      <Modal
+        isOpen={showDeleteConfirm}
+        title="Delete Projects"
+        content={`Are you sure you want to delete ${projectsToDelete.length} project${projectsToDelete.length > 1 ? 's' : ''}? This action cannot be undone.`}
+        onConfirm={confirmBulkDelete}
+        onCancel={cancelBulkDelete}
+      />
     </Page>
   );
 }

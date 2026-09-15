@@ -51,3 +51,18 @@ export const ProjectHistorySchema = z.object({
     limit: z.number()
 });
 export type ProjectHistoryObject = z.infer<typeof ProjectHistorySchema>;
+
+export const UpdateProjectRequestSchema = z.object({
+    id: z.uuid(),
+    name: z.string().min(1).optional(),
+    description: z.string().optional(),
+    isPrivate: z.boolean().optional()
+});
+
+export type UpdateProjectRequestObject = z.infer<typeof UpdateProjectRequestSchema>;
+
+export const DeleteProjectRequestSchema = z.object({
+    id: z.uuid()
+});
+
+export type DeleteProjectRequestObject = z.infer<typeof DeleteProjectRequestSchema>;

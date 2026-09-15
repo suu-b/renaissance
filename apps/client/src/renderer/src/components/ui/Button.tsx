@@ -13,6 +13,8 @@ const buttonVariants = cva(
         secondary:
           "border border-foreground text-foreground hover:bg-foreground/5 hover:-translate-y-0.5",
         ghost: "text-foreground hover:bg-foreground/3",
+        danger:
+          "bg-red-600 text-white hover:bg-red-700 hover:-translate-y-0.5",
       },
       size: {
         sm: "px-6 py-3 text-xs min-w-[130px]",

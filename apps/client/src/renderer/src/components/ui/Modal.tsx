@@ -4,10 +4,11 @@ import Typography from "./Typography"
 type ModalProps = {
   isOpen: boolean
   title: string
-  content: string
+  content?: string
   onConfirm: () => void
   onCancel?: () => void
   className?: string
+  children?: React.ReactNode
 }
 
 export default function Modal({
@@ -17,6 +18,7 @@ export default function Modal({
   onCancel,
   isOpen,
   className,
+  children,
 }: ModalProps) {
   if (!isOpen) return null
 
@@ -29,9 +31,15 @@ export default function Modal({
         <Typography variant="h3" className="mb-4">
           {title}
         </Typography>
-        <Typography variant="p" className="text-muted-foreground mb-6">
-          {content}
-        </Typography>
+        {children ? (
+          <div className="mb-6">
+            {children}
+          </div>
+        ) : (
+          <Typography variant="p" className="text-muted-foreground mb-6">
+            {content}
+          </Typography>
+        )}
         <div className="flex justify-end gap-3">
           <Button variant="secondary" size="sm" onClick={onCancel}>
             Cancel

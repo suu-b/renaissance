@@ -54,16 +54,23 @@ export default function Welcome(): React.JSX.Element {
         console.log('Status set to checking');
         
         try {
-            // Check if git is installed
             setSetupStep('Preparing your workspace...');
             console.log('Checking git installation...');
             const gitInstalled = await window.api.checkGitInstalled();
             console.log('Git installed:', gitInstalled);
-            
             if (!gitInstalled) {
                 console.log('Git not installed, setting error');
                 setSetupStatus('error');
                 setErrorMessage('Git is required to begin. Please install it first.');
+                return;
+            }
+
+            const sqliteInstalled = await window.api.checkSqliteInstalled();
+            console.log('SQlite installed:', sqliteInstalled);
+            if (!sqliteInstalled) {
+                console.log('Sqlite not installed, setting error');
+                setSetupStatus('error');
+                setErrorMessage('Sqlite is required to begin. Please install it first.');
                 return;
             }
             

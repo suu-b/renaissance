@@ -46,6 +46,7 @@ if (process.contextIsolated) {
       },
 
       folderExists: (folderName: string): Promise<boolean> => ipcRenderer.invoke('folder-exists', folderName),
+      checkSqliteInstalled: (): Promise<boolean> => ipcRenderer.invoke('check-sqlite-installed'),
       checkGitInstalled: (): Promise<boolean> => ipcRenderer.invoke('check-git-installed'),
       checkFolderExists: (folderPath: string): Promise<boolean> => ipcRenderer.invoke('check-folder-exists', folderPath),
       checkLeftovers: (): Promise<boolean> => ipcRenderer.invoke('check-leftovers'),
@@ -75,6 +76,7 @@ if (process.contextIsolated) {
       ipcRenderer.removeAllListeners('oauth-callback')
     },
     folderExists: (folderName: string): Promise<boolean> => ipcRenderer.invoke('folder-exists', folderName),
+    checkSqliteInstalled: (): Promise<boolean> => ipcRenderer.invoke('check-sqlite-installed'),
     checkGitInstalled: (): Promise<boolean> => ipcRenderer.invoke('check-git-installed'),
     checkFolderExists: (folderPath: string): Promise<boolean> => ipcRenderer.invoke('check-folder-exists', folderPath),
     checkLeftovers: (): Promise<boolean> => ipcRenderer.invoke('check-leftovers'),

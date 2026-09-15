@@ -15,6 +15,9 @@ type ProjectContextValue = {
     history: GitCommit[]
     historyLoading: boolean
     fetchHistory: () => Promise<void>
+    deleteChapter: (chapterId: string) => Promise<void>
+    bulkDeleteChapters: (chapterIds: string[]) => Promise<void>
+    deleteProject: (projectId: string) => Promise<void>
 }
 
 const ProjectContext = createContext<ProjectContextValue | null>(null)
@@ -35,7 +38,7 @@ export function ProjectProvider({
     const [history, setHistory] = useState<GitCommit[]>([])
     const [historyLoading, setHistoryLoading] = useState(false)
 
-    const refreshChapters = async () => {
+    const refreshChapters = useCallback(async () => {
         if (!projectId || !config.serverUrl) return
 
         const response = await fetch(
@@ -62,7 +65,7 @@ export function ProjectProvider({
         }
 
         setChapters(result.data?.chapters || result.chapters || [])
-    }
+    }, [projectId, config.serverUrl])
 
     const fetchHistory = useCallback(async () => {
         if (!projectId || !config.serverUrl) return
@@ -179,6 +182,96 @@ export function ProjectProvider({
             : null
     }
 
+    const deleteChapter = async (chapterId: string) => {
+        if (!config.serverUrl) return
+
+        try {
+            const response = await fetch(
+                `${config.serverUrl}/api/v1/user/data/chapter/delete`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: chapterId })
+                }
+            )
+
+            const result = await response.json()
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error?.message ||
+                    result.error ||
+                    `Failed to delete chapter: ${response.status}`
+                )
+            }
+
+            // Refresh chapters after successful deletion
+            await refreshChapters()
+        } catch (err) {
+            console.error("Failed to delete chapter:", err)
+            throw err
+        }
+    }
+
+    const bulkDeleteChapters = async (chapterIds: string[]) => {
+        if (!config.serverUrl) return
+
+        try {
+            const response = await fetch(
+                `${config.serverUrl}/api/v1/user/data/chapter/bulk-delete`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ids: chapterIds })
+                }
+            )
+
+            const result = await response.json()
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error?.message ||
+                    result.error ||
+                    `Failed to bulk delete chapters: ${response.status}`
+                )
+            }
+
+            // Refresh chapters after successful deletion
+            await refreshChapters()
+        } catch (err) {
+            console.error("Failed to bulk delete chapters:", err)
+            throw err
+        }
+    }
+
+    const deleteProject = async (projectId: string) => {
+        if (!config.serverUrl) return
+
+        try {
+            const response = await fetch(
+                `${config.serverUrl}/api/v1/user/data/project/delete`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: projectId })
+                }
+            )
+
+            const result = await response.json()
+
+            if (!response.ok) {
+                throw new Error(
+                    result.error?.message ||
+                    result.error ||
+                    `Failed to delete project: ${response.status}`
+                )
+            }
+        } catch (err) {
+            console.error("Failed to delete project:", err)
+            throw err
+        }
+    }
+
     const value = useMemo<ProjectContextValue>(() => ({
         project,
         chapters,
@@ -190,8 +283,11 @@ export function ProjectProvider({
         getNextChapter,
         history,
         historyLoading,
-        fetchHistory
-    }), [project, chapters, loading, error, history, historyLoading, fetchHistory])
+        fetchHistory,
+        deleteChapter,
+        bulkDeleteChapters,
+        deleteProject
+    }), [project, chapters, loading, error, history, historyLoading, fetchHistory, refreshChapters])
 
     return (
         <ProjectContext.Provider value={value}>

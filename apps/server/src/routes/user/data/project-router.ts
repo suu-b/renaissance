@@ -1,14 +1,14 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import fs from "fs/promises";
+import { promises as fs } from "fs";
 import { randomUUID } from "crypto";
 import path from "path";
-import { parse } from "csv-parse/sync";
-import { stringify } from "csv-stringify/sync";
 
 import {
     SearchProjectRequestSchema,
     CreateProjectRequestSchema,
+    UpdateProjectRequestSchema,
+    DeleteProjectRequestSchema,
     ProjectHistorySchema,
     ProjectObject,
     CARResponses,
@@ -16,7 +16,6 @@ import {
     sendSuccess,
     Errors,
     sendError,
-    ChaptersData,
     GitCommit
 } from "@renaissance/shared";
 
@@ -36,41 +35,7 @@ export async function projectRouter(app: FastifyInstance) {
     }, async (request, reply) => {
         try {
             const { includePrivate, limit, offset, sort, filters, fields } = request.body;
-            const fileContent = await fs.readFile(app.appPaths.indexFilePath, "utf-8");
-            const records = parse(fileContent, { skip_empty_lines: true, from_line: 2 });
-
-            let projects: ProjectObject[] = records.map((record: string[]) => {
-                const [id, name, description, isPrivate, createdAt, updatedAt, owner, contributors] = record;
-                const parsedOwner: UserObject = JSON.parse(owner);
-
-                return {
-                    id,
-                    name,
-                    description,
-                    isPrivate: isPrivate === "true",
-                    createdAt: new Date(createdAt),
-                    updatedAt: new Date(updatedAt),
-                    owner: {
-                        ...parsedOwner,
-                        createdAt: new Date(parsedOwner.createdAt)
-                    },
-                    contributors: contributors
-                        ? contributors.split(";").filter(Boolean).map(contributorId => ({
-                            id: contributorId,
-                            username: "",
-                            displayName: "",
-                            avatarUrl: "",
-                            email: "",
-                            createdAt: new Date()
-                        }))
-                        : []
-                };
-            });
-
-            if (!includePrivate) {
-                projects = projects.filter(project => !project.isPrivate);
-            }
-
+            const projects = app.indexService.getAllProjects({ includePrivate });
             const result = DataService.processSearch(projects, {
                 limit, offset, sort, filters, fields
             });
@@ -99,45 +64,11 @@ export async function projectRouter(app: FastifyInstance) {
         try {
             const { includePrivate, limit, offset, sort, filters, fields } = request.body;
             const userProfile = getUserProfile();
-            const fileContent = await fs.readFile(app.appPaths.indexFilePath, "utf-8");
-            const records = parse(fileContent, { skip_empty_lines: true, from_line: 2 });
-
-            let projects: ProjectObject[] = records.map((record: string[]) => {
-                const [id, name, description, isPrivate, createdAt, updatedAt, owner, contributors] = record;
-                const parsedOwner: UserObject = JSON.parse(owner);
-
-                return {
-                    id,
-                    name,
-                    description,
-                    isPrivate: isPrivate === "true",
-                    createdAt: new Date(createdAt),
-                    updatedAt: new Date(updatedAt),
-                    owner: {
-                        ...parsedOwner,
-                        createdAt: new Date(parsedOwner.createdAt)
-                    },
-                    contributors: contributors
-                        ? contributors.split(";").filter(Boolean).map(contributorId => ({
-                            id: contributorId,
-                            username: "",
-                            displayName: "",
-                            avatarUrl: "",
-                            email: "",
-                            createdAt: new Date()
-                        }))
-                        : []
-                };
+            const projects = app.indexService.getAllProjects({
+                includePrivate,
+                ownerId: userProfile.id,
+                contributorIds: [userProfile.id]
             });
-
-            projects = projects.filter(project =>
-                project.owner.id === userProfile.id ||
-                project.contributors.some(contributor => contributor.id === userProfile.id)
-            );
-
-            if (!includePrivate) {
-                projects = projects.filter(project => !project.isPrivate);
-            }
 
             const result = DataService.processSearch(projects, {
                 limit, offset, sort, filters, fields
@@ -164,42 +95,52 @@ export async function projectRouter(app: FastifyInstance) {
     }, async (request, reply) => {
         try {
             const { name, description, isPrivate } = request.body;
-            const id = randomUUID();
-            const now = new Date();
-            const indexFilePath = app.appPaths.indexFilePath;
-            const localProjectPath = path.join(app.appPaths.workspacePath, id);
             const userProfile = getUserProfile();
+            const id = randomUUID();
+            const localProjectPath = path.join(app.appPaths.workspacePath, id);
 
-            const indexEntry = [
+            await app.vandcService.createFolder(localProjectPath);
+
+            const projectId = app.indexService.createProject({
                 id,
                 name,
                 description,
                 isPrivate,
-                now.toISOString(),
-                now.toISOString(),
-                JSON.stringify(userProfile),
-                ""
-            ];
+                path: localProjectPath,
+                owner: userProfile
+            });
 
-            await app.vandcService.createFolder(localProjectPath);
-            await fs.appendFile(indexFilePath, stringify([indexEntry]), "utf-8");
-
-            const chaptersData: ChaptersData = {
-                chaptersNumber: 0,
-                chapters: []
-            };
-
-            await fs.writeFile(
-                path.join(localProjectPath, "chapters.json"),
-                JSON.stringify(chaptersData, null, 2),
-                "utf-8"
-            );
-
-            return reply.status(201).send(sendSuccess({ id }));
+            return reply.status(201).send(sendSuccess({ id: projectId }));
 
         } catch (error) {
             console.error("Failed to create project:", error);
             return reply.status(500).send(sendError(Errors.PROJECT_GET_FAILED));
+        }
+    });
+
+    // POST /api/v1/user/data/project/update
+    typedApp.post("/update", {
+        schema: {
+            body: UpdateProjectRequestSchema,
+            response: CARResponses,
+            tags: ["User Data"]
+        }
+    }, async (request, reply) => {
+        try {
+            const { id, name, description, isPrivate } = request.body;
+            const success = app.indexService.updateProject(id, {
+                name,
+                description,
+                isPrivate
+            });
+
+            if (!success) {
+                return reply.status(404).send(sendError(Errors.PROJECT_UPDATE_FAILED));
+            }
+            return reply.status(200).send(sendSuccess({ id }));
+        } catch (error) {
+            console.error("Failed to update project:", error);
+            return reply.status(500).send(sendError(Errors.PROJECT_UPDATE_FAILED));
         }
     });
 
@@ -219,6 +160,45 @@ export async function projectRouter(app: FastifyInstance) {
         } catch (error) {
             console.error("Failed to get scoped history:", error);
             return reply.status(500).send(sendError(Errors.PROJECT_GET_FAILED));
+        }
+    });
+
+    // POST /api/v1/user/data/project/delete
+    typedApp.post("/delete", {
+        schema: {
+            body: DeleteProjectRequestSchema,
+            response: CARResponses,
+            tags: ["User Data"]
+        }
+    }, async (request, reply) => {
+        try {
+            const { id } = request.body as { id: string };
+            
+            // Get project info to find project path
+            const project = app.indexService.getProjectById(id);
+            if (!project) {
+                return reply.status(404).send(sendError(Errors.PROJECT_NOT_FOUND));
+            }
+
+            // Delete from database
+            const success = app.indexService.deleteProject(id);
+            if (!success) {
+                return reply.status(404).send(sendError(Errors.PROJECT_DELETE_FAILED));
+            }
+
+            // Delete the project folder and all its contents
+            const projectPath = path.join(app.appPaths.workspacePath, id);
+            try {
+                await fs.rm(projectPath, { recursive: true, force: true });
+            } catch (fileError) {
+                console.error("Failed to delete project folder:", fileError);
+                // Continue even if folder deletion fails, as DB is updated
+            }
+
+            return reply.status(200).send(sendSuccess({ id }));
+        } catch (error) {
+            console.error("Failed to delete project:", error);
+            return reply.status(500).send(sendError(Errors.PROJECT_DELETE_FAILED));
         }
     });
 }

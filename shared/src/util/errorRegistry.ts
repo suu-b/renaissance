@@ -14,6 +14,11 @@ export const Errors = {
         message: "Failed to create project.",
     },
 
+    PROJECT_UPDATE_FAILED: {
+        code: "PROJECT_UPDATE_FAILED",
+        message: "Failed to update project.",
+    },
+
     PROJECT_NOT_FOUND: {
         code: "PROJECT_NOT_FOUND",
         message: "Project not found.",
@@ -37,6 +42,11 @@ export const Errors = {
     CHAPTER_CREATE_FAILED: {
         code: "CHAPTER_CREATE_FAILED",
         message: "Failed to create chapter.",
+    },
+
+    CHAPTER_UPDATE_FAILED: {
+        code: "CHAPTER_UPDATE_FAILED",
+        message: "Failed to update chapter.",
     },
 
     CHAPTER_GET_FAILED: {
@@ -87,5 +97,15 @@ export const Errors = {
     CHAPTER_SAVE_FAILED: {
         code: "CHAPTER_SAVE_FAILED",
         message: "Failed to save chapter"
+    },
+
+    CHAPTER_DELETE_FAILED: {
+        code: "CHAPTER_DELETE_FAILED",
+        message: "Failed to delete chapter"
+    },
+
+    PROJECT_DELETE_FAILED: {
+        code: "PROJECT_DELETE_FAILED",
+        message: "Failed to delete project"
     }
 } as const;

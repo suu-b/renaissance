@@ -15,6 +15,7 @@ declare global {
       removeOAuthCallback: () => void
       folderExists: (folderName: string) => Promise<boolean>
       checkGitInstalled: () => Promise<boolean>
+      checkSqliteInstalled: () => Promise<boolean>
       checkFolderExists: (folderPath: string) => Promise<boolean>
       checkLeftovers: () => Promise<boolean>
       doSetup: (withAccount: boolean) => Promise<{ success: boolean; error?: string; workspacePath?: string, indexFilePath?: string}>

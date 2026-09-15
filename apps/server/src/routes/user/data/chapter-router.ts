@@ -1,15 +1,17 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import fs from "fs/promises";
+import { promises as fs } from "fs";
 import { randomUUID } from "crypto";
 import path from "path";
 
 import {
     SearchChapterRequestSchema,
     CreateChapterRequestSchema,
+    UpdateChapterRequestSchema,
     GetChapterRequestSchema,
     SaveChapterRequestSchema,
-    ChaptersData,
+    DeleteChapterRequestSchema,
+    BulkDeleteChapterRequestSchema,
     ChapterObject,
     CARResponses,
     sendSuccess,
@@ -32,16 +34,7 @@ export async function chapterRouter(app: FastifyInstance) {
     }, async (request, reply) => {
         try {
             const { project: projectId, limit, offset, sort, filters, fields } = request.body;
-            const chaptersFilePath = path.join(app.appPaths.workspacePath, projectId, "chapters.json");
-
-            const chaptersData: ChaptersData = JSON.parse(await fs.readFile(chaptersFilePath, "utf-8"));
-
-            const chapters: ChapterObject[] = chaptersData.chapters.map(chapter => ({
-                ...chapter,
-                project: projectId,
-                createdAt: new Date(chapter.createdAt),
-                updatedAt: new Date(chapter.updatedAt)
-            }));
+            const chapters = app.indexService.getChaptersByProjectId(projectId);
 
             const result = DataService.processSearch(chapters, {
                 limit, offset, sort, filters, fields
@@ -69,19 +62,17 @@ export async function chapterRouter(app: FastifyInstance) {
     }, async (request, reply) => {
         try {
             const { project: projectId, id: chapterId } = request.body;
-            const chaptersFilePath = path.join(app.appPaths.workspacePath, projectId, "chapters.json");
+            const chapterNumber = app.indexService.getChapterNumber(chapterId);
+            const chaptersCount = app.indexService.getChaptersCount(projectId);
 
-            const chaptersData: ChaptersData = JSON.parse(await fs.readFile(chaptersFilePath, "utf-8"));
-            const chapterIndex = chaptersData.chapters.findIndex(chapter => chapter.id === chapterId);
-
-            if (chapterIndex === -1) {
+            if (chapterNumber === null) {
                 return reply.status(404).send(sendError(Errors.CHAPTER_GET_FAILED));
             }
 
             return reply.status(200).send(sendSuccess({
                 metadata: {
-                    chaptersNumber: chaptersData.chapters.length,
-                    chapterNumber: chapterIndex + 1
+                    chaptersNumber: chaptersCount,
+                    chapterNumber: chapterNumber
                 }
             }));
         } catch (error) {
@@ -126,55 +117,54 @@ export async function chapterRouter(app: FastifyInstance) {
         try {
             const { project: projectId, name } = request.body;
             const id = randomUUID();
-            const now = new Date();
+            const chapterId = app.indexService.createChapter({
+                id,
+                projectId,
+                name
+            });
 
             const projectPath = path.join(app.appPaths.workspacePath, projectId);
-            const chaptersFilePath = path.join(projectPath, "chapters.json");
-            const chapterFilePath = path.join(projectPath, `${id}.json`);
-
-            let chaptersData: ChaptersData;
-
-            try {
-                chaptersData = JSON.parse(await fs.readFile(chaptersFilePath, "utf-8"));
-            } catch {
-                chaptersData = { chaptersNumber: 0, chapters: [] };
-            }
-
-            const newChapter: ChapterObject = {
-                id,
-                project: projectId,
-                name,
-                createdAt: now,
-                updatedAt: now
-            };
-
-            chaptersData.chapters.push(newChapter);
-            chaptersData.chaptersNumber = chaptersData.chapters.length;
-
-            await fs.writeFile(
-                chaptersFilePath,
-                JSON.stringify(chaptersData, null, 2),
-                "utf-8"
-            );
-
+            const chapterFilePath = path.join(projectPath, `${chapterId}.json`);
             const initialContent = {
-                id,
+                id: chapterId,
                 content: [{
                     type: "paragraph",
                     children: [{ text: "Hey Boy, start writing from here..." }]
                 }]
             };
-
             await app.vandcService.createFile(
                 chapterFilePath,
                 JSON.stringify(initialContent, null, 2),
                 "utf-8"
             );
-
-            return reply.status(201).send(sendSuccess({ id }));
+            return reply.status(201).send(sendSuccess({ id: chapterId }));
         } catch (error) {
             console.error("Failed to create chapter:", error);
             return reply.status(500).send(sendError(Errors.CHAPTER_CREATE_FAILED));
+        }
+    });
+
+    // POST /api/v1/user/data/chapter/update
+    typedApp.post("/update", {
+        schema: {
+            body: UpdateChapterRequestSchema,
+            response: CARResponses,
+            tags: ["User Data"]
+        }
+    }, async (request, reply) => {
+        try {
+            const { id, name } = request.body;
+            if (!name) {
+                return reply.status(400).send(sendError(Errors.CHAPTER_UPDATE_FAILED));
+            }
+            const success = app.indexService.updateChapter(id, name);
+            if (!success) {
+                return reply.status(404).send(sendError(Errors.CHAPTER_UPDATE_FAILED));
+            }
+            return reply.status(200).send(sendSuccess({ id }));
+        } catch (error) {
+            console.error("Failed to update chapter:", error);
+            return reply.status(500).send(sendError(Errors.CHAPTER_UPDATE_FAILED));
         }
     });
 
@@ -199,6 +189,102 @@ export async function chapterRouter(app: FastifyInstance) {
         } catch (error) {
             console.error("Failed to save chapter:", error);
             return reply.status(500).send(sendError(Errors.CHAPTER_SAVE_FAILED));
+        }
+    });
+
+    // POST /api/v1/user/data/chapter/delete
+    typedApp.post("/delete", {
+        schema: {
+            body: DeleteChapterRequestSchema,
+            response: CARResponses,
+            tags: ["User Data"]
+        }
+    }, async (request, reply) => {
+        try {
+            const { id } = request.body as { id: string };
+            
+            // Get chapter info to find project ID
+            const chapter = app.indexService.getChapterById(id);
+            if (!chapter) {
+                return reply.status(404).send(sendError(Errors.CHAPTER_NOT_FOUND));
+            }
+
+            // Delete from database
+            const success = app.indexService.deleteChapter(id);
+            if (!success) {
+                return reply.status(404).send(sendError(Errors.CHAPTER_DELETE_FAILED));
+            }
+
+            // Delete the chapter file
+            const chapterFilePath = path.join(app.appPaths.workspacePath, chapter.project, `${id}.json`);
+            try {
+                await fs.unlink(chapterFilePath);
+            } catch (fileError) {
+                console.error("Failed to delete chapter file:", fileError);
+                // Continue even if file deletion fails, as DB is updated
+            }
+
+            return reply.status(200).send(sendSuccess({ id }));
+        } catch (error) {
+            console.error("Failed to delete chapter:", error);
+            return reply.status(500).send(sendError(Errors.CHAPTER_DELETE_FAILED));
+        }
+    });
+
+    // POST /api/v1/user/data/chapter/bulk-delete
+    typedApp.post("/bulk-delete", {
+        schema: {
+            body: BulkDeleteChapterRequestSchema,
+            response: CARResponses,
+            tags: ["User Data"]
+        }
+    }, async (request, reply) => {
+        try {
+            const { ids } = request.body as { ids: string[] };
+            const deletedIds: string[] = [];
+            const failedIds: string[] = [];
+
+            for (const id of ids) {
+                try {
+                    // Get chapter info to find project ID
+                    const chapter = app.indexService.getChapterById(id);
+                    if (!chapter) {
+                        failedIds.push(id);
+                        continue;
+                    }
+
+                    // Delete from database
+                    const success = app.indexService.deleteChapter(id);
+                    if (!success) {
+                        failedIds.push(id);
+                        continue;
+                    }
+
+                    // Delete the chapter file
+                    const chapterFilePath = path.join(app.appPaths.workspacePath, chapter.project, `${id}.json`);
+                    try {
+                        await fs.unlink(chapterFilePath);
+                    } catch (fileError) {
+                        console.error("Failed to delete chapter file:", fileError);
+                        // Continue even if file deletion fails, as DB is updated
+                    }
+
+                    deletedIds.push(id);
+                } catch (error) {
+                    console.error("Failed to delete chapter:", id, error);
+                    failedIds.push(id);
+                }
+            }
+
+            return reply.status(200).send(sendSuccess({
+                deletedIds,
+                failedIds,
+                totalRequested: ids.length,
+                totalDeleted: deletedIds.length
+            }));
+        } catch (error) {
+            console.error("Failed to bulk delete chapters:", error);
+            return reply.status(500).send(sendError(Errors.CHAPTER_DELETE_FAILED));
         }
     });
 }

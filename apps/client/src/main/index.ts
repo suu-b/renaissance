@@ -1,4 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { spawn, fork } from 'node:child_process'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -24,6 +25,13 @@ if (!gotTheLock) {
       mainWindow.focus()
     }
   })
+}
+
+
+function startServer() {
+  spawn("pnpm", ["--filter", "@renaissance/server", "dev"], {
+    stdio: "inherit",
+  });
 }
 
 function createWindow(): void {
@@ -66,6 +74,8 @@ app.setName("Renaissance")
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  // Spawn the local fastify server
+  // startServer();
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -184,6 +194,16 @@ app.whenReady().then(() => {
   ipcMain.handle('check-git-installed', async () => {
     try {
       await execAsync('git --version', { timeout: 5000 })
+      return true
+    } catch (error) {
+      console.error('Git not found:', error)
+      return false
+    }
+  })
+
+  ipcMain.handle('check-sqlite-installed', async () => {
+    try {
+      await execAsync('sqlite3 --version', { timeout: 5000 })
       return true
     } catch (error) {
       console.error('Git not found:', error)

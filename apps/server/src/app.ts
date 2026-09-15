@@ -12,6 +12,7 @@ import {
 import { router } from "./routes/router.js";
 import servicesPlugin from "./plugins/services.js"
 import configPlugin from "./plugins/config.js";
+import sqlitePlugin from "./plugins/sqlite-plugin.js";
 
 export function buildApp() {
     const app = Fastify({
@@ -43,6 +44,7 @@ export function buildApp() {
 
     // Registering Services
     app.register(configPlugin)
+    app.register(sqlitePlugin)
     app.register(servicesPlugin)
 
     // Registering the API Router

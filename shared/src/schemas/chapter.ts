@@ -18,6 +18,13 @@ export const CreateChapterRequestSchema = z.object({
 
 export type CreateChapterRequestObject = z.infer<typeof CreateChapterRequestSchema>;
 
+export const UpdateChapterRequestSchema = z.object({
+    id: z.uuid(),
+    name: z.string().min(1).optional()
+});
+
+export type UpdateChapterRequestObject = z.infer<typeof UpdateChapterRequestSchema>;
+
 export const SearchChapterRequestSchema = z.object({
     project: z.uuid(),
     includePrivate: z.boolean().default(true),
@@ -57,6 +64,18 @@ export type SaveChapterRequest = z.infer<
     typeof SaveChapterRequestSchema
 >;
 
+
+export const DeleteChapterRequestSchema = z.object({
+    id: z.uuid()
+});
+
+export type DeleteChapterRequestObject = z.infer<typeof DeleteChapterRequestSchema>;
+
+export const BulkDeleteChapterRequestSchema = z.object({
+    ids: z.array(z.uuid()).min(1)
+});
+
+export type BulkDeleteChapterRequestObject = z.infer<typeof BulkDeleteChapterRequestSchema>;
 
 export interface ChaptersData {
     chaptersNumber: number;

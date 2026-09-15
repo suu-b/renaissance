@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cva, type VariantProps } from "class-variance-authority";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiTrash2 } from "react-icons/fi";
+import Checkbox from "../ui/Checkbox";
 
 import Card from "../ui/Card";
 import Button from "../ui/Button";
@@ -27,6 +28,8 @@ type ProjectListProps = VariantProps<typeof projectListVariants> & {
   className?: string;
   projects?: ProjectObject[];
   searchTerm?: string;
+  onDelete?: (projectId: string) => Promise<void>;
+  onBulkDelete?: (projectIds: string[]) => void;
 };
 
 export default function ProjectList({
@@ -35,14 +38,19 @@ export default function ProjectList({
   className,
   projects = [],
   searchTerm = "",
+  onDelete,
+  onBulkDelete,
 }: ProjectListProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
 
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedProjects(new Set());
   }, [searchTerm]);
 
   const filteredProjects = useMemo(() => {
@@ -71,6 +79,43 @@ export default function ProjectList({
     );
   };
 
+  const handleDelete = async (projectId: string) => {
+    if (!onDelete) return;
+
+    setDeletingId(projectId);
+    try {
+      await onDelete(projectId);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleSelectProject = (projectId: string) => {
+    setSelectedProjects(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(projectId)) {
+        newSet.delete(projectId);
+      } else {
+        newSet.add(projectId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedProjects.size === currentProjects.length) {
+      setSelectedProjects(new Set());
+    } else {
+      setSelectedProjects(new Set(currentProjects.map(project => project.id)));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedProjects.size === 0 || !onBulkDelete) return;
+
+    onBulkDelete(Array.from(selectedProjects));
+  };
+
   const cardGap =
     size === "sm"
       ? "gap-1"
@@ -91,6 +136,17 @@ export default function ProjectList({
         />
 
         <div className="flex gap-2">
+          {onBulkDelete && selectedProjects.size > 0 && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleBulkDelete}
+            >
+              <FiTrash2 />
+              Delete {selectedProjects.size} projects
+            </Button>
+          )}
+
           <Button
             variant="primary"
             size="sm"
@@ -115,6 +171,18 @@ export default function ProjectList({
         </div>
       </div>
 
+      {currentProjects.length > 0 && onBulkDelete && (
+        <div className="mb-4 flex items-center gap-2">
+          <Checkbox
+            checked={selectedProjects.size === currentProjects.length}
+            onChange={handleSelectAll}
+          />
+          <Typography variant="small" className="text-muted-foreground">
+            Select all ({currentProjects.length})
+          </Typography>
+        </div>
+      )}
+
       <div className={`flex flex-col ${cardGap}`}>
         {filteredProjects.length === 0 ? (
           <div className="flex items-center justify-center py-8">
@@ -124,26 +192,36 @@ export default function ProjectList({
           </div>
         ) : (
           currentProjects.map((project) => (
-            <Card
-              key={project.id}
-              size={size}
-              title={project.name}
-              subtitle={
-                project.description ||
-                "No description"
-              }
-              lastUpdatedBy={
-                project.owner.displayName
-              }
-              lastUpdatedAt={project.updatedAt.toLocaleDateString()}
-              button={
-                <div className="flex gap-2">
-                  <Button variant="primary" size="sm" onClick={() => navigate(`/project/${project.id}`)}>
-                    Open
-                  </Button>
-                </div>
-              }
-            />
+            <div key={project.id} className="flex items-start gap-3">
+              {onBulkDelete && (
+                <Checkbox
+                  checked={selectedProjects.has(project.id)}
+                  onChange={() => handleSelectProject(project.id)}
+                  className="mt-1"
+                />
+              )}
+              <div className="flex-1">
+                <Card
+                  size={size}
+                  title={project.name}
+                  subtitle={
+                    project.description ||
+                    "No description"
+                  }
+                  lastUpdatedBy={
+                    project.owner.displayName
+                  }
+                  lastUpdatedAt={project.updatedAt.toLocaleDateString()}
+                  button={
+                    <div className="flex gap-2">
+                      <Button variant="primary" size="sm" onClick={() => navigate(`/project/${project.id}`)}>
+                        Open
+                      </Button>
+                    </div>
+                  }
+                />
+              </div>
+            </div>
           ))
         )}
       </div>
