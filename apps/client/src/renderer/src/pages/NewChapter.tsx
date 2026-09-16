@@ -10,12 +10,14 @@ import FormMessage from '../components/ui/FormMessage'
 import Typography from '../components/ui/Typography'
 import BackLink from '../components/ui/BackLink'
 import { useToast } from '../components/ui/Toast'
+import { useProject } from '../context/ProjectContext'
 
 import { config } from '../config'
 
 export default function NewChapter(): React.JSX.Element {
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const { currentBranch, branches } = useProject()
 
   const { projectId } = useParams<{ projectId: string }>()
 
@@ -25,6 +27,9 @@ export default function NewChapter(): React.JSX.Element {
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Get current branch name
+  const currentBranchName = branches.find(branch => branch.id === currentBranch)?.branchName || 'Unknown Branch'
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -46,6 +51,12 @@ export default function NewChapter(): React.JSX.Element {
       return
     }
 
+    if (!currentBranch) {
+      setError('No branch selected. Please select a branch first.')
+      setIsLoading(false)
+      return
+    }
+
     try {
       if (!config.serverUrl) {
         throw new Error('Server URL is not configured')
@@ -58,18 +69,24 @@ export default function NewChapter(): React.JSX.Element {
         },
         body: JSON.stringify({
           project: projectId,
-          name: formData.name.trim()
+          name: formData.name.trim(),
+          branchId: currentBranch
         })
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        throw new Error(`Failed to create chapter: ${response.status}`)
+        throw new Error(
+          result.error?.message || result.error || `Failed to create chapter: ${response.status}`
+        )
       }
+
       showToast("Chapter created successfully!", "info")
       navigate(`/project/${projectId}`)
     } catch (err) {
       console.error('Failed to create chapter:', err)
-      setError('Failed to create chapter. Please try again.')
+      setError(err instanceof Error ? err.message : 'Failed to create chapter. Please try again.')
       showToast('Failed to create chapter', 'alert')
     } finally {
       setIsLoading(false)
@@ -81,6 +98,9 @@ export default function NewChapter(): React.JSX.Element {
       <div className="flex flex-col gap-4 max-w-[500px]">
         <div className="flex items-center gap-2 mb-2">
           <BackLink fallbackPath={`/project/${projectId}`} />
+          <div className="text-sm text-muted-foreground">
+            Branch: <span className="font-medium text-foreground">{currentBranchName}</span>
+          </div>
         </div>
 
         <div className="text-center">

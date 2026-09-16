@@ -9,7 +9,8 @@ export const ProjectSchema = z.object({
     updatedAt: z.coerce.date(),
     createdAt: z.coerce.date(),
     owner: UserSchema,
-    contributors: z.array(UserSchema).default([])
+    contributors: z.array(UserSchema).default([]),
+    defaultBranch: z.string().nullable()
 });
 
 export type ProjectObject = z.infer<typeof ProjectSchema>;
@@ -48,7 +49,8 @@ export type PublishProjectRequestObject = z.infer<typeof PublishProjectRequestSc
 
 export const ProjectHistorySchema = z.object({
     projectId: z.string(),
-    limit: z.number()
+    limit: z.number(),
+    branchId: z.string().optional()
 });
 export type ProjectHistoryObject = z.infer<typeof ProjectHistorySchema>;
 
@@ -70,7 +72,30 @@ export type DeleteProjectRequestObject = z.infer<typeof DeleteProjectRequestSche
 export const GetCommitDiffRequestSchema = z.object({
     project: z.uuid(),
     filePath: z.string().min(1),
-    hash: z.string().min(1)
+    hash: z.string().min(1),
+    branch: z.array(z.string())
 });
- 
+
 export type GetCommitDiffRequestObject = z.infer<typeof GetCommitDiffRequestSchema>;
+
+export const GetBranchesRequestSchema = z.object({
+    projectId: z.uuid()
+});
+
+export type GetBranchesRequestObject = z.infer<typeof GetBranchesRequestSchema>;
+
+export const DeleteBranchRequestSchema = z.object({
+    branchId: z.uuid()
+});
+
+export type DeleteBranchRequestObject = z.infer<typeof DeleteBranchRequestSchema>;
+
+export const BranchSchema = z.object({
+    id: z.uuid(),
+    branchName: z.string(),
+    projectId: z.uuid(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date()
+});
+
+export type BranchObject = z.infer<typeof BranchSchema>;

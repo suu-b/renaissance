@@ -16,7 +16,7 @@ if (process.contextIsolated) {
       startOAuth: (url: string) => ipcRenderer.send("start-oauth", url),
 
       onOAuthCallback: (callback: (result: any) => void) => {
-        ipcRenderer.on('oauth-callback', (event, result) => callback(result))
+        ipcRenderer.on('oauth-callback', (_event, result) => callback(result))
       },
 
       removeOAuthCallback: () => {
@@ -48,7 +48,7 @@ if (process.contextIsolated) {
     openExternal: (url: string) => ipcRenderer.send("open-external", url),
     startOAuth: (url: string) => ipcRenderer.send("start-oauth", url),
     onOAuthCallback: (callback: (url: string) => void) => {
-      ipcRenderer.on('oauth-callback', (event, url) => callback(url))
+      ipcRenderer.on('oauth-callback', (_event, url) => callback(url))
     },
     removeOAuthCallback: () => {
       ipcRenderer.removeAllListeners('oauth-callback')

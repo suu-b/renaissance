@@ -16,6 +16,7 @@ import Input from '../components/ui/Input'
 import Textarea from '../components/ui/Textarea'
 import Veil from '../components/ui/Veil'
 import { useToast } from '../components/ui/Toast'
+import SearchableDropdown from '../components/ui/SearchableDropdown'
 
 import { useProject } from '../context/ProjectContext'
 import { useBreadcrumb } from '../context/BreadcrumbContext'
@@ -35,7 +36,12 @@ export default function Project() {
     fetchHistory,
     deleteProject,
     bulkDeleteChapters,
-    refreshProject
+    refreshProject,
+    branches,
+    fetchBranches,
+    switchBranch,
+    currentBranch,
+    createBranch
   } = useProject()
   const { setBreadcrumbs } = useBreadcrumb()
 
@@ -48,21 +54,21 @@ export default function Project() {
   const [editDescription, setEditDescription] = useState('')
   const [editIsPrivate, setEditIsPrivate] = useState(false)
   const [updating, setUpdating] = useState(false)
+  const [showNewBranchModal, setShowNewBranchModal] = useState(false)
+  const [newBranchName, setNewBranchName] = useState('')
+  const [creatingBranch, setCreatingBranch] = useState(false)
 
   useEffect(() => {
-    console.log("Fetching latest project...");
+    console.log('Fetching latest project...')
     fetchProject()
   }, [fetchProject])
 
   useEffect(() => {
-    console.log("Fetching latest chapters...");
-    fetchChapters()
-  }, [fetchChapters])
-
-  useEffect(() => {
-    console.log("Fetching latest history...");
-    fetchHistory()
-  }, [fetchHistory])
+    if (project) {
+      console.log('Fetching branches...')
+      fetchBranches()
+    }
+  }, [project, fetchBranches])
 
   useEffect(() => {
     if (project) {
@@ -173,6 +179,34 @@ export default function Project() {
     setEditIsPrivate(false)
   }
 
+  const handleCreateBranch = async () => {
+    if (!newBranchName.trim()) {
+      showToast('Branch name cannot be empty', 'alert')
+      return
+    }
+
+    setCreatingBranch(true)
+    setError(null)
+
+    try {
+      await createBranch(newBranchName.trim())
+      setShowNewBranchModal(false)
+      setNewBranchName('')
+      showToast('Branch created successfully', 'info')
+    } catch (error) {
+      console.error('Failed to create branch:', error)
+      setError(error instanceof Error ? error.message : 'Failed to create branch')
+      showToast('Failed to create branch', 'alert')
+    } finally {
+      setCreatingBranch(false)
+    }
+  }
+
+  const cancelNewBranch = () => {
+    setShowNewBranchModal(false)
+    setNewBranchName('')
+  }
+
   return (
     <Page alignment="default" className="flex gap-4">
       <div className="mx-auto w-[60vw]">
@@ -181,15 +215,34 @@ export default function Project() {
             <BackLink fallbackPath="/dashboard" />
           </div>
 
-          <ToolKit
-            size="sm"
-            confirm={true}
-            confirmTitle="Delete Project"
-            confirmContent="Are you sure you want to delete this project? This action cannot be undone."
-            onDelete={handleDelete}
-            onEdit={handleEdit}
-            showNew={false}
-          />
+          <div className="flex gap-5 justify-center items-center">
+            <div
+              className="bg-foreground rounded px-2 py-2 inline-flex items-center justify-center cursor-pointer"
+              onClick={() => setShowNewBranchModal(true)}
+            >
+              <FiPlus color="white" />
+            </div>
+            <SearchableDropdown
+              options={branches.map((branch) => branch.branchName)}
+              defaultIndex={branches.findIndex((branch) => branch.id === currentBranch)}
+              onSelect={async (branchName) => {
+                const selectedBranch = branches.find((branch) => branch.branchName === branchName)
+                if (selectedBranch) {
+                  await switchBranch(selectedBranch.id)
+                }
+              }}
+              variant="default"
+            />
+            <ToolKit
+              size="sm"
+              confirm={true}
+              confirmTitle="Delete Project"
+              confirmContent="Are you sure you want to delete this project? This action cannot be undone."
+              onDelete={handleDelete}
+              onEdit={handleEdit}
+              showNew={false}
+            />
+          </div>
         </div>
 
         <Typography variant="h1" className="my-6">
@@ -306,6 +359,36 @@ export default function Project() {
         onConfirm={confirmBulkDelete}
         onCancel={cancelBulkDelete}
       />
+
+      <Modal
+        isOpen={showNewBranchModal}
+        title="Create New Branch"
+        content=""
+        onConfirm={handleCreateBranch}
+        onCancel={cancelNewBranch}
+      >
+        <div className="w-full space-y-6">
+          <div className="space-y-2">
+            <label htmlFor="new-branch-name" className="block text-sm font-medium text-foreground">
+              Branch Name
+            </label>
+
+            <Input
+              id="new-branch-name"
+              value={newBranchName}
+              onChange={(e) => setNewBranchName(e.target.value)}
+              placeholder="Enter branch name"
+              className="w-full"
+            />
+          </div>
+
+          {creatingBranch && (
+            <div className="rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+              Creating branch...
+            </div>
+          )}
+        </div>
+      </Modal>
 
       <Modal
         isOpen={showEditModal}

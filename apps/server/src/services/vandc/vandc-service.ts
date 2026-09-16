@@ -6,12 +6,12 @@ import { GitCommit } from "@renaissance/shared"
 export interface VandcService {
     // Would init the local global repo for the user
     // VandcService instance should receive that path during init only
-    init(): Promise<void>;
+    init(repoPath?: string): Promise<void>;
 
     // Scoped methods
     // A Scope is the level within a project
     // Would allow user to save their changes. Internally, stage changes
-    scopedSaved(scopePath: string, content: string, message: string, encoding?: BufferEncoding): Promise<void>;
+    scopedSaved(scopePath: string, content: string, message: string, encoding?: BufferEncoding, repoPath?: string): Promise<void>;
 
     // Global methods
     // Global methods operate at the global repo level in a similar way like scoped ones.
@@ -19,12 +19,25 @@ export interface VandcService {
 
     // Local file system operations
     // Create a folder at the specified path
-    createFolder(path: string): Promise<void>;
+    createFolder(path: string, repoPath?: string): Promise<void>;
 
     // Create a file at the specified path with the given content
-    createFile(path: string, content: string, encoding?: BufferEncoding): Promise<void>;
+    createFile(path: string, content: string, encoding?: BufferEncoding, repoPath?: string): Promise<void>;
+
+    // Delete a file at the specified path
+    deleteFile(path: string, repoPath?: string): Promise<void>;
+
+    // Delete a folder at the specified path
+    deleteFolder(path: string, repoPath?: string): Promise<void>;
 
     getScopedHistory(path: string, limit: number): Promise<GitCommit[]>;
 
     getCommitDiff(filePath: string, hash: string): Promise<string>;
+
+    // Branch management methods
+    createBranch(branchName: string, repoPath?: string): Promise<void>;
+
+    changeBranch(branchName: string, repoPath?: string): Promise<void>;
+
+    deleteBranch(branchName: string, repoPath?: string): Promise<void>;
 }

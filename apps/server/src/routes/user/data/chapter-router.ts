@@ -32,8 +32,15 @@ export async function chapterRouter(app: FastifyInstance) {
         }
     }, async (request, reply) => {
         try {
-            const { project: projectId, limit, offset, sort, filters, fields } = request.body;
-            const chapters = app.indexService.getChaptersByProjectId(projectId);
+            const { project: projectId, limit, offset, sort, filters, fields, branch } = request.body as any;
+            let chapters = app.indexService.getChaptersByProjectId(projectId);
+            app.log.info({ branch }, "Current branch");
+            app.log.info({ branch }, "branch");
+            // Filter chapters by branch if provided
+            if (branch) {
+                chapters = chapters.filter(chapter => chapter.branchId === branch);
+            }
+            app.log.info({ chapters }, "Current chapters");
 
             const result = DataService.processSearch(chapters, {
                 limit, offset, sort, filters, fields
@@ -82,21 +89,34 @@ export async function chapterRouter(app: FastifyInstance) {
     });
 
     // POST /api/v1/user/data/chapter/new
+    // take the branch id as an arg as well
+    // before making vandc changes, swithc to that branch and then make those changes
     typedApp.post("/new", {
         schema: {
             body: CreateChapterRequestSchema
         }
     }, async (request, reply) => {
         try {
-            const { project: projectId, name } = request.body;
+            const { project: projectId, name, branchId } = request.body as any;
             const id = randomUUID();
+            const projectPath = path.join(app.appPaths.workspacePath, projectId);
+
+            // If branchId is provided, switch to that branch first
+            if (branchId) {
+                const branch = app.indexService.getBranchById(branchId);
+                if (!branch) {
+                    return reply.status(404).send(sendError(Errors.CHAPTER_CREATE_FAILED));
+                }
+                await app.vandcService.changeBranch(branchId, projectPath);
+            }
+
             const chapterId = app.indexService.createChapter({
                 id,
                 projectId,
-                name
+                name,
+                branchId
             });
 
-            const projectPath = path.join(app.appPaths.workspacePath, projectId);
             const chapterFilePath = path.join(projectPath, `${chapterId}.json`);
             const initialContent = {
                 id: chapterId,
@@ -108,7 +128,8 @@ export async function chapterRouter(app: FastifyInstance) {
             await app.vandcService.createFile(
                 chapterFilePath,
                 JSON.stringify(initialContent, null, 2),
-                "utf-8"
+                "utf-8",
+                projectPath
             );
             return reply.status(201).send(sendSuccess({ id: chapterId }));
         } catch (error) {
@@ -142,6 +163,9 @@ export async function chapterRouter(app: FastifyInstance) {
     });
 
     // POST /api/v1/user/data/chapter/save
+    // take the branch id as an arg as well
+    // before making vandc changes, swithc to that branch and then make those changes
+
     typedApp.post("/save", {
         schema: {
             body: SaveChapterRequestSchema,
@@ -149,14 +173,25 @@ export async function chapterRouter(app: FastifyInstance) {
         }
     }, async (request, reply) => {
         try {
-            const { project: projectId, id: chapterId, content, message } = request.body;
-            const chapterFilePath = path.join(app.appPaths.workspacePath, projectId, `${chapterId}.json`);
+            const { project: projectId, id: chapterId, content, message, branchId } = request.body as any;
+            const projectPath = path.join(app.appPaths.workspacePath, projectId);
+            const chapterFilePath = path.join(projectPath, `${chapterId}.json`);
+
+            // If branchId is provided, switch to that branch first
+            if (branchId) {
+                const branch = app.indexService.getBranchById(branchId);
+                if (!branch) {
+                    return reply.status(404).send(sendError(Errors.CHAPTER_SAVE_FAILED));
+                }
+                await app.vandcService.changeBranch(branchId, projectPath);
+            }
 
             await app.vandcService.scopedSaved(
                 chapterFilePath,
                 JSON.stringify({ id: chapterId, content }, null, 2),
                 message || `Update chapter ${chapterId}`,
-                "utf-8"
+                "utf-8",
+                projectPath
             );
 
             return reply.status(200).send(sendSuccess({ id: chapterId }));
@@ -189,10 +224,11 @@ export async function chapterRouter(app: FastifyInstance) {
                 return reply.status(404).send(sendError(Errors.CHAPTER_DELETE_FAILED));
             }
 
-            // Delete the chapter file
-            const chapterFilePath = path.join(app.appPaths.workspacePath, chapter.project, `${id}.json`);
+            // Delete the chapter file using the vandc service
+            const projectPath = path.join(app.appPaths.workspacePath, chapter.project);
+            const chapterFilePath = path.join(projectPath, `${id}.json`);
             try {
-                await fs.unlink(chapterFilePath);
+                await app.vandcService.deleteFile(chapterFilePath, projectPath);
             } catch (fileError) {
                 console.error("Failed to delete chapter file:", fileError);
                 // Continue even if file deletion fails, as DB is updated
@@ -234,10 +270,11 @@ export async function chapterRouter(app: FastifyInstance) {
                         continue;
                     }
 
-                    // Delete the chapter file
-                    const chapterFilePath = path.join(app.appPaths.workspacePath, chapter.project, `${id}.json`);
+                    // Delete the chapter file using the vandc service
+                    const projectPath = path.join(app.appPaths.workspacePath, chapter.project);
+                    const chapterFilePath = path.join(projectPath, `${id}.json`);
                     try {
-                        await fs.unlink(chapterFilePath);
+                        await app.vandcService.deleteFile(chapterFilePath, projectPath);
                     } catch (fileError) {
                         console.error("Failed to delete chapter file:", fileError);
                         // Continue even if file deletion fails, as DB is updated

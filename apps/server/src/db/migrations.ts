@@ -12,7 +12,17 @@ export function runMigrations(db: DatabaseSync) {
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             owner_id TEXT NOT NULL,
-            owner_data TEXT NOT NULL
+            owner_data TEXT NOT NULL,
+            default_branch TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS branches (
+            id TEXT PRIMARY KEY,
+            branch_name TEXT NOT NULL,
+            project_id TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
         );
 
         CREATE TABLE IF NOT EXISTS project_contributors (
@@ -30,7 +40,9 @@ export function runMigrations(db: DatabaseSync) {
             name TEXT NOT NULL,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+            branch_id TEXT NOT NULL,
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+            FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE
         );
 
         CREATE INDEX IF NOT EXISTS idx_projects_owner_id ON projects(owner_id);

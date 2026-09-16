@@ -9,12 +9,20 @@ export interface CreateProjectParams {
     isPrivate: boolean;
     path: string;
     owner: UserObject;
+    defaultBranch?: string | null;
 }
 
 export interface CreateChapterParams {
     id?: string;
     projectId: string;
     name: string;
+    branchId?: string;
+}
+
+export interface CreateBranchParams {
+    id?: string;
+    projectId: string;
+    branchName: string;
 }
 
 export interface SearchProjectsParams {
@@ -30,10 +38,11 @@ export class IndexService {
     createProject(params: CreateProjectParams): string {
         const id = params.id || randomUUID();
         const now = new Date().toISOString();
+        const defaultBranch = params.defaultBranch || null;
 
         const stmt = this.db.prepare(`
-            INSERT INTO projects (id, name, description, is_private, path, created_at, updated_at, owner_id, owner_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO projects (id, name, description, is_private, path, created_at, updated_at, owner_id, owner_data, default_branch)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         stmt.run(
@@ -45,7 +54,8 @@ export class IndexService {
             now,
             now,
             params.owner.id,
-            JSON.stringify(params.owner)
+            JSON.stringify(params.owner),
+            defaultBranch
         );
 
         return id;
@@ -156,6 +166,16 @@ export class IndexService {
         return this.updateProject(id, { isPrivate });
     }
 
+    updateProjectDefaultBranch(id: string, defaultBranch: string): boolean {
+        const now = new Date().toISOString();
+        const stmt = this.db.prepare(`
+            UPDATE projects SET default_branch = ?, updated_at = ? WHERE id = ?
+        `);
+
+        const result = stmt.run(defaultBranch, now, id);
+        return result.changes > 0;
+    }
+
     updateProjectPath(id: string, path: string): boolean {
         const now = new Date().toISOString();
         const stmt = this.db.prepare(`
@@ -230,8 +250,9 @@ export class IndexService {
                 avatarUrl: "",
                 email: "",
                 createdAt: new Date()
-            }))
-        };
+            })),
+            defaultBranch: row.default_branch || null
+        } as any;
     }
 
     createChapter(params: CreateChapterParams): string {
@@ -239,11 +260,11 @@ export class IndexService {
         const now = new Date().toISOString();
 
         const stmt = this.db.prepare(`
-            INSERT INTO chapters (id, project_id, name, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO chapters (id, project_id, name, created_at, updated_at, branch_id)
+            VALUES (?, ?, ?, ?, ?, ?)
         `);
 
-        stmt.run(id, params.projectId, params.name, now, now);
+        stmt.run(id, params.projectId, params.name, now, now, params.branchId || null);
 
         return id;
     }
@@ -291,7 +312,77 @@ export class IndexService {
             project: row.project_id,
             name: row.name,
             createdAt: new Date(row.created_at),
+            updatedAt: new Date(row.updated_at),
+            branchId: row.branch_id
+        };
+    }
+
+    createBranch(params: CreateBranchParams): string {
+        const id = params.id || randomUUID();
+        const now = new Date().toISOString();
+
+        const stmt = this.db.prepare(`
+            INSERT INTO branches (id, branch_name, project_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
+        `);
+
+        stmt.run(id, params.branchName, params.projectId, now, now);
+
+        return id;
+    }
+
+    getBranchById(id: string): any | null {
+        const stmt = this.db.prepare(`
+            SELECT * FROM branches WHERE id = ?
+        `);
+
+        const row = stmt.get(id) as any;
+        if (!row) return null;
+
+        return {
+            id: row.id,
+            branchName: row.branch_name,
+            projectId: row.project_id,
+            createdAt: new Date(row.created_at),
             updatedAt: new Date(row.updated_at)
         };
+    }
+
+    getBranchesByProjectId(projectId: string): any[] {
+        const stmt = this.db.prepare(`
+            SELECT * FROM branches WHERE project_id = ?
+        `);
+
+        const rows = stmt.all(projectId) as any[];
+        return rows.map(row => ({
+            id: row.id,
+            branchName: row.branch_name,
+            projectId: row.project_id,
+            createdAt: new Date(row.created_at),
+            updatedAt: new Date(row.updated_at)
+        }));
+    }
+
+    getBranchByName(projectId: string, branchName: string): any | null {
+        const stmt = this.db.prepare(`
+            SELECT * FROM branches WHERE project_id = ? AND branch_name = ?
+        `);
+
+        const row = stmt.get(projectId, branchName) as any;
+        if (!row) return null;
+
+        return {
+            id: row.id,
+            branchName: row.branch_name,
+            projectId: row.project_id,
+            createdAt: new Date(row.created_at),
+            updatedAt: new Date(row.updated_at)
+        };
+    }
+
+    deleteBranch(id: string): boolean {
+        const stmt = this.db.prepare("DELETE FROM branches WHERE id = ?");
+        const result = stmt.run(id);
+        return result.changes > 0;
     }
 }

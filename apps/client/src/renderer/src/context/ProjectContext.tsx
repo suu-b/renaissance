@@ -8,26 +8,37 @@ import {
 } from '@renaissance/shared'
 import { config } from '@renderer/config'
 
+type Branch = {
+  id: string
+  branchName: string
+}
+
 type ProjectContextValue = {
   project: ProjectObject | null
   chapters: ChapterObject[]
   history: GitCommit[]
+  branches: Branch[]
+  currentBranch: string | null
 
   projectLoading: boolean
   chaptersLoading: boolean
   historyLoading: boolean
+  branchesLoading: boolean
 
   projectError: string | null
   chaptersError: string | null
   historyError: string | null
+  branchesError: string | null
 
   fetchProject: () => Promise<void>
-  fetchChapters: () => Promise<void>
-  fetchHistory: () => Promise<void>
+  fetchChapters: (branchId?: string) => Promise<void>
+  fetchHistory: (branchId?: string) => Promise<void>
+  fetchBranches: () => Promise<void>
 
   refreshProject: () => Promise<void>
-  refreshChapters: () => Promise<void>
-  refreshHistory: () => Promise<void>
+  refreshChapters: (branchId?: string) => Promise<void>
+  refreshHistory: (branchId?: string) => Promise<void>
+  refreshBranches: () => Promise<void>
 
   getChapterIndex: (chapterId: string) => number
   getPreviousChapter: (chapterId: string) => ChapterObject | null
@@ -36,6 +47,9 @@ type ProjectContextValue = {
   deleteChapter: (chapterId: string) => Promise<void>
   bulkDeleteChapters: (chapterIds: string[]) => Promise<void>
   deleteProject: (projectId: string) => Promise<void>
+  deleteBranch: (branchId: string) => Promise<void>
+  switchBranch: (branchId: string) => Promise<void>
+  createBranch: (branchName: string) => Promise<void>
 }
 
 const ProjectContext = createContext<ProjectContextValue | null>(null)
@@ -49,15 +63,120 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   const [project, setProject] = useState<ProjectObject | null>(null)
   const [chapters, setChapters] = useState<ChapterObject[]>([])
   const [history, setHistory] = useState<GitCommit[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [currentBranch, setCurrentBranch] = useState<string | null>(null)
 
   const [projectLoading, setProjectLoading] = useState(false)
   const [chaptersLoading, setChaptersLoading] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [branchesLoading, setBranchesLoading] = useState(false)
 
   const [projectError, setProjectError] = useState<string | null>(null)
   const [chaptersError, setChaptersError] = useState<string | null>(null)
   const [historyError, setHistoryError] = useState<string | null>(null)
+  const [branchesError, setBranchesError] = useState<string | null>(null)
 
+  /*
+   * Fetch chapters for an explicitly requested branch.
+   *
+   * Important:
+   * This function does NOT depend on currentBranch.
+   * That keeps its identity stable when the user switches branches.
+   */
+  const fetchChapters = useCallback(
+    async (branchId?: string) => {
+      if (!projectId || !config.serverUrl) return
+
+      setChaptersLoading(true)
+      setChaptersError(null)
+
+      try {
+        const response = await fetch(`${config.serverUrl}/api/v1/user/data/chapter/search`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            project: projectId,
+            limit: 100,
+            offset: 0,
+            branch: branchId
+          })
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(
+            result.error?.message || result.error || `Failed to fetch chapters: ${response.status}`
+          )
+        }
+
+        setChapters(result.data?.chapters || result.chapters || [])
+      } catch (err) {
+        console.error('Failed to fetch chapters:', err)
+
+        setChaptersError(err instanceof Error ? err.message : 'Failed to load chapters')
+      } finally {
+        setChaptersLoading(false)
+      }
+    },
+    [projectId]
+  )
+
+  /*
+   * Fetch history for an explicitly requested branch.
+   *
+   * Important:
+   * This function does NOT depend on currentBranch.
+   */
+  const fetchHistory = useCallback(
+    async (branchId?: string) => {
+      if (!projectId || !config.serverUrl) return
+
+      setHistoryLoading(true)
+      setHistoryError(null)
+
+      try {
+        const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/history`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            projectId,
+            limit: 30,
+            branchId
+          })
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(
+            result.error?.message || result.error || `Failed to fetch history: ${response.status}`
+          )
+        }
+
+        setHistory(result.data?.history || result.history || [])
+      } catch (err) {
+        console.error('Failed to fetch history:', err)
+
+        setHistoryError(err instanceof Error ? err.message : 'Failed to load history')
+      } finally {
+        setHistoryLoading(false)
+      }
+    },
+    [projectId]
+  )
+
+  /*
+   * Fetch the project itself.
+   *
+   * This is intentionally independent of currentBranch.
+   * Loading the project should establish the initial default branch,
+   * but changing branches must not cause this function to be recreated.
+   */
   const fetchProject = useCallback(async () => {
     if (!projectId || !config.serverUrl) return
 
@@ -96,7 +215,25 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
         throw new Error('Project not found')
       }
 
-      setProject(ProjectSchema.parse(projects[0]))
+      const projectData = ProjectSchema.parse(projects[0])
+
+      setProject(projectData)
+
+      const defaultBranch =
+        (
+          projectData as ProjectObject & {
+            defaultBranch?: string
+          }
+        ).defaultBranch ?? null
+
+      setCurrentBranch(defaultBranch)
+
+      if (defaultBranch) {
+        await Promise.all([fetchChapters(defaultBranch), fetchHistory(defaultBranch)])
+      } else {
+        setChapters([])
+        setHistory([])
+      }
     } catch (err) {
       console.error('Failed to fetch project:', err)
 
@@ -104,24 +241,22 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     } finally {
       setProjectLoading(false)
     }
-  }, [projectId])
+  }, [projectId, fetchChapters, fetchHistory])
 
-  const fetchChapters = useCallback(async () => {
+  const fetchBranches = useCallback(async () => {
     if (!projectId || !config.serverUrl) return
 
-    setChaptersLoading(true)
-    setChaptersError(null)
+    setBranchesLoading(true)
+    setBranchesError(null)
 
     try {
-      const response = await fetch(`${config.serverUrl}/api/v1/user/data/chapter/search`, {
+      const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/branches`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          project: projectId,
-          limit: 100,
-          offset: 0
+          projectId
         })
       })
 
@@ -129,53 +264,17 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
       if (!response.ok) {
         throw new Error(
-          result.error?.message || result.error || `Failed to fetch chapters: ${response.status}`
+          result.error?.message || result.error || `Failed to fetch branches: ${response.status}`
         )
       }
 
-      setChapters(result.data?.chapters || result.chapters || [])
+      setBranches(result.data?.branches || result.branches || [])
     } catch (err) {
-      console.error('Failed to fetch chapters:', err)
+      console.error('Failed to fetch branches:', err)
 
-      setChaptersError(err instanceof Error ? err.message : 'Failed to load chapters')
+      setBranchesError(err instanceof Error ? err.message : 'Failed to load branches')
     } finally {
-      setChaptersLoading(false)
-    }
-  }, [projectId])
-
-  const fetchHistory = useCallback(async () => {
-    if (!projectId || !config.serverUrl) return
-
-    setHistoryLoading(true)
-    setHistoryError(null)
-
-    try {
-      const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/history`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          projectId,
-          limit: 30
-        })
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          result.error?.message || result.error || `Failed to fetch history: ${response.status}`
-        )
-      }
-
-      setHistory(result.data?.history || result.history || [])
-    } catch (err) {
-      console.error('Failed to fetch history:', err)
-
-      setHistoryError(err instanceof Error ? err.message : 'Failed to load history')
-    } finally {
-      setHistoryLoading(false)
+      setBranchesLoading(false)
     }
   }, [projectId])
 
@@ -183,13 +282,23 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     await fetchProject()
   }, [fetchProject])
 
-  const refreshChapters = useCallback(async () => {
-    await fetchChapters()
-  }, [fetchChapters])
+  const refreshChapters = useCallback(
+    async (branchId?: string) => {
+      await fetchChapters(branchId ?? currentBranch ?? undefined)
+    },
+    [fetchChapters, currentBranch]
+  )
 
-  const refreshHistory = useCallback(async () => {
-    await fetchHistory()
-  }, [fetchHistory])
+  const refreshHistory = useCallback(
+    async (branchId?: string) => {
+      await fetchHistory(branchId ?? currentBranch ?? undefined)
+    },
+    [fetchHistory, currentBranch]
+  )
+
+  const refreshBranches = useCallback(async () => {
+    await fetchBranches()
+  }, [fetchBranches])
 
   const getChapterIndex = useCallback(
     (chapterId: string) => chapters.findIndex((chapter) => chapter.id === chapterId),
@@ -237,14 +346,16 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
           )
         }
 
-        // Refresh only chapters.
-        await refreshChapters()
+        await Promise.all([
+          refreshChapters(currentBranch ?? undefined),
+          refreshHistory(currentBranch ?? undefined)
+        ])
       } catch (err) {
         console.error('Failed to delete chapter:', err)
         throw err
       }
     },
-    [refreshChapters]
+    [refreshChapters, refreshHistory, currentBranch]
   )
 
   const bulkDeleteChapters = useCallback(
@@ -272,14 +383,16 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
           )
         }
 
-        // Refresh only chapters.
-        await refreshChapters()
+        await Promise.all([
+          refreshChapters(currentBranch ?? undefined),
+          refreshHistory(currentBranch ?? undefined)
+        ])
       } catch (err) {
         console.error('Failed to bulk delete chapters:', err)
         throw err
       }
     },
-    [refreshChapters]
+    [refreshChapters, refreshHistory, currentBranch]
   )
 
   const deleteProject = useCallback(async (projectIdToDelete: string) => {
@@ -303,35 +416,142 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
           result.error?.message || result.error || `Failed to delete project: ${response.status}`
         )
       }
-
-      // The caller can navigate away or explicitly fetch again.
     } catch (err) {
       console.error('Failed to delete project:', err)
       throw err
     }
   }, [])
 
+  const deleteBranch = useCallback(
+    async (branchId: string) => {
+      if (!config.serverUrl) return
+
+      try {
+        const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/branch/delete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            branchId
+          })
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(
+            result.error?.message || result.error || `Failed to delete branch: ${response.status}`
+          )
+        }
+
+        await refreshBranches()
+
+        if (currentBranch === branchId && project) {
+          const defaultBranch =
+            (
+              project as ProjectObject & {
+                defaultBranch?: string
+              }
+            ).defaultBranch ?? null
+
+          setCurrentBranch(defaultBranch)
+
+          if (defaultBranch) {
+            await Promise.all([fetchChapters(defaultBranch), fetchHistory(defaultBranch)])
+          } else {
+            setChapters([])
+            setHistory([])
+          }
+        }
+      } catch (err) {
+        console.error('Failed to delete branch:', err)
+        throw err
+      }
+    },
+    [currentBranch, project, refreshBranches, fetchChapters, fetchHistory]
+  )
+
+  /*
+   * Branch switching explicitly passes the selected branch to both
+   * requests. It does not depend on React state having updated yet.
+   */
+  const switchBranch = useCallback(
+    async (branchId: string) => {
+      setCurrentBranch(branchId)
+
+      await Promise.all([fetchChapters(branchId), fetchHistory(branchId)])
+    },
+    [fetchChapters, fetchHistory]
+  )
+
+  const createBranch = useCallback(
+    async (branchName: string) => {
+      if (!projectId || !config.serverUrl) return
+
+      try {
+        const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/branch/new`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            projectId,
+            branchName
+          })
+        })
+
+        const result = await response.json()
+
+        if (!response.ok) {
+          throw new Error(
+            result.error?.message || result.error || `Failed to create branch: ${response.status}`
+          )
+        }
+
+        const newBranchId = result.data?.id || result.id
+
+        if (!newBranchId) {
+          throw new Error('Branch was created but no branch ID was returned')
+        }
+
+        await switchBranch(newBranchId)
+        await refreshBranches()
+      } catch (err) {
+        console.error('Failed to create branch:', err)
+        throw err
+      }
+    },
+    [projectId, switchBranch, refreshBranches]
+  )
+
   const value = useMemo<ProjectContextValue>(
     () => ({
       project,
       chapters,
       history,
+      branches,
+      currentBranch,
 
       projectLoading,
       chaptersLoading,
       historyLoading,
+      branchesLoading,
 
       projectError,
       chaptersError,
       historyError,
+      branchesError,
 
       fetchProject,
       fetchChapters,
       fetchHistory,
+      fetchBranches,
 
       refreshProject,
       refreshChapters,
       refreshHistory,
+      refreshBranches,
 
       getChapterIndex,
       getPreviousChapter,
@@ -339,28 +559,37 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
       deleteChapter,
       bulkDeleteChapters,
-      deleteProject
+      deleteProject,
+      deleteBranch,
+      switchBranch,
+      createBranch
     }),
     [
       project,
       chapters,
       history,
+      branches,
+      currentBranch,
 
       projectLoading,
       chaptersLoading,
       historyLoading,
+      branchesLoading,
 
       projectError,
       chaptersError,
       historyError,
+      branchesError,
 
       fetchProject,
       fetchChapters,
       fetchHistory,
+      fetchBranches,
 
       refreshProject,
       refreshChapters,
       refreshHistory,
+      refreshBranches,
 
       getChapterIndex,
       getPreviousChapter,
@@ -368,7 +597,10 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
       deleteChapter,
       bulkDeleteChapters,
-      deleteProject
+      deleteProject,
+      deleteBranch,
+      switchBranch,
+      createBranch
     ]
   )
 
@@ -377,8 +609,10 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
 export function useProject() {
   const context = useContext(ProjectContext)
+
   if (!context) {
     throw new Error('useProject must be used within a ProjectProvider')
   }
+
   return context
 }

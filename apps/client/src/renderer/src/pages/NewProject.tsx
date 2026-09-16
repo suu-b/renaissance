@@ -84,7 +84,8 @@ export default function NewProject(): React.JSX.Element {
       navigate(`/project/${projectId}`);
     } catch (err) {
       console.error('Failed to create project:', err)
-      setError('Failed to create project. Please try again.')
+      // setError('Failed to create project. Please try again.')
+      showToast("Failed to create project. Please try again.", "alert")
     } finally {
       setIsLoading(false)
     }

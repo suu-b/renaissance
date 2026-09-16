@@ -28,7 +28,7 @@ export default function Chapter() {
   const mode = searchParams.get('mode')
   const { showToast } = useToast()
 
-  const { getPreviousChapter, getNextChapter, deleteChapter, project } = useProject()
+  const { getPreviousChapter, getNextChapter, deleteChapter, project, currentBranch, branches } = useProject()
   const { setBreadcrumbs } = useBreadcrumb()
 
   const [content, setContent] = useState<EditorNode[]>([])
@@ -48,6 +48,9 @@ export default function Chapter() {
   const isWriteMode = mode === 'write'
 
   const draftKey = projectId && chapterId ? `renaissance:chapter:${projectId}:${chapterId}` : ''
+
+  // Get current branch name
+  const currentBranchName = branches.find(branch => branch.id === currentBranch)?.branchName || 'Unknown Branch'
 
   useEffect(() => {
     if (project) {
@@ -273,7 +276,8 @@ export default function Chapter() {
           project: projectId,
           id: chapterId,
           content,
-          message: saveMessage.trim() || undefined
+          message: saveMessage.trim() || undefined,
+          branchId: currentBranch || undefined
         })
       })
 
@@ -337,6 +341,9 @@ export default function Chapter() {
       <div className="mb-6 flex items-start justify-between">
         <div>
           <BackLink fallbackPath={`/project/${projectId}`} />
+          <div className="mt-2 text-sm text-muted-foreground">
+            Branch: <span className="font-medium text-foreground">{currentBranchName}</span>
+          </div>
         </div>
 
         <div className="relative">

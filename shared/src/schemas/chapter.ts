@@ -6,14 +6,16 @@ export const ChapterSchema = z.object({
     project: z.uuid(),
     name: z.string().min(1),
     createdAt: z.coerce.date(),
-    updatedAt: z.coerce.date()
+    updatedAt: z.coerce.date(),
+    branchId: z.string()
 });
 
 export type ChapterObject = z.infer<typeof ChapterSchema>;
 
 export const CreateChapterRequestSchema = z.object({
     project: z.uuid(),
-    name: z.string().min(1)
+    name: z.string().min(1),
+    branchId: z.uuid().optional()
 });
 
 export type CreateChapterRequestObject = z.infer<typeof CreateChapterRequestSchema>;
@@ -26,13 +28,14 @@ export const UpdateChapterRequestSchema = z.object({
 export type UpdateChapterRequestObject = z.infer<typeof UpdateChapterRequestSchema>;
 
 export const SearchChapterRequestSchema = z.object({
-    project: z.uuid(),
-    includePrivate: z.boolean().default(true),
-    limit: z.number().int().min(1).max(100).default(25),
-    offset: z.number().int().min(0).default(0),
-    sort: SortObjectSchema.optional(),
-    filters: z.array(FilterObjectSchema).default([]),
-    fields: z.array(z.string()).default([])
+  project: z.uuid(),
+  includePrivate: z.boolean().default(true),
+  limit: z.number().int().min(1).max(100).default(25),
+  offset: z.number().int().min(0).default(0),
+  sort: SortObjectSchema.optional(),
+  filters: z.array(FilterObjectSchema).default([]),
+  fields: z.array(z.string()).default([]),
+  branch: z.uuid()
 });
 
 export type SearchChapterRequestObject = z.infer<typeof SearchChapterRequestSchema>;
@@ -76,7 +79,8 @@ export const SaveChapterRequestSchema = z.object({
             )
         })
     ),
-    message: z.string().default(`Update chapter`)
+    message: z.string().default(`Update chapter`),
+    branchId: z.uuid().optional()
 });
 
 export type SaveChapterRequest = z.infer<
