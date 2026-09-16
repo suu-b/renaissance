@@ -1,47 +1,38 @@
 import { buildApp } from "./app.js";
-
-import { writeFileSync, mkdirSync, existsSync } from "fs"
-import { join } from "path";
-import { homedir } from "os";
-
-console.log("=================================");
-console.log("RENAISSANCE SERVER PROCESS START");
-console.log("PID:", process.pid);
-console.log("TIME:", new Date().toISOString());
-console.log("=================================");
-
-
 const app = buildApp();
 
 async function start() {
-    try {
-        await app.listen({
-            port: 0, // this is important - we do not want to hardcode our port but let the OS return one available for us
-            host: "127.0.0.1"
-        });
-
-        const address = app.server.address();
-        if(!address) throw new Error("Failed to get server address. Server failed to start");
-
-        const port = typeof address === 'string' ? parseInt(address.split(':')[1]) : address.port;
-
-       const portFilePath = join(homedir(), '.renaissance', 'server-port.txt');
-       const configDir = join(homedir(), '.renaissance');
-       
-       if (!existsSync(configDir)) {
-           mkdirSync(configDir, { recursive: true });
-       }
-       
-       writeFileSync(portFilePath, port.toString());
-
-
-        console.log("Server running at:", address);
-        console.log("Port written to:", portFilePath);
-
-    } catch (err) {
-        app.log.error(err);
-        process.exit(1);
+  try {
+    const port = Number(process.env.PORT);
+    if (!port || Number.isNaN(port)) {
+      throw new Error("Port configuration not found or invalid");
     }
+
+    await app.listen({
+      port: port, // electron will find an open port and pass here to run on
+      host: "127.0.0.1",
+    });
+
+    const address = app.server.address();
+    if (!address)
+      throw new Error("Failed to get server address. Server failed to start");
+
+    // Not saving in file. not easy to sync w/ client.
+    //    const portFilePath = join(homedir(), '.renaissance', 'server-port.txt');
+    //    const configDir = join(homedir(), '.renaissance');
+
+    // if (!existsSync(configDir)) {
+    //     mkdirSync(configDir, { recursive: true });
+    // }
+
+    // writeFileSync(portFilePath, port.toString());
+
+    // console.log("Server running at:", address);
+    console.log("Returning this port:", port);
+  } catch (err) {
+    app.log.error(err);
+    process.exit(1);
+  }
 }
 
 start();

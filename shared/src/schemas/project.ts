@@ -66,3 +66,11 @@ export const DeleteProjectRequestSchema = z.object({
 });
 
 export type DeleteProjectRequestObject = z.infer<typeof DeleteProjectRequestSchema>;
+
+export const GetCommitDiffRequestSchema = z.object({
+    project: z.uuid(),
+    filePath: z.string().min(1),
+    hash: z.string().min(1)
+});
+ 
+export type GetCommitDiffRequestObject = z.infer<typeof GetCommitDiffRequestSchema>;

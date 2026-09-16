@@ -31,11 +31,13 @@ type ToolKitProps = VariantProps<typeof toolKitVariants> & {
   confirm?: boolean
   confirmTitle?: string
   confirmContent?: string
+  saveConfirm?: boolean
   saveConfirmTitle?: string
   saveConfirmContent?: string
   cancelConfirmTitle?: string
   cancelConfirmContent?: string
   showSaveCancel?: boolean
+  showNew?: boolean
 }
 
 export default function ToolKit({
@@ -49,11 +51,13 @@ export default function ToolKit({
   confirm,
   confirmTitle,
   confirmContent,
-  saveConfirmTitle,
-  saveConfirmContent,
+  saveConfirm = true,
+  saveConfirmTitle = "Save Chapter",
+  saveConfirmContent = "Are you sure you want to save your changes to this chapter?",
   cancelConfirmTitle,
   cancelConfirmContent,
   showSaveCancel = false,
+  showNew = true,
 }: ToolKitProps) {
   return (
     <div className={`${toolKitVariants({ size })} ${className ?? ""}`}>
@@ -62,7 +66,7 @@ export default function ToolKit({
           <SaveTool
             size={size}
             onClick={onSave}
-            confirm={confirm}
+            confirm={saveConfirm}
             confirmTitle={saveConfirmTitle}
             confirmContent={saveConfirmContent}
           />
@@ -84,7 +88,7 @@ export default function ToolKit({
             confirmTitle={confirmTitle}
             confirmContent={confirmContent}
           />
-          <NewTool size={size} onClick={onNew} />
+          {showNew && <NewTool size={size} onClick={onNew} />}
         </>
       )}
     </div>

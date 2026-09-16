@@ -11,21 +11,16 @@ import UserProfilePopover from "../ui/UserProfilePopover"
 import Breadcrumbs from "../ui/Breadcrumbs"
 
 import { useAuth } from "../../context/AuthContext"
-
-type BreadcrumbItem = {
-  label: string
-  path?: string
-  onClick?: () => void
-}
+import { useBreadcrumb } from "../../context/BreadcrumbContext"
 
 type TopBarProps = {
   onMenuClick?: () => void
-  breadcrumbs?: BreadcrumbItem[]
 }
 
-export default function TopBar({ onMenuClick, breadcrumbs }: TopBarProps): React.JSX.Element {
+export default function TopBar({ onMenuClick }: TopBarProps): React.JSX.Element {
   console.log("url:", config.getRenaissanceFeedbackURL );
   const { user } = useAuth()
+  const { breadcrumbs } = useBreadcrumb()
   
   return (
     <div className="flex justify-between items-center py-2 px-5 border-b border-gray-200">
@@ -37,7 +32,7 @@ export default function TopBar({ onMenuClick, breadcrumbs }: TopBarProps): React
         >
           <FiMenu className="text-lg" />
         </button>
-        <Typography variant="h3" >
+        <Typography variant="h3">
           Renaissance
         </Typography>
         {breadcrumbs && breadcrumbs.length > 0 && (

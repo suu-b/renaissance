@@ -3,7 +3,6 @@ import { spawn, fork } from 'node:child_process'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-
 import os from 'node:os'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -13,6 +12,7 @@ import { promisify } from 'node:util'
 const execAsync = promisify(exec)
 
 let mainWindow: BrowserWindow | null = null
+let serverPort: number | null = null;
 
 const gotTheLock = app.requestSingleInstanceLock()
 
@@ -28,10 +28,19 @@ if (!gotTheLock) {
 }
 
 
-function startServer() {
-  spawn("pnpm", ["--filter", "@renaissance/server", "dev"], {
-    stdio: "inherit",
-  });
+async function startServer() {
+  const { default: getPort } = await import('get-port');
+  serverPort = await getPort();
+  spawn("pnpm", ["--filter", "@renaissance/server", "dev"],
+    {
+      env: {
+        ...process.env,
+        PORT: String(serverPort),
+      },
+      stdio: "inherit",
+    });
+
+  return serverPort;
 }
 
 function createWindow(): void {
@@ -75,7 +84,7 @@ app.setName("Renaissance")
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Spawn the local fastify server
-  // startServer();
+  startServer();
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -308,6 +317,10 @@ app.whenReady().then(() => {
       console.error('Failed to load user profile:', error)
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
     }
+  })
+
+  ipcMain.handle('get-port', () => {
+    return serverPort;
   })
 
   createWindow()

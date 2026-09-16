@@ -8,6 +8,7 @@ import ChapterWriteView from '@renderer/components/common/ChapterWriteView'
 import Modal from '@renderer/components/ui/Modal'
 import Input from '@renderer/components/ui/Input'
 import { useProject } from '@renderer/context/ProjectContext'
+import { useBreadcrumb } from '@renderer/context/BreadcrumbContext'
 import { config } from '@renderer/config'
 
 type EditorNode = {
@@ -30,7 +31,8 @@ export default function Chapter() {
   const [searchParams] = useSearchParams()
   const mode = searchParams.get('mode')
 
-  const { getPreviousChapter, getNextChapter, deleteChapter } = useProject()
+  const { getPreviousChapter, getNextChapter, deleteChapter, project } = useProject()
+  const { setBreadcrumbs } = useBreadcrumb()
 
   const [content, setContent] = useState<EditorNode[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,10 +49,28 @@ export default function Chapter() {
   const [editChapterName, setEditChapterName] = useState('')
 
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showSavePopover, setShowSavePopover] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
 
   const isWriteMode = mode === 'write'
 
   const draftKey = projectId && chapterId ? `renaissance:chapter:${projectId}:${chapterId}` : ''
+
+  useEffect(() => {
+    if (project) {
+      const chapterLabel = chapterName
+        ? `Chapter ${chapterNumber || '?'}: ${chapterName}`
+        : `Chapter ${chapterNumber || '?'}`
+
+      const modeLabel = isWriteMode ? ' (Editing)' : ''
+
+      setBreadcrumbs([
+        { label: 'Dashboard', path: '/dashboard' },
+        { label: project.name || `Project ${projectId?.slice(0, 8)}...`, path: `/project/${projectId}` },
+        { label: `${chapterLabel}${modeLabel}` }
+      ])
+    }
+  }, [project, projectId, chapterName, chapterNumber, isWriteMode, setBreadcrumbs])
 
   const previousChapter = chapterId ? getPreviousChapter(chapterId) : null
 
@@ -271,7 +291,12 @@ export default function Chapter() {
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = () => {
+    setShowSavePopover(true)
+    setSaveMessage('')
+  }
+
+  const handleSaveWithMessage = async () => {
     if (!projectId || !chapterId || !config.serverUrl) {
       setError('Chapter information is missing')
       return
@@ -280,6 +305,7 @@ export default function Chapter() {
     setSaving(true)
     setError(null)
     setSuccess(null)
+    setShowSavePopover(false)
 
     try {
       const response = await fetch(`${config.serverUrl}/api/v1/user/data/chapter/save`, {
@@ -290,7 +316,8 @@ export default function Chapter() {
         body: JSON.stringify({
           project: projectId,
           id: chapterId,
-          content
+          content,
+          message: saveMessage.trim() || undefined
         })
       })
 
@@ -316,6 +343,11 @@ export default function Chapter() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleCancelSave = () => {
+    setShowSavePopover(false)
+    setSaveMessage('')
   }
 
   const handleCancel = () => {
@@ -351,21 +383,63 @@ export default function Chapter() {
           <BackLink fallbackPath={`/project/${projectId}`} />
         </div>
 
-        <ToolKit
-          size="sm"
-          confirm={true}
-          confirmTitle="Delete Chapter"
-          confirmContent="Are you sure you want to delete this chapter? This action cannot be undone."
-          onDelete={handleDelete}
-          onEdit={handleEditChapterName}
-          onSave={handleSave}
-          onCancel={handleCancel}
-          saveConfirmTitle="Save Chapter"
-          saveConfirmContent="Are you sure you want to save your changes to this chapter?"
-          cancelConfirmTitle="Cancel Editing"
-          cancelConfirmContent="Are you sure you want to cancel? Any unsaved changes will be lost."
-          showSaveCancel={isWriteMode}
-        />
+        <div className="relative">
+          <ToolKit
+            size="sm"
+            confirm={true}
+            confirmTitle="Delete Chapter"
+            confirmContent="Are you sure you want to delete this chapter? This action cannot be undone."
+            onDelete={handleDelete}
+            onEdit={handleEditChapterName}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            saveConfirm={false}
+            cancelConfirmTitle="Cancel Editing"
+            cancelConfirmContent="Are you sure you want to cancel? Any unsaved changes will be lost."
+            showSaveCancel={isWriteMode}
+            showNew={false}
+          />
+
+          {showSavePopover && (
+            <div className="absolute right-0 top-full mt-2 z-50 w-80 bg-background border border-foreground/15 rounded-lg shadow-lg backdrop-blur-sm">
+              <div className="p-5 space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground/90 mb-1">
+                    Commit Message (Optional)
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Add a custom message for this save, or leave empty
+                  </p>
+                </div>
+
+                <Input
+                  value={saveMessage}
+                  onChange={(e) => setSaveMessage(e.target.value)}
+                  placeholder="We have a horrible alternative tho lol"
+                  className="w-full"
+                  disabled={saving}
+                />
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleCancelSave}
+                    disabled={saving}
+                    className="flex-1 px-4 py-2 text-sm font-medium rounded-md border border-foreground/20 text-foreground/80 hover:bg-foreground/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveWithMessage}
+                    disabled={saving}
+                    className="flex-1 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <Modal

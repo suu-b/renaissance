@@ -176,12 +176,13 @@ export async function chapterRouter(app: FastifyInstance) {
         }
     }, async (request, reply) => {
         try {
-            const { project: projectId, id: chapterId, content } = request.body;
+            const { project: projectId, id: chapterId, content, message } = request.body;
             const chapterFilePath = path.join(app.appPaths.workspacePath, projectId, `${chapterId}.json`);
 
             await app.vandcService.scopedSaved(
                 chapterFilePath,
                 JSON.stringify({ id: chapterId, content }, null, 2),
+                message || `Update chapter ${chapterId}`,
                 "utf-8"
             );
 

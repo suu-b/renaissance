@@ -21,6 +21,7 @@ declare global {
       doSetup: (withAccount: boolean) => Promise<{ success: boolean; error?: string; workspacePath?: string, indexFilePath?: string}>
       saveUserProfile: (profile: object) => Promise<{ success: boolean; error?: string }>
       loadUserProfile: () => Promise<{ success: boolean; profile?: object; error?: string }>
+      getServerPort: () => Promise<number>
     }
   }
 }

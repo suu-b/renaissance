@@ -1,7 +1,8 @@
-import React from "react"
-import Typography from "../ui/Typography"
-import { FiGitCommit } from "react-icons/fi"
-import type { GitCommit } from "@renaissance/shared"
+import React from 'react'
+import Typography from '../ui/Typography'
+import { FiGitCommit } from 'react-icons/fi'
+import { useNavigate } from 'react-router-dom'
+import type { GitCommit } from '@renaissance/shared'
 
 type Contribution = {
   id: number
@@ -14,20 +15,26 @@ type Contribution = {
 type StreamProps = {
   contributions?: Contribution[]
   history?: GitCommit[]
+  projectId?: string
   className?: string
 }
 
 export default function Stream({
   contributions,
   history,
-  className,
+  projectId,
+  className
 }: StreamProps): React.JSX.Element {
+  const navigate = useNavigate()
+
+  const handleCommitClick = (hash: string) => {
+    if (!projectId) return
+
+    navigate(`/project/${projectId}/diff/${hash}`)
+  }
+
   return (
-    <div
-      className={`border border-foreground/20 rounded-lg p-4 ${
-        className ?? ""
-      }`}
-    >
+    <div className={`border border-foreground/20 rounded-lg p-4 ${className ?? ''}`}>
       <Typography variant="h4" className="mb-4">
         Stream
       </Typography>
@@ -37,24 +44,21 @@ export default function Stream({
           history.map((commit) => (
             <div
               key={commit.hash}
-              className="flex items-start gap-3 p-3 rounded-lg hover:bg-foreground/5 transition-colors"
+              onClick={() => handleCommitClick(commit.hash)}
+              className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+                projectId ? 'cursor-pointer hover:bg-foreground/5' : ''
+              }`}
             >
               <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center shrink-0">
                 <FiGitCommit className="text-foreground/50 text-sm" />
               </div>
 
               <div className="min-w-0">
-                <Typography
-                  variant="muted"
-                  className="text-foreground/90 leading-snug"
-                >
+                <Typography variant="muted" className="text-foreground/90 leading-snug">
                   {commit.message}
                 </Typography>
 
-                <Typography
-                  variant="small"
-                  className="text-muted-foreground font-mono mt-1"
-                >
+                <Typography variant="small" className="text-muted-foreground font-mono mt-1">
                   {commit.hash.slice(0, 7)}
                 </Typography>
               </div>
@@ -78,10 +82,7 @@ export default function Stream({
             </div>
           ))
         ) : (
-          <Typography
-            variant="p"
-            className="text-muted-foreground text-center py-4"
-          >
+          <Typography variant="p" className="text-muted-foreground text-center py-4">
             No activity yet
           </Typography>
         )}

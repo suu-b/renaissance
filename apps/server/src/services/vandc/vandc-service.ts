@@ -11,7 +11,7 @@ export interface VandcService {
     // Scoped methods
     // A Scope is the level within a project
     // Would allow user to save their changes. Internally, stage changes
-    scopedSaved(scopePath: string, content: string, encoding?: BufferEncoding): Promise<void>;
+    scopedSaved(scopePath: string, content: string, message: string, encoding?: BufferEncoding): Promise<void>;
 
     // Global methods
     // Global methods operate at the global repo level in a similar way like scoped ones.
@@ -25,4 +25,6 @@ export interface VandcService {
     createFile(path: string, content: string, encoding?: BufferEncoding): Promise<void>;
 
     getScopedHistory(path: string, limit: number): Promise<GitCommit[]>;
+
+    getCommitDiff(filePath: string, hash: string): Promise<string>;
 }

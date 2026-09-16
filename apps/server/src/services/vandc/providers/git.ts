@@ -32,13 +32,13 @@ export class GitProvider implements VandcService {
         }
     }
 
-    async scopedSaved(scopePath: string, content: string, encoding?: BufferEncoding): Promise<void> {
+    async scopedSaved(scopePath: string, content: string, message: string, encoding?: BufferEncoding): Promise<void> {
         try {
             await fs.writeFile(scopePath, content, encoding);
             const { stdout } = await execFileAsync( "git", ["rev-parse", "--show-toplevel"], { cwd: path.dirname(scopePath) } );
             const repoPath = stdout.trim();
             await execFileAsync( "git", ["add", "--", scopePath], { cwd: repoPath } );
-            await execFileAsync( "git", [ "commit", "-m", `Update ${path.basename(scopePath)}` ], { cwd: repoPath } );
+            await execFileAsync( "git", [ "commit", "-m", message ], { cwd: repoPath } );
         } catch (error) {
             console.error(`Failed to save scope changes at ${scopePath}:`, error);
             throw error;
@@ -112,4 +112,25 @@ export class GitProvider implements VandcService {
         throw error;
     }
 }
+
+    async getCommitDiff(filePath: string, hash: string): Promise<string> {
+        try {
+            const { stdout } = await execFileAsync(
+                "git",
+                [
+                    "show",
+                    hash
+                ],
+                { cwd: this.repoPath }
+            );
+
+            return stdout;
+        } catch (error) {
+            console.error(
+                `Failed to get commit diff for ${filePath} at ${hash}:`,
+                error
+            );
+            throw error;
+        }
+    }
 }

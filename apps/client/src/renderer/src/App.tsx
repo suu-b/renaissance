@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
 import { FiLayout, FiFolder, FiGrid } from "react-icons/fi"
 // import { FiCompass, FiBook } from "react-icons/fi" // Commented out since sidebar items are disabled
@@ -7,6 +7,7 @@ import Welcome from "./pages/Welcome"
 import Dashboard from "./pages/Dashboard"
 import NewProject from "./pages/NewProject"
 import NewChapter from "./pages/NewChapter"
+import CommitDiff from "./pages/CommitDiff"
 
 import TopBar from "./components/common/TopBar"
 import Sidebar, { SidebarItem } from "./components/common/Sidebar"
@@ -14,12 +15,7 @@ import Project from "./pages/Project"
 import Projects from "./pages/Projects"
 import Chapter from "./pages/Chapter"
 import ProjectLayout from "./pages/ProjectLayout"
-
-type BreadcrumbItem = {
-  label: string
-  path?: string
-  onClick?: () => void
-}
+import { BreadcrumbProvider, useBreadcrumb, type BreadcrumbItem } from "./context/BreadcrumbContext"
 
 function App(): React.JSX.Element {
   
@@ -54,7 +50,7 @@ function App(): React.JSX.Element {
 
   return (
     <BrowserRouter>
-      <AppContent 
+      <AppWithProvider 
         sidebarItems={sidebarItems} 
         isSidebarExpanded={isSidebarExpanded} 
         setIsSidebarExpanded={setIsSidebarExpanded}
@@ -69,43 +65,41 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
   setIsSidebarExpanded: (expanded: boolean) => void 
 }): React.JSX.Element {
   const location = useLocation()
+  const { setBreadcrumbs } = useBreadcrumb()
 
-  const getBreadcrumbs = (): BreadcrumbItem[] => {
+  useEffect(() => {
     const path = location.pathname
 
     if (path === '/dashboard') {
-      return [{ label: 'Dashboard' }]
-    }
-
-    if (path.startsWith('/project/')) {
+      setBreadcrumbs([{ label: 'Dashboard' }])
+    } else if (path.startsWith('/project/')) {
       const segments = path.split('/').filter(Boolean)
       const projectId = segments[1]
       
       if (segments.length > 2 && segments[2] === 'new-chapter') {
-        return [
+        setBreadcrumbs([
           { label: 'Dashboard', path: '/dashboard' },
           { label: `Project ${projectId}`, path: `/project/${projectId}` },
           { label: 'New Chapter' }
-        ]
-      }
-      
-      if (segments.length > 2 && segments[2] === 'chapter') {
+        ])
+      } else if (segments.length > 2 && segments[2] === 'chapter') {
         const chapterId = segments[3]
         const chapterNumber = parseInt(chapterId || "1")
-        return [
+        setBreadcrumbs([
           { label: 'Dashboard', path: '/dashboard' },
           { label: `Project ${projectId}`, path: `/project/${projectId}` },
           { label: `Chapter ${chapterNumber}` }
-        ]
+        ])
+      } else {
+        setBreadcrumbs([
+          { label: 'Dashboard', path: '/dashboard' },
+          { label: 'Project Details' }
+        ])
       }
-      return [
-        { label: 'Dashboard', path: '/dashboard' },
-        { label: 'Project Details' }
-      ]
+    } else {
+      setBreadcrumbs([])
     }
-
-    return []
-  }
+  }, [location, setBreadcrumbs])
 
   const isWelcomePage = location.pathname === "/"
 
@@ -121,7 +115,6 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
     <div className="flex flex-col h-screen">
       <TopBar 
         onMenuClick={() => setIsSidebarExpanded(!isSidebarExpanded)} 
-        breadcrumbs={getBreadcrumbs()}
       />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar 
@@ -140,10 +133,27 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
               <Route path="new-chapter" element={<NewChapter />} />
               <Route path="chapter/:chapterId" element={<Chapter />} />
             </Route>
+            <Route path="/project/:projectId/diff/:hash" element={<CommitDiff />} />
           </Routes>
         </main>
       </div>
     </div>
+  )
+}
+
+function AppWithProvider({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: { 
+  sidebarItems: SidebarItem[], 
+  isSidebarExpanded: boolean,
+  setIsSidebarExpanded: (expanded: boolean) => void 
+}): React.JSX.Element {
+  return (
+    <BreadcrumbProvider>
+      <AppContent 
+        sidebarItems={sidebarItems} 
+        isSidebarExpanded={isSidebarExpanded} 
+        setIsSidebarExpanded={setIsSidebarExpanded}
+      />
+    </BreadcrumbProvider>
   )
 }
 

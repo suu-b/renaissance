@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiPlus } from 'react-icons/fi'
 import Page from '../components/layout/Page'
@@ -14,6 +14,7 @@ import Modal from '../components/ui/Modal'
 import Input from '../components/ui/Input'
 import Textarea from '../components/ui/Textarea'
 import { useProject } from '../context/ProjectContext'
+import { useBreadcrumb } from '../context/BreadcrumbContext'
 import { config } from '../config'
 
 import Veil from '../components/ui/Veil'
@@ -21,6 +22,7 @@ import Veil from '../components/ui/Veil'
 export default function Project() {
   const navigate = useNavigate()
   const { project, chapters, loading, history, deleteProject, bulkDeleteChapters } = useProject()
+  const { setBreadcrumbs } = useBreadcrumb()
   const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -31,6 +33,15 @@ export default function Project() {
   const [editDescription, setEditDescription] = useState('')
   const [editIsPrivate, setEditIsPrivate] = useState(false)
   const [updating, setUpdating] = useState(false)
+
+  useEffect(() => {
+    if (project) {
+      setBreadcrumbs([
+        { label: 'Dashboard', path: '/dashboard' },
+        { label: project.name || 'Project Details' }
+      ])
+    }
+  }, [project, setBreadcrumbs])
 
   const handleDelete = async () => {
     if (!project?.id) return
@@ -146,6 +157,7 @@ export default function Project() {
             confirmContent="Are you sure you want to delete this project? This action cannot be undone."
             onDelete={handleDelete}
             onEdit={handleEdit}
+            showNew={false}
           />
         </div>
 
@@ -242,7 +254,7 @@ export default function Project() {
           </div>
         </div>
 
-        <Stream history={history} className="mb-4" />
+        <Stream history={history} projectId={project?.id} className="mb-4"/>
 
         <Veil className="rounded-lg">
           <Contributions

@@ -16,7 +16,8 @@ import {
     sendSuccess,
     Errors,
     sendError,
-    GitCommit
+    GitCommit,
+    GetCommitDiffRequestSchema
 } from "@renaissance/shared";
 
 import { getUserProfile } from "../../../utils/userProfile.js";
@@ -173,7 +174,7 @@ export async function projectRouter(app: FastifyInstance) {
     }, async (request, reply) => {
         try {
             const { id } = request.body as { id: string };
-            
+
             // Get project info to find project path
             const project = app.indexService.getProjectById(id);
             if (!project) {
@@ -199,6 +200,31 @@ export async function projectRouter(app: FastifyInstance) {
         } catch (error) {
             console.error("Failed to delete project:", error);
             return reply.status(500).send(sendError(Errors.PROJECT_DELETE_FAILED));
+        }
+    });
+
+    // POST /api/v1/user/data/project/diff
+    typedApp.post("/diff", {
+        schema: {
+            body: GetCommitDiffRequestSchema,
+            response: CARResponses,
+            tags: ["User Data"]
+        }
+    }, async (request, reply) => {
+        try {
+            const { project: projectId, filePath, hash } = request.body;
+            const fullPath = path.join(app.appPaths.workspacePath, projectId, filePath);
+
+            const diff = await app.vandcService.getCommitDiff(fullPath, hash);
+
+            return reply.status(200).send(sendSuccess({
+                diff,
+                hash,
+                filePath
+            }));
+        } catch (error) {
+            console.error("Failed to get commit diff:", error);
+            return reply.status(500).send(sendError(Errors.PROJECT_GET_FAILED));
         }
     });
 }

@@ -23,18 +23,19 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@renaissance/shared": "workspace:*",
     "@supabase/supabase-js": "^2.110.1",
     "@tailwindcss/vite": "^4.3.3",
     "class-variance-authority": "^0.7.1",
     "crypto-js": "^4.2.0",
+    "get-port": "^7.2.0",
     "harmonia-text-editor": "^2.0.4",
     "node-fetch": "^3.3.2",
     "react-icons": "^5.7.0",
     "react-router-dom": "^7.18.3",
     "slate": "^0.126.2",
     "slate-react": "^0.126.4",
-    "tailwindcss": "^4.3.3",
-    "@renaissance/shared": "workspace:*"
+    "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",

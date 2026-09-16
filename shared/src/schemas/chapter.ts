@@ -57,7 +57,8 @@ export const SaveChapterRequestSchema = z.object({
                 })
             )
         })
-    )
+    ),
+    message: z.string().default(`Update chapter`)
 });
 
 export type SaveChapterRequest = z.infer<
@@ -68,6 +69,8 @@ export type SaveChapterRequest = z.infer<
 export const DeleteChapterRequestSchema = z.object({
     id: z.uuid()
 });
+
+
 
 export type DeleteChapterRequestObject = z.infer<typeof DeleteChapterRequestSchema>;
 
