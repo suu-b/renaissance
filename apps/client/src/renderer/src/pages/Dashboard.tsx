@@ -1,159 +1,98 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react'
 
-import Page from "../components/layout/Page";
-import Typography from "../components/ui/Typography";
-import ProjectList from "../components/common/ProjectList";
-import SearchBar from "../components/ui/SearchBar";
-import Activity from "../components/common/Activity";
-import Explore from "../components/common/Explore";
-import TextHighlight from "../components/ui/TextHighlight";
-import Veil from "../components/ui/Veil";
-import Modal from "../components/ui/Modal";
+import Page from '../components/layout/Page'
+import Typography from '../components/ui/Typography'
+import ProjectList from '../components/common/ProjectList'
+import SearchBar from '../components/ui/SearchBar'
+import Activity from '../components/common/Activity'
+import Explore from '../components/common/Explore'
+import TextHighlight from '../components/ui/TextHighlight'
+import Veil from '../components/ui/Veil'
+import Modal from '../components/ui/Modal'
 
-import { config } from "../config";
-import {
-  ProjectSchema,
-  type ProjectObject,
-} from "@renaissance/shared";
-import { useNavigate } from "react-router-dom";
+import { config } from '../config'
+import { ProjectSchema, type ProjectObject } from '@renaissance/shared'
 
 export default function Dashboard(): React.JSX.Element {
-  const navigate = useNavigate();
-  const [projects, setProjects] = useState<ProjectObject[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [projectsToDelete, setProjectsToDelete] = useState<string[]>([]);
+  const [projects, setProjects] = useState<ProjectObject[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [projectsToDelete, setProjectsToDelete] = useState<string[]>([])
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
         if (!config.serverUrl) {
-          console.error("Server URL is not configured");
-          setLoading(false);
-          return;
+          console.error('Server URL is not configured')
+          setLoading(false)
+          return
         }
 
-        const response = await fetch(
-          `${config.serverUrl}/api/v1/user/data/project/search/mine`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({}),
-          }
-        );
+        const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/search/mine`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({})
+        })
 
         if (!response.ok) {
-          throw new Error(
-            `Failed to fetch projects: ${response.status}`
-          );
+          throw new Error(`Failed to fetch projects: ${response.status}`)
         }
 
-        const result = await response.json();
-        const projectsData =
-          result.data?.projects || result.projects || [];
+        const result = await response.json()
+        const projectsData = result.data?.projects || result.projects || []
 
-        const parsedProjects =
-          ProjectSchema.array().parse(projectsData);
+        const parsedProjects = ProjectSchema.array().parse(projectsData)
 
-        setProjects(parsedProjects);
+        setProjects(parsedProjects)
       } catch (error) {
-        console.error("Failed to fetch projects:", error);
-        setProjects([]);
+        console.error('Failed to fetch projects:', error)
+        setProjects([])
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-
-    fetchProjects();
-  }, []);
-
-  const handleDeleteProject = async (projectId: string) => {
-    try {
-      const response = await fetch(
-        `${config.serverUrl}/api/v1/user/data/project/delete`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: projectId })
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.error?.message ||
-          result.error ||
-          `Failed to delete project: ${response.status}`
-        );
-      }
-
-      // Remove the deleted project from the list
-      setProjects(prevProjects => prevProjects.filter(p => p.id !== projectId));
-      setSuccess("Project deleted successfully");
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (error) {
-      console.error("Failed to delete project:", error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to delete project"
-      );
-      
-      // Clear error message after 3 seconds
-      setTimeout(() => setError(null), 3000);
     }
-  };
+
+    fetchProjects()
+  }, [])
 
   const handleBulkDeleteProjects = async (projectIds: string[]) => {
     try {
       // Delete projects one by one
       for (const projectId of projectIds) {
-        const response = await fetch(
-          `${config.serverUrl}/api/v1/user/data/project/delete`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: projectId })
-          }
-        );
+        const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: projectId })
+        })
 
-        const result = await response.json();
+        const result = await response.json()
 
         if (!response.ok) {
           throw new Error(
-            result.error?.message ||
-            result.error ||
-            `Failed to delete project: ${response.status}`
-          );
+            result.error?.message || result.error || `Failed to delete project: ${response.status}`
+          )
         }
       }
 
       // Remove the deleted projects from the list
-      setProjects(prevProjects => prevProjects.filter(p => !projectIds.includes(p.id)));
-      setSuccess(`Successfully deleted ${projectIds.length} projects`);
-      
+      setProjects((prevProjects) => prevProjects.filter((p) => !projectIds.includes(p.id)))
+      setSuccess(`Successfully deleted ${projectIds.length} projects`)
+
       // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(null), 3000);
+      setTimeout(() => setSuccess(null), 3000)
     } catch (error) {
-      console.error("Failed to bulk delete projects:", error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to delete projects"
-      );
-      
+      console.error('Failed to bulk delete projects:', error)
+      setError(error instanceof Error ? error.message : 'Failed to delete projects')
+
       // Clear error message after 3 seconds
-      setTimeout(() => setError(null), 3000);
+      setTimeout(() => setError(null), 3000)
     }
-  };
+  }
 
   const handleBulkDeleteProjectsWithConfirm = (projectIds: string[]) => {
     if (projectIds.length === 0) return
@@ -173,58 +112,32 @@ export default function Dashboard(): React.JSX.Element {
   }
 
   return (
-    <Page
-      alignment="default"
-      className="flex gap-4"
-    >
+    <Page alignment="default" className="flex gap-4">
       <div className="mx-auto w-[62vw]">
         <div className="flex items-baseline justify-between">
           <div>
+            <Typography variant="h1">Welcome</Typography>
             <Typography variant="h1">
-              Welcome
-            </Typography>
-
-            <Typography variant="h1">
-              <TextHighlight
-                color="bg-primary"
-                intensity={60}
-              >
+              <TextHighlight color="bg-primary" intensity={60}>
                 Shubham!
               </TextHighlight>
             </Typography>
           </div>
 
-          <div className="flex flex-col gap-1 text-right">
-            <Typography
-              variant="muted"
-              className="text-muted-foreground"
-            >
-              Words this week{" "}
-              <span className="font-bold text-primary">
-                253
-              </span>
+          {/* LATER */}
+          {/* <div className="flex flex-col gap-1 text-right">
+            <Typography variant="muted" className="text-muted-foreground">
+              Words this week <span className="font-bold text-primary">253</span>
             </Typography>
 
-            <Typography
-              variant="muted"
-              className="text-muted-foreground"
-            >
-              New chapters{" "}
-              <span className="font-bold text-primary">
-                2
-              </span>
+            <Typography variant="muted" className="text-muted-foreground">
+              New chapters <span className="font-bold text-primary">2</span>
             </Typography>
 
-            <Typography
-              variant="muted"
-              className="text-muted-foreground"
-            >
-              Branches created{" "}
-              <span className="font-bold text-primary">
-                5
-              </span>
+            <Typography variant="muted" className="text-muted-foreground">
+              Branches created <span className="font-bold text-primary">5</span>
             </Typography>
-          </div>
+          </div> */}
         </div>
 
         <SearchBar
@@ -235,24 +148,13 @@ export default function Dashboard(): React.JSX.Element {
           className="my-5"
         />
 
-        {success && (
-          <div className="mb-4 text-sm text-green-600">
-            {success}
-          </div>
-        )}
+        {success && <div className="mb-4 text-sm text-green-600">{success}</div>}
 
-        {error && (
-          <div className="mb-4 text-sm text-red-600">
-            {error}
-          </div>
-        )}
+        {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
 
         {loading ? (
           <div className="my-5 flex items-center justify-center py-8">
-            <Typography
-              variant="muted"
-              className="text-muted-foreground text-sm"
-            >
+            <Typography variant="muted" className="text-muted-foreground text-sm">
               Loading projects...
             </Typography>
           </div>
@@ -263,7 +165,6 @@ export default function Dashboard(): React.JSX.Element {
             className="my-5"
             projects={projects}
             searchTerm={searchTerm}
-            onDelete={handleDeleteProject}
             onBulkDelete={handleBulkDeleteProjectsWithConfirm}
           />
         )}
@@ -287,5 +188,5 @@ export default function Dashboard(): React.JSX.Element {
         onCancel={cancelBulkDelete}
       />
     </Page>
-  );
+  )
 }

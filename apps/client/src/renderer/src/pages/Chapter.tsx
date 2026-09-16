@@ -16,11 +16,6 @@ type EditorNode = {
   children: Array<{ text: string }>
 }
 
-type ChapterMetadata = {
-  chaptersNumber: number
-  chapterNumber: number
-}
-
 export default function Chapter() {
   const { projectId, chapterId } = useParams<{
     projectId: string
@@ -42,9 +37,6 @@ export default function Chapter() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
-  const [chapterNumber, setChapterNumber] = useState(0)
-  const [totalChapters, setTotalChapters] = useState(0)
-
   const [chapterName, setChapterName] = useState('')
   const [editChapterName, setEditChapterName] = useState('')
 
@@ -58,9 +50,7 @@ export default function Chapter() {
 
   useEffect(() => {
     if (project) {
-      const chapterLabel = chapterName
-        ? `Chapter ${chapterNumber || '?'}: ${chapterName}`
-        : `Chapter ${chapterNumber || '?'}`
+      const chapterLabel = chapterName || 'Chapter'
 
       const modeLabel = isWriteMode ? ' (Editing)' : ''
 
@@ -70,7 +60,7 @@ export default function Chapter() {
         { label: `${chapterLabel}${modeLabel}` }
       ])
     }
-  }, [project, projectId, chapterName, chapterNumber, isWriteMode, setBreadcrumbs])
+  }, [project, projectId, chapterName, isWriteMode, setBreadcrumbs])
 
   const previousChapter = chapterId ? getPreviousChapter(chapterId) : null
 
@@ -88,58 +78,30 @@ export default function Chapter() {
       setError(null)
 
       try {
-        const [chapterResponse, metadataResponse] = await Promise.all([
-          fetch(`${config.serverUrl}/api/v1/user/data/chapter/get`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              project: projectId,
-              id: chapterId
-            })
-          }),
-
-          fetch(`${config.serverUrl}/api/v1/user/data/chapter/metadata`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              project: projectId,
-              id: chapterId
-            })
+        const chapterResponse = await fetch(`${config.serverUrl}/api/v1/user/data/chapter/get`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            project: projectId,
+            id: chapterId
           })
-        ])
+        })
 
         if (!chapterResponse.ok) {
           throw new Error(`Failed to fetch chapter: ${chapterResponse.status}`)
         }
 
-        if (!metadataResponse.ok) {
-          throw new Error(`Failed to fetch chapter metadata: ${metadataResponse.status}`)
-        }
-
-        const [chapterResult, metadataResult] = await Promise.all([
-          chapterResponse.json(),
-          metadataResponse.json()
-        ])
+        const chapterResult = await chapterResponse.json()
 
         const chapter = chapterResult.data?.chapter || chapterResult.chapter
-
-        const metadata: ChapterMetadata = metadataResult.data?.metadata || metadataResult.metadata
 
         if (!chapter) {
           throw new Error('Chapter not found')
         }
 
-        if (!metadata) {
-          throw new Error('Chapter metadata not found')
-        }
-
         setChapterName(chapter.name || '')
-        setChapterNumber(metadata.chapterNumber)
-        setTotalChapters(metadata.chaptersNumber)
 
         const localDraft = draftKey ? localStorage.getItem(draftKey) : null
 
@@ -468,12 +430,6 @@ export default function Chapter() {
             />
           </div>
 
-          <div className="rounded-lg border bg-muted/30 px-4 py-3">
-            <p className="text-sm text-muted-foreground">
-              Chapter {chapterNumber} of {totalChapters}
-            </p>
-          </div>
-
           {updating && (
             <div className="rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
               Updating chapter...
@@ -504,18 +460,14 @@ export default function Chapter() {
         <div className="py-10 text-center text-red-600">{error}</div>
       ) : isWriteMode ? (
         <ChapterWriteView
-          title={chapterName || `Chapter ${chapterNumber}: The Beginning`}
+          title={chapterName || 'Chapter'}
           initialValue={content}
           onChange={handleContentChange}
-          chapterNumber={chapterNumber}
-          totalChapters={totalChapters}
         />
       ) : (
         <ChapterReader
-          title={chapterName || `Chapter ${chapterNumber}: The Beginning`}
+          title={chapterName || 'Chapter'}
           content={content}
-          chapterNumber={chapterNumber}
-          totalChapters={totalChapters}
           onPrevious={handlePrevious}
           onNext={handleNext}
           onEdit={handleEditContent}

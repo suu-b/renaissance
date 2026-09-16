@@ -18,7 +18,7 @@ type TopBarProps = {
 }
 
 export default function TopBar({ onMenuClick }: TopBarProps): React.JSX.Element {
-  console.log("url:", config.getRenaissanceFeedbackURL );
+  // console.log("url:", config.getRenaissanceFeedbackURL );
   const { user } = useAuth()
   const { breadcrumbs } = useBreadcrumb()
   

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiPlus } from 'react-icons/fi'
+
 import Page from '../components/layout/Page'
 import Typography from '../components/ui/Typography'
 import ChapterList from '../components/common/ChapterList'
@@ -13,16 +14,29 @@ import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import Input from '../components/ui/Input'
 import Textarea from '../components/ui/Textarea'
+import Veil from '../components/ui/Veil'
+
 import { useProject } from '../context/ProjectContext'
 import { useBreadcrumb } from '../context/BreadcrumbContext'
-import { config } from '../config'
 
-import Veil from '../components/ui/Veil'
+import { config } from '../config'
 
 export default function Project() {
   const navigate = useNavigate()
-  const { project, chapters, loading, history, deleteProject, bulkDeleteChapters } = useProject()
+  const {
+    project,
+    chapters,
+    projectLoading,
+    fetchProject,
+    fetchChapters,
+    history,
+    fetchHistory,
+    deleteProject,
+    bulkDeleteChapters,
+    refreshProject
+  } = useProject()
   const { setBreadcrumbs } = useBreadcrumb()
+
   const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -35,6 +49,21 @@ export default function Project() {
   const [updating, setUpdating] = useState(false)
 
   useEffect(() => {
+    console.log("Fetching latest project...");
+    fetchProject()
+  }, [fetchProject])
+
+  useEffect(() => {
+    console.log("Fetching latest chapters...");
+    fetchChapters()
+  }, [fetchChapters])
+
+  useEffect(() => {
+    console.log("Fetching latest history...");
+    fetchHistory()
+  }, [fetchHistory])
+
+  useEffect(() => {
     if (project) {
       setBreadcrumbs([
         { label: 'Dashboard', path: '/dashboard' },
@@ -45,12 +74,10 @@ export default function Project() {
 
   const handleDelete = async () => {
     if (!project?.id) return
-
     try {
       await deleteProject(project.id)
       setSuccess('Project deleted successfully')
 
-      // Navigate to dashboard after successful deletion
       setTimeout(() => {
         navigate('/dashboard')
       }, 1000)
@@ -72,13 +99,16 @@ export default function Project() {
 
   const handleBulkDeleteChaptersWithConfirm = (chapterIds: string[]) => {
     if (chapterIds.length === 0) return
+
     setProjectsToDelete(chapterIds)
     setShowDeleteConfirm(true)
   }
 
   const confirmBulkDelete = async () => {
     setShowDeleteConfirm(false)
+
     await handleBulkDeleteChapters(projectsToDelete)
+
     setProjectsToDelete([])
   }
 
@@ -105,7 +135,9 @@ export default function Project() {
     try {
       const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/update`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
           id: project.id,
           name: editName,
@@ -125,10 +157,12 @@ export default function Project() {
       setSuccess('Project updated successfully')
       setShowEditModal(false)
 
-      // Clear success message after 3 seconds
+      await refreshProject()
+
       setTimeout(() => setSuccess(null), 3000)
     } catch (error) {
       console.error('Failed to update project:', error)
+
       setError(error instanceof Error ? error.message : 'Failed to update project')
     } finally {
       setUpdating(false)
@@ -162,7 +196,7 @@ export default function Project() {
         </div>
 
         <Typography variant="h1" className="my-6">
-          {loading ? 'Loading...' : project?.name || `Project ${project?.id}`}
+          {projectLoading ? 'Loading...' : project?.name || `Project ${project?.id}`}
         </Typography>
 
         {success && <div className="mb-4 text-sm text-green-600">{success}</div>}
@@ -231,6 +265,7 @@ export default function Project() {
                 {project?.isPrivate ? 'Private' : 'Public'}
               </span>
             </Typography>
+
             <Typography variant="muted" className="text-muted-foreground">
               Contributors:{' '}
               <span className="text-foreground font-semibold">
@@ -254,7 +289,7 @@ export default function Project() {
           </div>
         </div>
 
-        <Stream history={history} projectId={project?.id} className="mb-4"/>
+        <Stream history={history} projectId={project?.id} className="mb-4" />
 
         <Veil className="rounded-lg">
           <Contributions

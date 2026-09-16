@@ -76,10 +76,15 @@ export default function NewProject(): React.JSX.Element {
       }
 
       setSuccess(true)
+      const responseData = await response.json();
+      const projectId = responseData.data.id;
 
+      // console.log(response)
+      console.log(responseData)
       setTimeout(() => {
-        navigate('/dashboard')
-      }, 2000)
+        console.log("PROJECT ID", projectId);
+        navigate(`/project/${projectId}`);
+      }, 1000)
     } catch (err) {
       console.error('Failed to create project:', err)
       setError('Failed to create project. Please try again.')
@@ -91,25 +96,9 @@ export default function NewProject(): React.JSX.Element {
   if (success) {
     return (
       <Page alignment="center">
-        <div className="flex flex-col gap-4 max-w-[500px]">
-          <div className="flex items-center gap-4 mb-2">
-            <BackLink fallbackPath="/dashboard" />
+            <div className="flex flex-col gap-4 max-w-[500px]">
+            <Typography variant="muted">Navigating you back to Project...</Typography>
           </div>
-
-          <Typography variant="h1">Project Created</Typography>
-
-          <Typography variant="muted">
-            Your project "{formData.name}" has been created successfully.
-            You can now begin your literary journey.
-          </Typography>
-
-          <Button
-            onClick={() => navigate('/dashboard')}
-            className="mt-4"
-          >
-            Go to Dashboard <FiArrowUpRight size={15} />
-          </Button>
-        </div>
       </Page>
     )
   }

@@ -37,12 +37,30 @@ export const SearchChapterRequestSchema = z.object({
 
 export type SearchChapterRequestObject = z.infer<typeof SearchChapterRequestSchema>;
 
-export const GetChapterRequestSchema = z.object({ 
-    project: z.uuid(), 
-    id: z.uuid() 
+export const GetChapterRequestSchema = z.object({
+    project: z.uuid(),
+    id: z.uuid()
 });
 
 export type GetChapterRequestObject = z.infer<typeof GetChapterRequestSchema>;
+
+export const ChapterContentSchema = z.object({
+    id: z.uuid(),
+    project: z.uuid(),
+    name: z.string(),
+    content: z.array(
+        z.object({
+            type: z.string(),
+            children: z.array(
+                z.object({
+                    text: z.string()
+                })
+            )
+        })
+    )
+});
+
+export type ChapterContentObject = z.infer<typeof ChapterContentSchema>;
 
 
 export const SaveChapterRequestSchema = z.object({

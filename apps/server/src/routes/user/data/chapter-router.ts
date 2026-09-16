@@ -12,7 +12,6 @@ import {
     SaveChapterRequestSchema,
     DeleteChapterRequestSchema,
     BulkDeleteChapterRequestSchema,
-    ChapterObject,
     CARResponses,
     sendSuccess,
     sendError,
@@ -52,35 +51,6 @@ export async function chapterRouter(app: FastifyInstance) {
         }
     });
 
-    // POST /api/v1/user/data/chapter/metadata
-    typedApp.post("/metadata", {
-        schema: {
-            body: GetChapterRequestSchema,
-            response: CARResponses,
-            tags: ["User Data"]
-        }
-    }, async (request, reply) => {
-        try {
-            const { project: projectId, id: chapterId } = request.body;
-            const chapterNumber = app.indexService.getChapterNumber(chapterId);
-            const chaptersCount = app.indexService.getChaptersCount(projectId);
-
-            if (chapterNumber === null) {
-                return reply.status(404).send(sendError(Errors.CHAPTER_GET_FAILED));
-            }
-
-            return reply.status(200).send(sendSuccess({
-                metadata: {
-                    chaptersNumber: chaptersCount,
-                    chapterNumber: chapterNumber
-                }
-            }));
-        } catch (error) {
-            console.error("Failed to get chapter metadata:", error);
-            return reply.status(500).send(sendError(Errors.CHAPTER_GET_FAILED));
-        }
-    });
-
     // POST /api/v1/user/data/chapter/get
     typedApp.post("/get", {
         schema: {
@@ -95,10 +65,13 @@ export async function chapterRouter(app: FastifyInstance) {
 
             const chapterData = JSON.parse(await fs.readFile(chapterFilePath, "utf-8"));
 
+            const chapter = app.indexService.getChapterById(chapterId);
+
             return reply.status(200).send(sendSuccess({
                 chapter: {
                     id: chapterId,
                     project: projectId,
+                    name: chapter?.name || '',
                     content: chapterData.content
                 }
             }));

@@ -12,8 +12,6 @@ type EditorNode = {
 type ChapterReaderProps = {
   title: string
   content: EditorNode[]
-  chapterNumber: number
-  totalChapters: number
   onPrevious?: () => void
   onNext?: () => void
   onEdit?: () => void
@@ -23,8 +21,6 @@ type ChapterReaderProps = {
 export default function ChapterReader({
   title,
   content,
-  chapterNumber,
-  totalChapters,
   onPrevious,
   onNext,
   onEdit,
@@ -34,9 +30,6 @@ export default function ChapterReader({
     <div className={`max-w-3xl mx-auto ${className ?? ""}`}>
       {/* Chapter Header */}
       <div className="mb-8">
-        <Typography variant="small" className="text-muted-foreground uppercase tracking-wider mb-2">
-          Chapter {chapterNumber} of {totalChapters}
-        </Typography>
         <Typography variant="h1" className="mb-4">
           {title}
         </Typography>
@@ -45,7 +38,7 @@ export default function ChapterReader({
             variant="ghost"
             size="sm"
             onClick={onPrevious}
-            disabled={chapterNumber === 1}
+            disabled={!onPrevious}
             className="flex items-center gap-2"
           >
             <FiArrowLeft className="text-sm" />
@@ -55,7 +48,7 @@ export default function ChapterReader({
             variant="ghost"
             size="sm"
             onClick={onNext}
-            disabled={chapterNumber === totalChapters}
+            disabled={!onNext}
             className="flex items-center gap-2"
           >
             Next
@@ -86,20 +79,17 @@ export default function ChapterReader({
           variant="ghost"
           size="sm"
           onClick={onPrevious}
-          disabled={chapterNumber === 1}
+          disabled={!onPrevious}
           className="flex items-center gap-2"
         >
           <FiArrowLeft className="text-sm" />
           Previous Chapter
         </Button>
-        <Typography variant="small" className="text-muted-foreground">
-          {chapterNumber} / {totalChapters}
-        </Typography>
         <Button
           variant="ghost"
           size="sm"
           onClick={onNext}
-          disabled={chapterNumber === totalChapters}
+          disabled={!onNext}
           className="flex items-center gap-2"
         >
           Next Chapter

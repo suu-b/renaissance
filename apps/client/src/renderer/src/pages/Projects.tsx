@@ -9,10 +9,8 @@ import {
     type ProjectObject,
 } from "@renaissance/shared";
 import { config } from "../config";
-import { useNavigate } from "react-router-dom";
 
 export default function Projects(): React.JSX.Element {
-    const navigate = useNavigate();
     const [projects, setProjects] = useState<ProjectObject[]>([]);
     const [totalProjects, setTotalProjects] = useState(0);
     const [loading, setLoading] = useState(true);

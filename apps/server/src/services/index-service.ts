@@ -238,17 +238,12 @@ export class IndexService {
         const id = params.id || randomUUID();
         const now = new Date().toISOString();
 
-        // Get the current chapter number for this project
-        const countStmt = this.db.prepare("SELECT COUNT(*) as count FROM chapters WHERE project_id = ?");
-        const { count } = countStmt.get(params.projectId) as { count: number };
-        const chapterNumber = count + 1;
-
         const stmt = this.db.prepare(`
-            INSERT INTO chapters (id, project_id, name, chapter_number, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO chapters (id, project_id, name, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
         `);
 
-        stmt.run(id, params.projectId, params.name, chapterNumber, now, now);
+        stmt.run(id, params.projectId, params.name, now, now);
 
         return id;
     }
@@ -266,7 +261,7 @@ export class IndexService {
 
     getChaptersByProjectId(projectId: string): ChapterObject[] {
         const stmt = this.db.prepare(`
-            SELECT * FROM chapters WHERE project_id = ? ORDER BY chapter_number ASC
+            SELECT * FROM chapters WHERE project_id = ?
         `);
 
         const rows = stmt.all(projectId) as any[];
@@ -288,26 +283,6 @@ export class IndexService {
         const stmt = this.db.prepare("DELETE FROM chapters WHERE id = ?");
         const result = stmt.run(id);
         return result.changes > 0;
-    }
-
-    getChapterNumber(chapterId: string): number | null {
-        const stmt = this.db.prepare(`
-            SELECT chapter_number FROM chapters WHERE id = ?
-        `);
-
-        const row = stmt.get(chapterId) as any;
-        if (!row) return null;
-
-        return row.chapter_number;
-    }
-
-    getChaptersCount(projectId: string): number {
-        const stmt = this.db.prepare(`
-            SELECT COUNT(*) as count FROM chapters WHERE project_id = ?
-        `);
-
-        const { count } = stmt.get(projectId) as { count: number };
-        return count;
     }
 
     private mapRowToChapter(row: any): ChapterObject {

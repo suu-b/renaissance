@@ -38,12 +38,10 @@ export default function ProjectList({
   className,
   projects = [],
   searchTerm = "",
-  onDelete,
   onBulkDelete,
 }: ProjectListProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -77,17 +75,6 @@ export default function ProjectList({
     setCurrentPage((prev) =>
       Math.min(prev + 1, totalPages)
     );
-  };
-
-  const handleDelete = async (projectId: string) => {
-    if (!onDelete) return;
-
-    setDeletingId(projectId);
-    try {
-      await onDelete(projectId);
-    } finally {
-      setDeletingId(null);
-    }
   };
 
   const handleSelectProject = (projectId: string) => {
@@ -143,7 +130,7 @@ export default function ProjectList({
               onClick={handleBulkDelete}
             >
               <FiTrash2 />
-              Delete {selectedProjects.size} projects
+              Delete projects
             </Button>
           )}
 
