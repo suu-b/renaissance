@@ -3,6 +3,7 @@ import Page from "../components/layout/Page";
 import ProjectList from "../components/common/ProjectList";
 import Typography from "../components/ui/Typography";
 import Modal from "../components/ui/Modal";
+import { useToast } from "../components/ui/Toast";
 
 import {
     ProjectSchema,
@@ -11,11 +12,11 @@ import {
 import { config } from "../config";
 
 export default function Projects(): React.JSX.Element {
+    const { showToast } = useToast();
     const [projects, setProjects] = useState<ProjectObject[]>([]);
     const [totalProjects, setTotalProjects] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [projectsToDelete, setProjectsToDelete] = useState<string[]>([]);
 
@@ -80,10 +81,7 @@ export default function Projects(): React.JSX.Element {
             // Remove the deleted project from the list
             setProjects(prevProjects => prevProjects.filter(p => p.id !== projectId));
             setTotalProjects(prev => prev - 1);
-            setSuccess("Project deleted successfully");
-            
-            // Clear success message after 3 seconds
-            setTimeout(() => setSuccess(null), 3000);
+            showToast("Project deleted successfully", "info");
         } catch (error) {
             console.error("Failed to delete project:", error);
             setError(
@@ -91,9 +89,7 @@ export default function Projects(): React.JSX.Element {
                     ? error.message
                     : "Failed to delete project"
             );
-            
-            // Clear error message after 3 seconds
-            setTimeout(() => setError(null), 3000);
+            showToast("Failed to delete project", "alert");
         }
     };
 
@@ -124,10 +120,7 @@ export default function Projects(): React.JSX.Element {
             // Remove the deleted projects from the list
             setProjects(prevProjects => prevProjects.filter(p => !projectIds.includes(p.id)));
             setTotalProjects(prev => prev - projectIds.length);
-            setSuccess(`Successfully deleted ${projectIds.length} projects`);
-            
-            // Clear success message after 3 seconds
-            setTimeout(() => setSuccess(null), 3000);
+            showToast(`Successfully deleted ${projectIds.length} projects`, "info");
         } catch (error) {
             console.error("Failed to bulk delete projects:", error);
             setError(
@@ -135,9 +128,7 @@ export default function Projects(): React.JSX.Element {
                     ? error.message
                     : "Failed to delete projects"
             );
-            
-            // Clear error message after 3 seconds
-            setTimeout(() => setError(null), 3000);
+            showToast("Failed to delete projects", "alert");
         }
     };
 
@@ -169,12 +160,6 @@ export default function Projects(): React.JSX.Element {
                     <Typography variant="muted">
                         All projects in the workspace
                     </Typography>
-
-                    {success && (
-                        <div className="mt-2 text-sm text-green-600">
-                            {success}
-                        </div>
-                    )}
 
                     {error && (
                         <div className="mt-2 text-sm text-red-600">

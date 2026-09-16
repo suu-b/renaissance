@@ -15,6 +15,7 @@ import Modal from '../components/ui/Modal'
 import Input from '../components/ui/Input'
 import Textarea from '../components/ui/Textarea'
 import Veil from '../components/ui/Veil'
+import { useToast } from '../components/ui/Toast'
 
 import { useProject } from '../context/ProjectContext'
 import { useBreadcrumb } from '../context/BreadcrumbContext'
@@ -23,6 +24,7 @@ import { config } from '../config'
 
 export default function Project() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const {
     project,
     chapters,
@@ -39,7 +41,6 @@ export default function Project() {
 
   const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [projectsToDelete, setProjectsToDelete] = useState<string[]>([])
   const [showEditModal, setShowEditModal] = useState(false)
@@ -76,24 +77,23 @@ export default function Project() {
     if (!project?.id) return
     try {
       await deleteProject(project.id)
-      setSuccess('Project deleted successfully')
-
-      setTimeout(() => {
-        navigate('/dashboard')
-      }, 1000)
+      showToast('Project deleted successfully', 'info')
+      navigate('/dashboard')
     } catch (error) {
       console.error('Failed to delete project:', error)
       setError(error instanceof Error ? error.message : 'Failed to delete project')
+      showToast('Failed to delete project', 'alert')
     }
   }
 
   const handleBulkDeleteChapters = async (chapterIds: string[]) => {
     try {
       await bulkDeleteChapters(chapterIds)
-      setSuccess(`Successfully deleted ${chapterIds.length} chapters`)
+      showToast(`Successfully deleted ${chapterIds.length} chapters`, 'info')
     } catch (error) {
       console.error('Failed to bulk delete chapters:', error)
       setError(error instanceof Error ? error.message : 'Failed to delete chapters')
+      showToast('Failed to delete chapters', 'alert')
     }
   }
 
@@ -130,7 +130,6 @@ export default function Project() {
 
     setUpdating(true)
     setError(null)
-    setSuccess(null)
 
     try {
       const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/update`, {
@@ -154,16 +153,14 @@ export default function Project() {
         )
       }
 
-      setSuccess('Project updated successfully')
       setShowEditModal(false)
-
+      showToast('Project updated successfully', 'info')
       await refreshProject()
-
-      setTimeout(() => setSuccess(null), 3000)
     } catch (error) {
       console.error('Failed to update project:', error)
 
       setError(error instanceof Error ? error.message : 'Failed to update project')
+      showToast('Failed to update project', 'alert')
     } finally {
       setUpdating(false)
     }
@@ -198,8 +195,6 @@ export default function Project() {
         <Typography variant="h1" className="my-6">
           {projectLoading ? 'Loading...' : project?.name || `Project ${project?.id}`}
         </Typography>
-
-        {success && <div className="mb-4 text-sm text-green-600">{success}</div>}
 
         {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
 

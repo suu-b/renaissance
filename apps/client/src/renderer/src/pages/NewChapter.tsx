@@ -9,11 +9,14 @@ import Button from '../components/ui/Button'
 import FormMessage from '../components/ui/FormMessage'
 import Typography from '../components/ui/Typography'
 import BackLink from '../components/ui/BackLink'
+import { useToast } from '../components/ui/Toast'
 
 import { config } from '../config'
 
 export default function NewChapter(): React.JSX.Element {
   const navigate = useNavigate()
+  const { showToast } = useToast()
+
   const { projectId } = useParams<{ projectId: string }>()
 
   const [formData, setFormData] = useState({
@@ -22,7 +25,6 @@ export default function NewChapter(): React.JSX.Element {
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -63,30 +65,15 @@ export default function NewChapter(): React.JSX.Element {
       if (!response.ok) {
         throw new Error(`Failed to create chapter: ${response.status}`)
       }
-      setSuccess(true)
-      setTimeout(() => {
-        navigate(`/project/${projectId}`)
-      }, 1000)
+      showToast("Chapter created successfully!", "info")
+      navigate(`/project/${projectId}`)
     } catch (err) {
       console.error('Failed to create chapter:', err)
       setError('Failed to create chapter. Please try again.')
+      showToast('Failed to create chapter', 'alert')
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (success) {
-    return (
-      <Page alignment="center">
-        <div className="flex flex-col gap-4 max-w-[500px]">
-          <div className="flex items-center gap-4 mb-2">
-            {/* <BackLink fallbackPath={`/project/${projectId}`} /> */}
-          </div>
-          <Typography variant="muted">Navigating you back to Project...</Typography>
-
-        </div>
-      </Page>
-    )
   }
 
   return (

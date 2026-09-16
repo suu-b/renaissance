@@ -7,6 +7,7 @@ import ChapterReader from '@renderer/components/ui/ChapterReader'
 import ChapterWriteView from '@renderer/components/common/ChapterWriteView'
 import Modal from '@renderer/components/ui/Modal'
 import Input from '@renderer/components/ui/Input'
+import { useToast } from '@renderer/components/ui/Toast'
 import { useProject } from '@renderer/context/ProjectContext'
 import { useBreadcrumb } from '@renderer/context/BreadcrumbContext'
 import { config } from '@renderer/config'
@@ -25,6 +26,7 @@ export default function Chapter() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const mode = searchParams.get('mode')
+  const { showToast } = useToast()
 
   const { getPreviousChapter, getNextChapter, deleteChapter, project } = useProject()
   const { setBreadcrumbs } = useBreadcrumb()
@@ -35,7 +37,6 @@ export default function Chapter() {
   const [updating, setUpdating] = useState(false)
 
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
 
   const [chapterName, setChapterName] = useState('')
   const [editChapterName, setEditChapterName] = useState('')
@@ -111,6 +112,7 @@ export default function Chapter() {
 
             if (Array.isArray(parsedDraft)) {
               setContent(parsedDraft)
+              showToast('Loaded from local draft', 'info')
               return
             }
 
@@ -151,7 +153,6 @@ export default function Chapter() {
   // Opens the popup for changing the chapter name.
   const handleEditChapterName = () => {
     setError(null)
-    setSuccess(null)
     setEditChapterName(chapterName)
     setShowEditModal(true)
   }
@@ -195,7 +196,6 @@ export default function Chapter() {
 
     setUpdating(true)
     setError(null)
-    setSuccess(null)
 
     try {
       const response = await fetch(`${config.serverUrl}/api/v1/user/data/chapter/update`, {
@@ -221,15 +221,12 @@ export default function Chapter() {
       setEditChapterName(trimmedName)
       setShowEditModal(false)
 
-      setSuccess('Chapter name updated successfully')
-
-      setTimeout(() => {
-        setSuccess(null)
-      }, 3000)
+      showToast('Chapter name updated successfully', 'info')
     } catch (error) {
       console.error('Failed to update chapter:', error)
 
       setError(error instanceof Error ? error.message : 'Failed to update chapter')
+      showToast('Failed to update chapter', 'alert')
     } finally {
       setUpdating(false)
     }
@@ -241,15 +238,13 @@ export default function Chapter() {
     try {
       await deleteChapter(chapterId)
 
-      setSuccess('Chapter deleted successfully')
-
-      setTimeout(() => {
-        navigate(`/project/${projectId}`)
-      }, 1000)
+      showToast('Chapter deleted successfully', 'info')
+      navigate(`/project/${projectId}`)
     } catch (error) {
       console.error('Failed to delete chapter:', error)
 
       setError(error instanceof Error ? error.message : 'Failed to delete chapter')
+      showToast('Failed to delete chapter', 'alert')
     }
   }
 
@@ -266,7 +261,6 @@ export default function Chapter() {
 
     setSaving(true)
     setError(null)
-    setSuccess(null)
     setShowSavePopover(false)
 
     try {
@@ -295,13 +289,13 @@ export default function Chapter() {
         localStorage.removeItem(draftKey)
       }
 
-      setSuccess('Chapter saved successfully')
-
+      showToast('Chapter saved successfully', 'info')
       navigate(`/project/${projectId}/chapter/${chapterId}?mode=read`)
     } catch (error) {
       console.error('Failed to save chapter:', error)
 
       setError(error instanceof Error ? error.message : 'Failed to save chapter')
+      showToast('Failed to save chapter', 'alert')
     } finally {
       setSaving(false)
     }
@@ -313,8 +307,9 @@ export default function Chapter() {
   }
 
   const handleCancel = () => {
-    if (draftKey) {
+    if (draftKey && localStorage.getItem(draftKey)) {
       localStorage.removeItem(draftKey)
+      showToast('Draft discarded', 'info')
     }
 
     navigate(`/project/${projectId}/chapter/${chapterId}?mode=read`)
@@ -326,7 +321,6 @@ export default function Chapter() {
 
       setContent(parsedContent)
       setError(null)
-      setSuccess(null)
 
       if (draftKey) {
         localStorage.setItem(draftKey, JSON.stringify(parsedContent))
@@ -449,11 +443,7 @@ export default function Chapter() {
           Saving chapter...
         </div>
       )}
-
-      {success && <div className="mb-4 text-sm text-green-600">{success}</div>}
-
-      {error && !showEditModal && <div className="mb-4 text-sm text-red-600">{error}</div>}
-
+      
       {loading ? (
         <div className="py-10 text-center text-muted-foreground">Loading chapter...</div>
       ) : error && !content.length ? (

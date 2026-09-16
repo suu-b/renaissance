@@ -6,12 +6,15 @@ import './index.css'
 // context providers
 import { AuthProvider } from "./context/AuthContext";
 import { WorkspaceProvider } from "./context/WorkspaceContext";
+import { ToastProvider } from "./components/ui/Toast";
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <WorkspaceProvider>
-        <App />
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </WorkspaceProvider>
     </AuthProvider>
   </StrictMode>

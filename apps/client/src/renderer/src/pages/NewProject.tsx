@@ -11,11 +11,13 @@ import Button from '../components/ui/Button'
 import FormMessage from '../components/ui/FormMessage'
 import Typography from '../components/ui/Typography'
 import BackLink from '../components/ui/BackLink'
+import { useToast } from '../components/ui/Toast'
 
 import { config } from '../config';
 
 export default function NewProject(): React.JSX.Element {
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   const [formData, setFormData] = useState({
     name: '',
@@ -25,7 +27,6 @@ export default function NewProject(): React.JSX.Element {
 
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -75,32 +76,18 @@ export default function NewProject(): React.JSX.Element {
         throw new Error(`Failed to create project: ${response.status}`)
       }
 
-      setSuccess(true)
       const responseData = await response.json();
       const projectId = responseData.data.id;
 
-      // console.log(response)
       console.log(responseData)
-      setTimeout(() => {
-        console.log("PROJECT ID", projectId);
-        navigate(`/project/${projectId}`);
-      }, 1000)
+      showToast("Project created successfully!", "info")
+      navigate(`/project/${projectId}`);
     } catch (err) {
       console.error('Failed to create project:', err)
       setError('Failed to create project. Please try again.')
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (success) {
-    return (
-      <Page alignment="center">
-            <div className="flex flex-col gap-4 max-w-[500px]">
-            <Typography variant="muted">Navigating you back to Project...</Typography>
-          </div>
-      </Page>
-    )
   }
 
   return (

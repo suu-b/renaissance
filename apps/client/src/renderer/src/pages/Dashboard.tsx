@@ -9,16 +9,17 @@ import Explore from '../components/common/Explore'
 import TextHighlight from '../components/ui/TextHighlight'
 import Veil from '../components/ui/Veil'
 import Modal from '../components/ui/Modal'
+import { useToast } from '../components/ui/Toast'
 
 import { config } from '../config'
 import { ProjectSchema, type ProjectObject } from '@renaissance/shared'
 
 export default function Dashboard(): React.JSX.Element {
+  const { showToast } = useToast()
   const [projects, setProjects] = useState<ProjectObject[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [projectsToDelete, setProjectsToDelete] = useState<string[]>([])
 
@@ -81,16 +82,11 @@ export default function Dashboard(): React.JSX.Element {
 
       // Remove the deleted projects from the list
       setProjects((prevProjects) => prevProjects.filter((p) => !projectIds.includes(p.id)))
-      setSuccess(`Successfully deleted ${projectIds.length} projects`)
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(null), 3000)
+      showToast(`Successfully deleted ${projectIds.length} projects`, 'info')
     } catch (error) {
       console.error('Failed to bulk delete projects:', error)
       setError(error instanceof Error ? error.message : 'Failed to delete projects')
-
-      // Clear error message after 3 seconds
-      setTimeout(() => setError(null), 3000)
+      showToast('Failed to delete projects', 'alert')
     }
   }
 
@@ -147,8 +143,6 @@ export default function Dashboard(): React.JSX.Element {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="my-5"
         />
-
-        {success && <div className="mb-4 text-sm text-green-600">{success}</div>}
 
         {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
 
