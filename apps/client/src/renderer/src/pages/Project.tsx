@@ -10,6 +10,8 @@ import BackLink from '../components/ui/BackLink'
 import Contributions from '../components/common/Contributions'
 import Stream from '../components/common/Stream'
 import ToolKit from '../components/common/ToolKit'
+import NewTool from '../components/ui/NewTool'
+import MergeTool from '../components/ui/MergeTool'
 import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import Input from '../components/ui/Input'
@@ -234,24 +236,41 @@ export default function Project() {
   return (
     <Page alignment="default" className="flex gap-4">
       <div className="mx-auto w-[60vw]">
-        <div className="mb-6 flex justify-between items-start">
+        <div className="mb-4 flex justify-between items-center">
           <div>
             <BackLink fallbackPath="/dashboard" />
           </div>
+          <Contributions
+            contributors={
+              project?.contributors?.map((c, index) => ({
+                id: parseInt(c.id.replace(/-/g, '').substring(0, 8), 16) || index,
+                name: c.displayName,
+                avatar: c.avatarUrl
+              })) || []
+            }
+          />
+        </div>
 
-          <div className="flex gap-5 justify-center items-center">
-            <div
-              className="bg-foreground rounded px-2 py-2 inline-flex items-center justify-center cursor-pointer"
-              onClick={() => setShowNewBranchModal(true)}
-            >
-              <FiPlus color="white" />
-            </div>
+        <div className="mb-6 flex justify-between items-center gap-4">
+          <Typography variant="h1">
+            {project?.name}
+          </Typography>
+
+          <div className="flex gap-3 justify-center items-center shrink-0">
             <SearchableDropdown
               options={allBranches.map((branch) => branch.branchName)}
               value={allBranches.find((branch) => branch.id === currentBranch)?.branchName}
               defaultIndex={allBranches.findIndex((branch) => branch.id === currentBranch)}
               onSelect={handleBranchSelect}
               variant="default"
+            />
+            <NewTool
+              size="sm"
+              onClick={() => setShowNewBranchModal(true)}
+            />
+            <MergeTool
+              size="sm"
+              onClick={() => showToast('Merge functionality', 'info')}
             />
             <ToolKit
               size="sm"
@@ -264,10 +283,6 @@ export default function Project() {
             />
           </div>
         </div>
-
-        <Typography variant="h1" className="my-6">
-          {project?.name}
-        </Typography>
 
         {error && <div className="mb-4 text-sm text-red-600">{error}</div>}
 
@@ -358,18 +373,6 @@ export default function Project() {
         </div>
 
         <Stream history={history} projectId={project?.id} className="mb-4" />
-
-        <Veil className="rounded-lg">
-          <Contributions
-            contributors={
-              project?.contributors?.map((c, index) => ({
-                id: parseInt(c.id.replace(/-/g, '').substring(0, 8), 16) || index,
-                name: c.displayName,
-                avatar: c.avatarUrl
-              })) || []
-            }
-          />
-        </Veil>
       </div>
 
       <Modal

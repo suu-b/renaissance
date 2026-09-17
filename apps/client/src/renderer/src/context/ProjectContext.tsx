@@ -76,29 +76,19 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [branchesError, setBranchesError] = useState<string | null>(null)
 
-  /**
-   * Monotonically-increasing counter that identifies the "current" branch switch.
-   * Each call to switchBranch captures the generation at the time of the call.
-   * When the fetch pair resolves, it checks that its generation is still current
-   * before committing any state — older (superseded) fetches are silently dropped.
-   *
-   * This prevents the "one step behind" bug where a slow fetch from a previous
-   * branch overwrites the result of a newer one.
-   */
-  const switchGenRef = useRef(0)
+  // Keep a ref to currentBranch so callbacks don't need currentBranch as a dependency,
+  // preventing function recreation and cascade re-fetches when switching branches.
+  const currentBranchRef = useRef<string | null>(null)
+  currentBranchRef.current = currentBranch
 
   /*
-   * Fetch chapters for an explicitly requested branch.
-   *
-   * Important:
-   * This function does NOT depend on currentBranch.
-   * That keeps its identity stable when the user switches branches.
+   * Fetch chapters for an explicitly requested branch or current branch.
    */
   const fetchChapters = useCallback(
     async (branchId?: string) => {
       if (!projectId || !config.serverUrl) return
 
-      const targetBranchId = branchId || currentBranch
+      const targetBranchId = branchId || currentBranchRef.current
       setChaptersLoading(true)
       setChaptersError(null)
 
@@ -133,7 +123,7 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
         setChaptersLoading(false)
       }
     },
-    [projectId, currentBranch]
+    [projectId]
   )
 
   /*
@@ -143,7 +133,7 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     async (branchId?: string) => {
       if (!projectId || !config.serverUrl) return
 
-      const targetBranchId = branchId || currentBranch
+      const targetBranchId = branchId || currentBranchRef.current
       setHistoryLoading(true)
       setHistoryError(null)
 
@@ -177,14 +167,8 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
         setHistoryLoading(false)
       }
     },
-    [projectId, currentBranch]
+    [projectId]
   )
-
-
-  const fetchChaptersRef = useRef(fetchChapters)
-  fetchChaptersRef.current = fetchChapters
-  const fetchHistoryRef = useRef(fetchHistory)
-  fetchHistoryRef.current = fetchHistory
 
   const fetchProject = useCallback(async () => {
     if (!projectId || !config.serverUrl) return
@@ -235,13 +219,14 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
           }
         ).defaultBranch ?? null
 
-      setCurrentBranch(defaultBranch)
+      // Set default branch on initial load if no branch is currently active
+      const activeBranch = currentBranchRef.current || defaultBranch
+      if (!currentBranchRef.current && defaultBranch) {
+        setCurrentBranch(defaultBranch)
+      }
 
-      if (defaultBranch) {
-        await Promise.all([
-          fetchChaptersRef.current(defaultBranch),
-          fetchHistoryRef.current(defaultBranch)
-        ])
+      if (activeBranch) {
+        await Promise.all([fetchChapters(activeBranch), fetchHistory(activeBranch)])
       } else {
         setChapters([])
         setHistory([])
@@ -253,7 +238,7 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
     } finally {
       setProjectLoading(false)
     }
-  }, [projectId])
+  }, [projectId, fetchChapters, fetchHistory])
 
   const fetchBranches = useCallback(async () => {
     if (!projectId || !config.serverUrl) return
@@ -296,16 +281,16 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
   const refreshChapters = useCallback(
     async (branchId?: string) => {
-      await fetchChapters(branchId ?? currentBranch ?? undefined)
+      await fetchChapters(branchId ?? currentBranchRef.current ?? undefined)
     },
-    [fetchChapters, currentBranch]
+    [fetchChapters]
   )
 
   const refreshHistory = useCallback(
     async (branchId?: string) => {
-      await fetchHistory(branchId ?? currentBranch ?? undefined)
+      await fetchHistory(branchId ?? currentBranchRef.current ?? undefined)
     },
-    [fetchHistory, currentBranch]
+    [fetchHistory]
   )
 
   const refreshBranches = useCallback(async () => {
@@ -359,15 +344,15 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
         }
 
         await Promise.all([
-          refreshChapters(currentBranch ?? undefined),
-          refreshHistory(currentBranch ?? undefined)
+          refreshChapters(currentBranchRef.current ?? undefined),
+          refreshHistory(currentBranchRef.current ?? undefined)
         ])
       } catch (err) {
         console.error('Failed to delete chapter:', err)
         throw err
       }
     },
-    [refreshChapters, refreshHistory, currentBranch]
+    [refreshChapters, refreshHistory]
   )
 
   const bulkDeleteChapters = useCallback(
@@ -390,21 +375,21 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
         if (!response.ok) {
           throw new Error(
             result.error?.message ||
-            result.error ||
-            `Failed to bulk delete chapters: ${response.status}`
+              result.error ||
+              `Failed to bulk delete chapters: ${response.status}`
           )
         }
 
         await Promise.all([
-          refreshChapters(currentBranch ?? undefined),
-          refreshHistory(currentBranch ?? undefined)
+          refreshChapters(currentBranchRef.current ?? undefined),
+          refreshHistory(currentBranchRef.current ?? undefined)
         ])
       } catch (err) {
         console.error('Failed to bulk delete chapters:', err)
         throw err
       }
     },
-    [refreshChapters, refreshHistory, currentBranch]
+    [refreshChapters, refreshHistory]
   )
 
   const deleteProject = useCallback(async (projectIdToDelete: string) => {
@@ -439,15 +424,18 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       if (!config.serverUrl) return
 
       try {
-        const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/branch/delete`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            branchId
-          })
-        })
+        const response = await fetch(
+          `${config.serverUrl}/api/v1/user/data/project/branch/delete`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              branchId
+            })
+          }
+        )
 
         const result = await response.json()
 
@@ -459,7 +447,7 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
 
         await refreshBranches()
 
-        if (currentBranch === branchId && project) {
+        if (currentBranchRef.current === branchId && project) {
           const defaultBranch =
             (
               project as ProjectObject & {
@@ -481,93 +469,17 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
         throw err
       }
     },
-    [currentBranch, project, refreshBranches, fetchChapters, fetchHistory]
+    [project, refreshBranches, fetchChapters, fetchHistory]
   )
 
-  /*
-   * Branch switching.
-   *
-   * Race-condition safety via generation counter:
-   * - Each switch increments `switchGenRef` and captures that generation number.
-   * - The chapters and history requests are issued in parallel.
-   * - Before committing ANY state we check that our generation is still the
-   *   current one.  If a newer switch has already started, we discard the
-   *   results so the fresher data is never overwritten by a slower older fetch.
-   * - `currentBranch` is set optimistically before the fetch so the dropdown
-   *   immediately reflects the user's selection.
-   *
-   * NOTE: we fetch inline here (rather than via fetchChapters/fetchHistory)
-   * because those helpers call setChapters/setHistory unconditionally inside
-   * their own try/catch.  We need to gate the state update on the generation
-   * check, which must happen *before* we call the setters.
-   */
   const switchBranch = useCallback(
     async (branchId: string) => {
       if (!projectId || !config.serverUrl) return
 
-      // Bump the generation counter; capture our generation before any awaits
-      const gen = ++switchGenRef.current
-
-      // Optimistically commit the new branch so the UI reflects it immediately
       setCurrentBranch(branchId)
-      setChaptersLoading(true)
-      setHistoryLoading(true)
-      console.debug('Switching branch:', branchId, '(gen', gen + ')')
-
-      try {
-        const [chaptersRes, historyRes] = await Promise.all([
-          fetch(`${config.serverUrl}/api/v1/user/data/chapter/search`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ project: projectId, limit: 100, offset: 0, branch: branchId })
-          }),
-          fetch(`${config.serverUrl}/api/v1/user/data/project/history`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId, limit: 30, branchId })
-          })
-        ])
-
-        const [chaptersData, historyData] = await Promise.all([
-          chaptersRes.json(),
-          historyRes.json()
-        ])
-
-        // Stale-check: if a newer switch has already started, discard our results
-        if (gen !== switchGenRef.current) {
-          console.debug('Branch switch gen', gen, 'superseded — discarding results')
-          return
-        }
-
-        if (chaptersRes.ok) {
-          setChapters(chaptersData.data?.chapters || chaptersData.chapters || [])
-          setChaptersError(null)
-        } else {
-          setChaptersError(
-            chaptersData.error?.message || chaptersData.error || 'Failed to fetch chapters'
-          )
-        }
-
-        if (historyRes.ok) {
-          setHistory(historyData.data?.history || historyData.history || [])
-          setHistoryError(null)
-        } else {
-          setHistoryError(
-            historyData.error?.message || historyData.error || 'Failed to fetch history'
-          )
-        }
-      } catch (err) {
-        if (gen !== switchGenRef.current) return // superseded; ignore
-        console.error('Failed to switch branch:', err)
-        setChaptersError(err instanceof Error ? err.message : 'Failed to switch branch')
-      } finally {
-        if (gen === switchGenRef.current) {
-          setChaptersLoading(false)
-          setHistoryLoading(false)
-        }
-      }
+      await Promise.all([fetchChapters(branchId), fetchHistory(branchId)])
     },
-    [projectId] // stable across branch changes; only needs projectId
+    [projectId, fetchChapters, fetchHistory]
   )
 
   const createBranch = useCallback(
