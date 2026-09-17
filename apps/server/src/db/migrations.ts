@@ -40,9 +40,7 @@ export function runMigrations(db: DatabaseSync) {
             name TEXT NOT NULL,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            branch_id TEXT NOT NULL,
-            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-            FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE
+            FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
         );
 
         CREATE INDEX IF NOT EXISTS idx_projects_owner_id ON projects(owner_id);

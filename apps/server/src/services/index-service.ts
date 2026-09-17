@@ -16,7 +16,6 @@ export interface CreateChapterParams {
     id?: string;
     projectId: string;
     name: string;
-    branchId?: string;
 }
 
 export interface CreateBranchParams {
@@ -260,11 +259,11 @@ export class IndexService {
         const now = new Date().toISOString();
 
         const stmt = this.db.prepare(`
-            INSERT INTO chapters (id, project_id, name, created_at, updated_at, branch_id)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO chapters (id, project_id, name, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?)
         `);
 
-        stmt.run(id, params.projectId, params.name, now, now, params.branchId || null);
+        stmt.run(id, params.projectId, params.name, now, now);
 
         return id;
     }
@@ -312,8 +311,7 @@ export class IndexService {
             project: row.project_id,
             name: row.name,
             createdAt: new Date(row.created_at),
-            updatedAt: new Date(row.updated_at),
-            branchId: row.branch_id
+            updatedAt: new Date(row.updated_at)
         };
     }
 

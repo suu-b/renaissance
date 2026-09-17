@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiPlus } from 'react-icons/fi'
 
@@ -29,19 +29,16 @@ export default function Project() {
   const {
     project,
     chapters,
-    projectLoading,
-    fetchProject,
-    fetchChapters,
     history,
-    fetchHistory,
+    branches,
+    currentBranch,
+    fetchProject,
+    fetchBranches,
     deleteProject,
     bulkDeleteChapters,
     refreshProject,
-    branches,
-    fetchBranches,
+    createBranch,
     switchBranch,
-    currentBranch,
-    createBranch
   } = useProject()
   const { setBreadcrumbs } = useBreadcrumb()
 
@@ -57,6 +54,19 @@ export default function Project() {
   const [showNewBranchModal, setShowNewBranchModal] = useState(false)
   const [newBranchName, setNewBranchName] = useState('')
   const [creatingBranch, setCreatingBranch] = useState(false)
+
+  // Ensure the default branch is always in the dropdown options.
+  // If it is missing from the server response (e.g. still loading), we do not
+  // inject a fake entry — we simply use the raw branches list.
+  const allBranches = useMemo(() => {
+    if (!project?.defaultBranch) return branches
+    const hasDefault = branches.some((b) => b.id === project.defaultBranch)
+    if (hasDefault) return branches
+    // The default branch is not yet in the list — omit it rather than
+    // injecting a stub without a branchName; the list will correct itself
+    // once fetchBranches completes.
+    return branches
+  }, [branches, project?.defaultBranch])
 
   useEffect(() => {
     console.log('Fetching latest project...')
@@ -202,6 +212,20 @@ export default function Project() {
     }
   }
 
+  const handleBranchSelect = async (branchName: string) => {
+    const selectedBranch = allBranches.find((branch) => branch.branchName === branchName)
+    if (!selectedBranch || selectedBranch.id === currentBranch) return
+
+    try {
+      await switchBranch(selectedBranch.id)
+      // showToast(`Switched to branch ${branchName}`, 'info')
+    } catch (error) {
+      console.error('Failed to switch branch:', error)
+      setError(error instanceof Error ? error.message : 'Failed to switch branch')
+      showToast('Failed to switch branch', 'alert')
+    }
+  }
+
   const cancelNewBranch = () => {
     setShowNewBranchModal(false)
     setNewBranchName('')
@@ -223,14 +247,10 @@ export default function Project() {
               <FiPlus color="white" />
             </div>
             <SearchableDropdown
-              options={branches.map((branch) => branch.branchName)}
-              defaultIndex={branches.findIndex((branch) => branch.id === currentBranch)}
-              onSelect={async (branchName) => {
-                const selectedBranch = branches.find((branch) => branch.branchName === branchName)
-                if (selectedBranch) {
-                  await switchBranch(selectedBranch.id)
-                }
-              }}
+              options={allBranches.map((branch) => branch.branchName)}
+              value={allBranches.find((branch) => branch.id === currentBranch)?.branchName}
+              defaultIndex={allBranches.findIndex((branch) => branch.id === currentBranch)}
+              onSelect={handleBranchSelect}
               variant="default"
             />
             <ToolKit
@@ -246,7 +266,7 @@ export default function Project() {
         </div>
 
         <Typography variant="h1" className="my-6">
-          {projectLoading ? 'Loading...' : project?.name || `Project ${project?.id}`}
+          {project?.name}
         </Typography>
 
         {error && <div className="mb-4 text-sm text-red-600">{error}</div>}

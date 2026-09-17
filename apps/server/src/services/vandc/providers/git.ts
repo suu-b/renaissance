@@ -37,11 +37,11 @@ export class GitProvider implements VandcService {
         try {
             await fs.writeFile(scopePath, content, encoding);
             const cwd = repoPath || this.repoPath;
-            await execFileAsync( "git", ["add", "--", scopePath], { cwd } );
-            
+            await execFileAsync("git", ["add", "--", scopePath], { cwd });
+
             // Handle the case where this might be the first commit
             try {
-                await execFileAsync( "git", [ "commit", "-m", message ], { cwd } );
+                await execFileAsync("git", ["commit", "-m", message], { cwd });
             } catch (commitError) {
                 // If commit fails due to no commits, try with --allow-empty
                 const errorStr = String(commitError);
@@ -75,21 +75,21 @@ export class GitProvider implements VandcService {
     async createFolder(folderPath: string, repoPath?: string): Promise<void> {
         try {
             await fs.mkdir(folderPath, { recursive: true });
-            
+
             const cwd = repoPath || this.repoPath;
-            
+
             // Only perform git operations if this is a git repository
             try {
                 // Check if .git directory exists
                 const gitDir = path.join(cwd, '.git');
                 await fs.access(gitDir);
-                
+
                 // Add .gitkeep file to ensure the folder is tracked by git
                 const gitkeepPath = path.join(folderPath, '.gitkeep');
                 await fs.writeFile(gitkeepPath, '# This file ensures the folder is tracked by git\n');
-                
+
                 await execFileAsync("git", ["add", "--", gitkeepPath], { cwd });
-                
+
                 // Handle the case where this might be the first commit
                 try {
                     await execFileAsync("git", ["commit", "-m", `Add ${path.basename(folderPath)} folder`], { cwd });
@@ -118,15 +118,15 @@ export class GitProvider implements VandcService {
             await fs.mkdir(dir, { recursive: true });
             await fs.writeFile(filePath, content, encoding);
             const cwd = repoPath || this.repoPath;
-            
+
             // Only perform git operations if this is a git repository
             try {
                 // Check if .git directory exists
                 const gitDir = path.join(cwd, '.git');
                 await fs.access(gitDir);
-                
+
                 await execFileAsync("git", ["add", "--", filePath], { cwd });
-                
+
                 // Commit the file with a descriptive message
                 const fileName = path.basename(filePath);
                 try {
@@ -153,16 +153,16 @@ export class GitProvider implements VandcService {
     async deleteFile(filePath: string, repoPath?: string): Promise<void> {
         try {
             const cwd = repoPath || this.repoPath;
-            
+
             // Only perform git operations if this is a git repository
             try {
                 // Check if .git directory exists
                 const gitDir = path.join(cwd, '.git');
                 await fs.access(gitDir);
-                
+
                 // Stage the deletion in git
                 await execFileAsync("git", ["rm", "--", filePath], { cwd });
-                
+
                 // Commit the deletion with a descriptive message
                 const fileName = path.basename(filePath);
                 try {
@@ -195,13 +195,13 @@ export class GitProvider implements VandcService {
     async deleteFolder(folderPath: string, repoPath?: string): Promise<void> {
         try {
             const cwd = repoPath || this.repoPath;
-            
+
             // Only perform git operations if this is a git repository
             try {
                 // Check if .git directory exists
                 const gitDir = path.join(cwd, '.git');
                 await fs.access(gitDir);
-                
+
                 // Stage the folder deletion in git (including .gitkeep file)
                 const gitkeepPath = path.join(folderPath, '.gitkeep');
                 try {
@@ -214,7 +214,7 @@ export class GitProvider implements VandcService {
                         console.log(`Could not remove folder or .gitkeep from git, proceeding with direct deletion`);
                     }
                 }
-                
+
                 // Commit the deletion with a descriptive message
                 const folderName = path.basename(folderPath);
                 try {
@@ -228,7 +228,7 @@ export class GitProvider implements VandcService {
                         throw commitError;
                     }
                 }
-                
+
                 // Delete the actual folder from filesystem
                 await fs.rm(folderPath, { recursive: true, force: true });
             } catch (gitError) {
@@ -242,51 +242,75 @@ export class GitProvider implements VandcService {
         }
     }
 
-   async getScopedHistory( filePath: string, limit: number = 30 ): Promise<GitCommit[]> {
-    try {
-        const { stdout } = await execFileAsync(
-            "git",
-            [
+    async getScopedHistory(filePath: string, limit: number = 30): Promise<GitCommit[]> {
+        try {
+            let cwd = this.repoPath;
+            let relativePath: string | null = null;
+
+            try {
+                const stat = await fs.stat(filePath);
+                if (stat.isDirectory()) {
+                    cwd = filePath;
+                } else {
+                    cwd = path.dirname(filePath);
+                    relativePath = path.basename(filePath);
+                }
+            } catch {
+                cwd = path.extname(filePath) ? path.dirname(filePath) : filePath;
+                relativePath = path.basename(filePath);
+            }
+
+            const args = [
                 "log",
                 "--format=%H|%s",
                 "-n",
-                limit.toString(),
-                "--",
-                filePath,
-            ],
-            { cwd: this.repoPath }
-        );
+                limit.toString()
+            ];
 
-        return stdout
-            .trim()
-            .split("\n")
-            .filter(Boolean)
-            .map((line) => {
-                const [hash, ...messageParts] = line.split("|");
+            if (relativePath) {
+                args.push("--", relativePath);
+            }
 
-                return {
-                    hash,
-                    message: messageParts.join("|"),
-                };
-            });
-    } catch (error) {
-        console.error(
-            `Failed to get git history for path ${filePath}:`,
-            error
-        );
-        throw error;
+            const { stdout } = await execFileAsync("git", args, { cwd });
+
+            return stdout
+                .trim()
+                .split("\n")
+                .filter(Boolean)
+                .map((line) => {
+                    const [hash, ...messageParts] = line.split("|");
+
+                    return {
+                        hash,
+                        message: messageParts.join("|"),
+                    };
+                });
+        } catch (error) {
+            console.error(
+                `Failed to get git history for path ${filePath}:`,
+                error
+            );
+            throw error;
+        }
     }
-}
 
     async getCommitDiff(filePath: string, hash: string): Promise<string> {
         try {
+            let cwd = this.repoPath;
+            try {
+                const stat = await fs.stat(filePath);
+                cwd = stat.isDirectory() ? filePath : path.dirname(filePath);
+            } catch {
+                cwd = path.extname(filePath) ? path.dirname(filePath) : filePath;
+            }
+
             const { stdout } = await execFileAsync(
                 "git",
                 [
                     "show",
                     hash
                 ],
-                { cwd: this.repoPath }
+                { cwd }
             );
 
             return stdout;
@@ -312,6 +336,14 @@ export class GitProvider implements VandcService {
     async changeBranch(branchName: string, repoPath?: string): Promise<void> {
         try {
             const cwd = repoPath || this.repoPath;
+            try {
+                const { stdout } = await execFileAsync("git", ["rev-parse", "--abbrev-ref", "HEAD"], { cwd });
+                if (stdout.trim() === branchName) {
+                    return;
+                }
+            } catch {
+                // If rev-parse fails, proceed to checkout
+            }
             await execFileAsync("git", ["checkout", branchName], { cwd });
         } catch (error) {
             console.error(`Failed to change to branch ${branchName}:`, error);
@@ -325,6 +357,19 @@ export class GitProvider implements VandcService {
             await execFileAsync("git", ["branch", "-D", branchName], { cwd });
         } catch (error) {
             console.error(`Failed to delete branch ${branchName}:`, error);
+            throw error;
+        }
+    }
+
+    async getFileNames(folderPath: string): Promise<string[]> {
+        try {
+            const entries = await fs.readdir(folderPath, { withFileTypes: true });
+            const fileNames = entries
+                .filter(entry => entry.isFile())
+                .map(entry => entry.name);
+            return fileNames;
+        } catch (error) {
+            console.error(`Failed to read file names from ${folderPath}:`, error);
             throw error;
         }
     }

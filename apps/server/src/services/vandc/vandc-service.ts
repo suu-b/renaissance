@@ -40,4 +40,6 @@ export interface VandcService {
     changeBranch(branchName: string, repoPath?: string): Promise<void>;
 
     deleteBranch(branchName: string, repoPath?: string): Promise<void>;
+
+    getFileNames(folderPath: string): Promise<string[]>;
 }

@@ -32,18 +32,30 @@ export async function chapterRouter(app: FastifyInstance) {
         }
     }, async (request, reply) => {
         try {
-            const { project: projectId, limit, offset, sort, filters, fields, branch } = request.body as any;
-            let chapters = app.indexService.getChaptersByProjectId(projectId);
-            app.log.info({ branch }, "Current branch");
-            app.log.info({ branch }, "branch");
-            // Filter chapters by branch if provided
-            if (branch) {
-                chapters = chapters.filter(chapter => chapter.branchId === branch);
+            const { project: projectId, limit, offset, sort, filters, fields, branch, branchId } = request.body as any;
+            const projectPath = path.join(app.appPaths.workspacePath, projectId);
+
+            // If branch or branchId is provided, switch to that branch first
+            const targetBranchId = branch || branchId;
+            if (targetBranchId) {
+                const branchObj = app.indexService.getBranchById(targetBranchId);
+                if (branchObj) {
+                    await app.vandcService.changeBranch(targetBranchId, projectPath);
+                }
             }
-            app.log.info({ chapters }, "Current chapters");
+
+            const fileNames = await app.vandcService.getFileNames(projectPath);
+            const jsonFiles = fileNames.filter(name => name.endsWith('.json'));
+            const chapterIds = jsonFiles.map(name => name.replace('.json', ''));
+            
+            const chapters = chapterIds
+                .map(id => app.indexService.getChapterById(id))
+                .filter((chapter): chapter is NonNullable<typeof chapter> => chapter !== null && chapter !== undefined);
+            
+            // app.log.info({ chapters }, "Current chapters");
 
             const result = DataService.processSearch(chapters, {
-                limit, offset, sort, filters, fields
+                limit, offset, sort: sort || { field: 'createdAt', order: 'desc' }, filters, fields
             });
 
             return reply.status(200).send(sendSuccess({
@@ -67,8 +79,19 @@ export async function chapterRouter(app: FastifyInstance) {
         }
     }, async (request, reply) => {
         try {
-            const { project: projectId, id: chapterId } = request.body;
-            const chapterFilePath = path.join(app.appPaths.workspacePath, projectId, `${chapterId}.json`);
+            const { project: projectId, id: chapterId, branchId, branch } = request.body as any;
+            const projectPath = path.join(app.appPaths.workspacePath, projectId);
+
+            // If branchId or branch is provided, switch to that branch first
+            const targetBranchId = branchId || branch;
+            if (targetBranchId) {
+                const branchObj = app.indexService.getBranchById(targetBranchId);
+                if (branchObj) {
+                    await app.vandcService.changeBranch(targetBranchId, projectPath);
+                }
+            }
+
+            const chapterFilePath = path.join(projectPath, `${chapterId}.json`);
 
             const chapterData = JSON.parse(await fs.readFile(chapterFilePath, "utf-8"));
 
@@ -113,8 +136,7 @@ export async function chapterRouter(app: FastifyInstance) {
             const chapterId = app.indexService.createChapter({
                 id,
                 projectId,
-                name,
-                branchId
+                name
             });
 
             const chapterFilePath = path.join(projectPath, `${chapterId}.json`);

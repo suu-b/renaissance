@@ -6,8 +6,7 @@ export const ChapterSchema = z.object({
     project: z.uuid(),
     name: z.string().min(1),
     createdAt: z.coerce.date(),
-    updatedAt: z.coerce.date(),
-    branchId: z.string()
+    updatedAt: z.coerce.date()
 });
 
 export type ChapterObject = z.infer<typeof ChapterSchema>;
@@ -35,14 +34,17 @@ export const SearchChapterRequestSchema = z.object({
   sort: SortObjectSchema.optional(),
   filters: z.array(FilterObjectSchema).default([]),
   fields: z.array(z.string()).default([]),
-  branch: z.uuid()
+  branch: z.uuid().optional(),
+  branchId: z.uuid().optional()
 });
 
 export type SearchChapterRequestObject = z.infer<typeof SearchChapterRequestSchema>;
 
 export const GetChapterRequestSchema = z.object({
     project: z.uuid(),
-    id: z.uuid()
+    id: z.uuid(),
+    branchId: z.uuid().optional(),
+    branch: z.uuid().optional()
 });
 
 export type GetChapterRequestObject = z.infer<typeof GetChapterRequestSchema>;

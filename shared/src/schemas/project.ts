@@ -73,7 +73,7 @@ export const GetCommitDiffRequestSchema = z.object({
     project: z.uuid(),
     filePath: z.string().min(1),
     hash: z.string().min(1),
-    branch: z.array(z.string())
+    branch: z.union([z.string(), z.array(z.string())]).optional()
 });
 
 export type GetCommitDiffRequestObject = z.infer<typeof GetCommitDiffRequestSchema>;

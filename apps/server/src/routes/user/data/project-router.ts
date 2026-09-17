@@ -296,9 +296,19 @@ export async function projectRouter(app: FastifyInstance) {
         }
     }, async (request, reply) => {
         try {
-            const { project: projectId, filePath, hash } = request.body;
-            const fullPath = path.join(app.appPaths.workspacePath, projectId, filePath);
+            const { project: projectId, filePath, hash, branch } = request.body as any;
+            const projectPath = path.join(app.appPaths.workspacePath, projectId);
 
+            // If branch is provided, switch to that branch first
+            const targetBranchId = Array.isArray(branch) ? branch[0] : branch;
+            if (targetBranchId) {
+                const branchObj = app.indexService.getBranchById(targetBranchId);
+                if (branchObj) {
+                    await app.vandcService.changeBranch(targetBranchId, projectPath);
+                }
+            }
+
+            const fullPath = path.join(projectPath, filePath);
             const diff = await app.vandcService.getCommitDiff(fullPath, hash);
 
             return reply.status(200).send(sendSuccess({
