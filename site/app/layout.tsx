@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   title: 'Renaissance',
   description: 'A desktop application for literary creation, branching, and collaboration.',
   generator: 'Renaissance',
+  icons: {
+    icon: '/renaissance_logo.png',
+    apple: '/renaissance_logo.png',
+  },
 }
 
 export const viewport: Viewport = {
@@ -22,7 +26,9 @@ export const viewport: Viewport = {
   userScalable: true,
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="bg-background">
       <body className={`${poppins.variable} antialiased`}>
