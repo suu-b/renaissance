@@ -377,14 +377,14 @@ export class GitProvider implements VandcService {
     async getChangedFilesBetweenBranches(sourceBranch: string, targetBranch: string, repoPath?: string): Promise<string[]> {
         try {
             const cwd = repoPath || this.repoPath;
-            const { stdout } = await execFileAsync("git", ["diff", sourceBranch, targetBranch, "--name-only"], { cwd });
+            const { stdout } = await execFileAsync("git", ["diff", `${targetBranch}...${sourceBranch}`, "--name-only"], { cwd });
 
             return stdout
                 .trim()
                 .split("\n")
                 .filter(Boolean);
         } catch (error) {
-            console.error(`Failed to get changed files between ${sourceBranch} and ${targetBranch}:`, error);
+            console.error(`Failed to get changed files between ${targetBranch} and ${sourceBranch}:`, error);
             throw error;
         }
     }
@@ -396,7 +396,7 @@ export class GitProvider implements VandcService {
 
             for (const filePath of filePaths) {
                 try {
-                    const { stdout } = await execFileAsync("git", ["diff", sourceBranch, targetBranch, "--", filePath], { cwd });
+                    const { stdout } = await execFileAsync("git", ["diff", `${targetBranch}...${sourceBranch}`, "--", filePath], { cwd });
                     diffs.push({
                         filePath,
                         diff: stdout
@@ -412,7 +412,25 @@ export class GitProvider implements VandcService {
 
             return diffs;
         } catch (error) {
-            console.error(`Failed to get files diff between ${sourceBranch} and ${targetBranch}:`, error);
+            console.error(`Failed to get files diff between ${targetBranch} and ${sourceBranch}:`, error);
+            throw error;
+        }
+    }
+
+    async mergeBranches(mainBranchId: string, mergeBranchId: string, mainBranchName?: string, mergeBranchName?: string, message?: string, repoPath?: string): Promise<void> {
+        try {
+            const cwd = repoPath || this.repoPath;
+
+            // Switch to main branch
+            await execFileAsync("git", ["switch", mainBranchId], { cwd });
+
+            // Generate default message if not provided
+            const mergeMessage = message || `merge ${mainBranchName || mainBranchId} ${mergeBranchName || mergeBranchId}`;
+
+            // Merge the other branch with -X theirs strategy and custom message
+            await execFileAsync("git", ["merge", "-X", "theirs", "-m", mergeMessage, mergeBranchId], { cwd });
+        } catch (error) {
+            console.error(`Failed to merge branch ${mergeBranchId} into ${mainBranchId}:`, error);
             throw error;
         }
     }

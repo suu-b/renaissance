@@ -19,7 +19,8 @@ import {
     sendError,
     GitCommit,
     GetCommitDiffRequestSchema,
-    GetBranchDiffRequestSchema
+    GetBranchDiffRequestSchema,
+    MergeBranchRequestSchema
 } from "@renaissance/shared";
 
 import { getUserProfile } from "../../../utils/userProfile.js";
@@ -497,6 +498,31 @@ export async function projectRouter(app: FastifyInstance) {
             }));
         } catch (error) {
             console.error("Failed to get branch diff:", error);
+            return reply.status(500).send(sendError(Errors.PROJECT_GET_FAILED));
+        }
+    });
+
+    // POST /api/v1/user/data/project/branches/merge
+    // Merge a branch into main branch
+    typedApp.post("/branches/merge", {
+        schema: {
+            body: MergeBranchRequestSchema,
+            response: CARResponses,
+            tags: ["User Data"]
+        }
+    }, async (request, reply) => {
+        try {
+            const { projectId, mainBranchId, mergeBranchId, mainBranchName, mergeBranchName, message } = request.body as z.infer<typeof MergeBranchRequestSchema>;
+            const projectPath = path.join(app.appPaths.workspacePath, projectId);
+
+            await app.vandcService.mergeBranches(mainBranchId, mergeBranchId, mainBranchName, mergeBranchName, message, projectPath);
+
+            return reply.status(200).send(sendSuccess({
+                success: true,
+                message: "Branch merged successfully"
+            }));
+        } catch (error) {
+            console.error("Failed to merge branch:", error);
             return reply.status(500).send(sendError(Errors.PROJECT_GET_FAILED));
         }
     });

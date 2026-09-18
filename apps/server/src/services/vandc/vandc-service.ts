@@ -46,4 +46,7 @@ export interface VandcService {
     getChangedFilesBetweenBranches(sourceBranch: string, targetBranch: string, repoPath?: string): Promise<string[]>;
 
     getFilesDiff(sourceBranch: string, targetBranch: string, filePaths: string[], repoPath?: string): Promise<Array<{ filePath: string; diff: string }>>;
+
+    // Branch merge methods
+    mergeBranches(mainBranchId: string, mergeBranchId: string, mainBranchName?: string, mergeBranchName?: string, message?: string, repoPath?: string): Promise<void>;
 }

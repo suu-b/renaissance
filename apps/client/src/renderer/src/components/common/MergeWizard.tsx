@@ -2,7 +2,8 @@ import { useState } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import Typography from '../ui/Typography'
-import { FiGitBranch, FiArrowRight, FiCheckCircle, FiLoader } from 'react-icons/fi'
+import Input from '../ui/Input'
+import { FiGitBranch, FiArrowRight, FiCheckCircle, FiLoader, FiXCircle } from 'react-icons/fi'
 import { config } from '../../config'
 
 type MergeWizardProps = {
@@ -11,16 +12,31 @@ type MergeWizardProps = {
   branchName: string
   currentBranchId?: string
   mainBranchId?: string
+  mainBranchName?: string
   onClose: () => void
 }
 
-export default function MergeWizard({ isOpen, projectId, branchName, currentBranchId, mainBranchId, onClose }: MergeWizardProps) {
+export default function MergeWizard({
+  isOpen,
+  projectId,
+  branchName,
+  currentBranchId,
+  mainBranchId,
+  mainBranchName,
+  onClose
+}: MergeWizardProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedChapter, setSelectedChapter] = useState<string | null>(null)
-  const [changedFiles, setChangedFiles] = useState<Array<{ filePath: string; chapterId: string; chapterName: string }>>([])
-  const [fileDiffs, setFileDiffs] = useState<Array<{ filePath: string; chapterId: string; chapterName: string; diff: string }>>([])
+  const [changedFiles, setChangedFiles] = useState<
+    Array<{ filePath: string; chapterId: string; chapterName: string }>
+  >([])
+  const [fileDiffs, setFileDiffs] = useState<
+    Array<{ filePath: string; chapterId: string; chapterName: string; diff: string }>
+  >([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mergeError, setMergeError] = useState<string | null>(null)
+  const [mergeMessage, setMergeMessage] = useState('')
 
   const fetchChangedFiles = async () => {
     if (!projectId || !currentBranchId || !mainBranchId || !config.serverUrl) return
@@ -49,6 +65,7 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
 
       const files = result.data.changedFiles || []
       const diffs = result.data.diffs || []
+
       setChangedFiles(files)
       setFileDiffs(diffs)
 
@@ -64,20 +81,52 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
 
   const handleConfirmMerge = async () => {
     const hasChanges = await fetchChangedFiles()
+
     if (hasChanges) {
       setCurrentStep(2)
     } else {
       // No changes to merge
-      setCurrentStep(4)
+      setCurrentStep(6)
     }
   }
 
   const handleStartMerge = async () => {
+    if (!projectId || !mainBranchId || !currentBranchId || !config.serverUrl) return
+
     setCurrentStep(3)
-    // Simulate merge process
-    setTimeout(() => {
+    setMergeError(null)
+
+    try {
+      const response = await fetch(`${config.serverUrl}/api/v1/user/data/project/branches/merge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          projectId,
+          mainBranchId,
+          mergeBranchId: currentBranchId,
+          mainBranchName,
+          mergeBranchName: branchName,
+          message: mergeMessage || undefined
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error?.message || result.error || 'Failed to merge branch')
+      }
+
+      // Success - move to success step
       setCurrentStep(4)
-    }, 3000)
+    } catch (err) {
+      console.error('Failed to merge branch:', err)
+      setMergeError(err instanceof Error ? err.message : 'Failed to merge branch')
+
+      // Move to error step
+      setCurrentStep(5)
+    }
   }
 
   const handleClose = () => {
@@ -86,6 +135,8 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
     setChangedFiles([])
     setFileDiffs([])
     setError(null)
+    setMergeError(null)
+    setMergeMessage('')
     onClose()
   }
 
@@ -96,6 +147,7 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
           <div className="w-20 h-20 rounded-full bg-foreground/10 border-2 border-foreground/30 flex items-center justify-center mb-2">
             <FiGitBranch className="text-foreground text-2xl" />
           </div>
+
           <Typography variant="small" className="text-muted-foreground">
             {branchName}
           </Typography>
@@ -107,19 +159,21 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
           <div className="w-20 h-20 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center mb-2">
             <FiGitBranch className="text-primary text-2xl" />
           </div>
+
           <Typography variant="small" className="text-muted-foreground">
-            main
+            {mainBranchName || 'main'}
           </Typography>
         </div>
       </div>
 
       <Typography variant="p" className="text-center mb-6">
-        Merge changes from <span className="font-semibold text-foreground">{branchName}</span> into
-        main branch
+        Merge changes from <span className="font-semibold text-foreground">{branchName}</span> into{' '}
+        {mainBranchName || 'main'} branch
       </Typography>
 
       <Typography variant="muted" className="text-center">
-        This action will merge all changes from the branch into the main branch.
+        This action will merge all changes from the branch into the {mainBranchName || 'main'}{' '}
+        branch.
       </Typography>
     </div>
   )
@@ -143,10 +197,30 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
 
       {!loading && !error && (
         <>
-          <div className="mb-4">
-            <Typography variant="muted" className="mb-2">
-              Found {changedFiles.length} files with changes:
-            </Typography>
+          <div className="mb-4 space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="merge-message" className="block text-sm font-medium text-foreground">
+                Merge Message (optional)
+              </label>
+
+              <Input
+                id="merge-message"
+                value={mergeMessage}
+                onChange={(e) => setMergeMessage(e.target.value)}
+                placeholder={`Default: merge ${mainBranchName || 'main'} ${branchName}`}
+                className="w-full"
+              />
+
+              <Typography variant="small" className="text-muted-foreground">
+                Leave empty to use default message
+              </Typography>
+            </div>
+
+            <div>
+              <Typography variant="muted" className="mb-2">
+                Found {changedFiles.length} files with changes:
+              </Typography>
+            </div>
           </div>
 
           <div className="space-y-2 max-h-96 overflow-y-auto mb-4">
@@ -156,9 +230,13 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
                 className="border border-foreground/20 rounded-lg overflow-hidden bg-background"
               >
                 <button
-                  onClick={() => setSelectedChapter(selectedChapter === file.chapterId ? null : file.chapterId)}
+                  onClick={() =>
+                    setSelectedChapter(selectedChapter === file.chapterId ? null : file.chapterId)
+                  }
                   className={`w-full p-4 flex items-center justify-between transition-colors text-left ${
-                    selectedChapter === file.chapterId ? 'bg-foreground/10' : 'hover:bg-foreground/5'
+                    selectedChapter === file.chapterId
+                      ? 'bg-foreground/10'
+                      : 'hover:bg-foreground/5'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -166,14 +244,18 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
                       <Typography variant="p" className="font-medium">
                         {file.chapterName}
                       </Typography>
+
                       <Typography variant="small" className="text-muted-foreground">
                         Modified in branch
                       </Typography>
                     </div>
                   </div>
+
                   <div
                     className={`w-2 h-2 rounded-full transition-transform ${
-                      selectedChapter === file.chapterId ? 'rotate-90 bg-foreground' : 'bg-foreground/30'
+                      selectedChapter === file.chapterId
+                        ? 'rotate-90 bg-foreground'
+                        : 'bg-foreground/30'
                     }`}
                   />
                 </button>
@@ -182,10 +264,16 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
                   <div className="border-t border-foreground/20 bg-foreground/[0.02]">
                     <div className="p-4">
                       {(() => {
-                        const diff = fileDiffs.find(d => d.chapterId === file.chapterId)?.diff
-                        if (!diff) return <div className="text-sm text-muted-foreground">No diff available</div>
+                        const diff = fileDiffs.find((d) => d.chapterId === file.chapterId)?.diff
+
+                        if (!diff) {
+                          return (
+                            <div className="text-sm text-muted-foreground">No diff available</div>
+                          )
+                        }
 
                         const lines = diff.split('\n')
+
                         return (
                           <div className="font-mono text-sm bg-background/50 p-3 rounded border border-foreground/10 overflow-x-auto">
                             {lines.map((line, index) => {
@@ -196,6 +284,7 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
                                   </div>
                                 )
                               }
+
                               if (line.startsWith('index ')) {
                                 return (
                                   <div key={index} className="text-gray-500 py-0.5">
@@ -203,6 +292,7 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
                                   </div>
                                 )
                               }
+
                               if (line.startsWith('---') || line.startsWith('+++')) {
                                 return (
                                   <div key={index} className="text-gray-600 py-0.5">
@@ -210,6 +300,7 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
                                   </div>
                                 )
                               }
+
                               if (line.startsWith('@@')) {
                                 return (
                                   <div key={index} className="text-purple-600 font-semibold py-0.5">
@@ -217,13 +308,18 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
                                   </div>
                                 )
                               }
+
                               if (line.startsWith('+')) {
                                 return (
-                                  <div key={index} className="text-green-600 bg-green-50 py-0.5 px-1">
+                                  <div
+                                    key={index}
+                                    className="text-green-600 bg-green-50 py-0.5 px-1"
+                                  >
                                     {line}
                                   </div>
                                 )
                               }
+
                               if (line.startsWith('-')) {
                                 return (
                                   <div key={index} className="text-red-600 bg-red-50 py-0.5 px-1">
@@ -231,6 +327,7 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
                                   </div>
                                 )
                               }
+
                               return (
                                 <div key={index} className="py-0.5">
                                   {line}
@@ -259,14 +356,14 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
     </div>
   )
 
-
-
   const renderStep3 = () => (
     <div className="flex flex-col items-center py-8">
       <FiLoader className="text-4xl text-foreground animate-spin mb-4" />
+
       <Typography variant="h3" className="mb-2">
         Merging Changes
       </Typography>
+
       <Typography variant="muted">Please wait while we merge the changes...</Typography>
 
       <div className="w-full bg-foreground/10 rounded-full h-2 mt-6">
@@ -283,15 +380,68 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
       <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-4">
         <FiCheckCircle className="text-foreground text-3xl" />
       </div>
+
       <Typography variant="h3" className="mb-2">
         Merge Successful
       </Typography>
+
       <Typography variant="p" className="text-center mb-6">
         Changes from <span className="font-semibold">{branchName}</span> have been successfully
-        merged into main.
+        merged into {mainBranchName || 'main'}.
       </Typography>
+
       <Typography variant="muted" className="text-center">
         {changedFiles.length} files were updated in the process.
+      </Typography>
+    </div>
+  )
+
+  const renderStep5 = () => (
+    <div className="flex flex-col items-center py-8">
+      <div className="w-16 h-16 rounded-full bg-red-20 flex items-center justify-center mb-4">
+        <FiXCircle className="text-red-600 text-3xl" />
+      </div>
+
+      <Typography variant="h3" className="mb-2 text-red-600">
+        Merge Failed
+      </Typography>
+
+      <Typography variant="p" className="text-center mb-6">
+        Failed to merge <span className="font-semibold">{branchName}</span> into{' '}
+        {mainBranchName || 'main'}.
+      </Typography>
+
+      {mergeError && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg max-w-md">
+          <Typography variant="small" className="text-red-600">
+            {mergeError}
+          </Typography>
+        </div>
+      )}
+
+      <Typography variant="muted" className="text-center">
+        Please try again or contact support if the issue persists.
+      </Typography>
+    </div>
+  )
+
+  const renderStep6 = () => (
+    <div className="flex flex-col items-center py-8">
+      <div className="w-16 h-16 rounded-full bg-foreground/10 flex items-center justify-center mb-4">
+        <FiCheckCircle className="text-foreground text-3xl" />
+      </div>
+
+      <Typography variant="h3" className="mb-2">
+        No Changes to Merge
+      </Typography>
+
+      <Typography variant="p" className="text-center mb-6">
+        There are no changes in <span className="font-semibold">{branchName}</span> that need to be
+        merged into {mainBranchName || 'main'}.
+      </Typography>
+
+      <Typography variant="muted" className="text-center">
+        The branches are already up to date with respect to the changes introduced by {branchName}.
       </Typography>
     </div>
   )
@@ -306,6 +456,10 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
         return 'Merging...'
       case 4:
         return 'Success'
+      case 5:
+        return 'Merge Failed'
+      case 6:
+        return 'No Changes'
       default:
         return 'Merge Branch'
     }
@@ -318,8 +472,12 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
       case 2:
         return handleStartMerge
       case 3:
-        return () => {} // No action during progress
+        return () => {}
       case 4:
+        return handleClose
+      case 5:
+        return handleClose
+      case 6:
         return handleClose
       default:
         return () => {}
@@ -329,14 +487,14 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
   const getOnCancel = () => {
     switch (currentStep) {
       case 3:
-        return () => {} // Can't cancel during progress
+        return () => {}
       default:
         return handleClose
     }
   }
 
   const getShowButtons = () => {
-    return currentStep !== 3 // Hide buttons during progress
+    return currentStep !== 3
   }
 
   const getConfirmButtonText = () => {
@@ -346,6 +504,10 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
       case 2:
         return 'Continue'
       case 4:
+        return 'Close'
+      case 5:
+        return 'Close'
+      case 6:
         return 'Close'
       default:
         return 'Confirm'
@@ -365,12 +527,15 @@ export default function MergeWizard({ isOpen, projectId, branchName, currentBran
       {currentStep === 2 && renderStep2()}
       {currentStep === 3 && renderStep3()}
       {currentStep === 4 && renderStep4()}
+      {currentStep === 5 && renderStep5()}
+      {currentStep === 6 && renderStep6()}
 
       {getShowButtons() && (
         <div className="flex justify-end gap-3 mt-6">
           <Button variant="secondary" size="sm" onClick={getOnCancel()}>
             Cancel
           </Button>
+
           <Button variant="primary" size="sm" onClick={getOnConfirm()}>
             {getConfirmButtonText()}
           </Button>

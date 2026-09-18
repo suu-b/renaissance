@@ -121,3 +121,21 @@ export const GetBranchDiffResponseSchema = z.object({
 });
 
 export type GetBranchDiffResponseObject = z.infer<typeof GetBranchDiffResponseSchema>;
+
+export const MergeBranchRequestSchema = z.object({
+    projectId: z.uuid(),
+    mainBranchId: z.string().min(1),
+    mergeBranchId: z.string().min(1),
+    mainBranchName: z.string().optional(),
+    mergeBranchName: z.string().optional(),
+    message: z.string().optional()
+});
+
+export type MergeBranchRequestObject = z.infer<typeof MergeBranchRequestSchema>;
+
+export const MergeBranchResponseSchema = z.object({
+    success: z.boolean(),
+    message: z.string()
+});
+
+export type MergeBranchResponseObject = z.infer<typeof MergeBranchResponseSchema>;

@@ -485,6 +485,7 @@ export default function Project() {
         branchName={allBranches.find((branch) => branch.id === currentBranch)?.branchName || 'feature-branch'}
         currentBranchId={currentBranch ?? undefined}
         mainBranchId={project?.defaultBranch ?? undefined}
+        mainBranchName={allBranches.find((branch) => branch.id === project?.defaultBranch)?.branchName ?? undefined}
         onClose={() => setShowMergeWizard(false)}
       />
     </Page>
