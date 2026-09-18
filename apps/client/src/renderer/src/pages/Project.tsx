@@ -7,16 +7,15 @@ import Typography from '../components/ui/Typography'
 import ChapterList from '../components/common/ChapterList'
 import SearchBar from '../components/ui/SearchBar'
 import BackLink from '../components/ui/BackLink'
-import Contributions from '../components/common/Contributions'
 import Stream from '../components/common/Stream'
 import ToolKit from '../components/common/ToolKit'
 import NewTool from '../components/ui/NewTool'
 import MergeTool from '../components/ui/MergeTool'
+import MergeWizard from '../components/common/MergeWizard'
 import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import Input from '../components/ui/Input'
 import Textarea from '../components/ui/Textarea'
-import Veil from '../components/ui/Veil'
 import { useToast } from '../components/ui/Toast'
 import SearchableDropdown from '../components/ui/SearchableDropdown'
 
@@ -56,6 +55,7 @@ export default function Project() {
   const [showNewBranchModal, setShowNewBranchModal] = useState(false)
   const [newBranchName, setNewBranchName] = useState('')
   const [creatingBranch, setCreatingBranch] = useState(false)
+  const [showMergeWizard, setShowMergeWizard] = useState(false)
 
   // Ensure the default branch is always in the dropdown options.
   // If it is missing from the server response (e.g. still loading), we do not
@@ -240,7 +240,7 @@ export default function Project() {
           <div>
             <BackLink fallbackPath="/dashboard" />
           </div>
-          <Contributions
+          {/* <Contributions
             contributors={
               project?.contributors?.map((c, index) => ({
                 id: parseInt(c.id.replace(/-/g, '').substring(0, 8), 16) || index,
@@ -248,7 +248,7 @@ export default function Project() {
                 avatar: c.avatarUrl
               })) || []
             }
-          />
+          /> */}
         </div>
 
         <div className="mb-6 flex justify-between items-center gap-4">
@@ -270,7 +270,8 @@ export default function Project() {
             />
             <MergeTool
               size="sm"
-              onClick={() => showToast('Merge functionality', 'info')}
+              onClick={() => setShowMergeWizard(true)}
+              disabled={currentBranch === project?.defaultBranch}
             />
             <ToolKit
               size="sm"
@@ -477,6 +478,15 @@ export default function Project() {
           )}
         </div>
       </Modal>
+
+      <MergeWizard
+        isOpen={showMergeWizard}
+        projectId={project?.id || undefined}
+        branchName={allBranches.find((branch) => branch.id === currentBranch)?.branchName || 'feature-branch'}
+        currentBranchId={currentBranch ?? undefined}
+        mainBranchId={project?.defaultBranch ?? undefined}
+        onClose={() => setShowMergeWizard(false)}
+      />
     </Page>
   )
 }

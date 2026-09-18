@@ -18,7 +18,8 @@ import {
     Errors,
     sendError,
     GitCommit,
-    GetCommitDiffRequestSchema
+    GetCommitDiffRequestSchema,
+    GetBranchDiffRequestSchema
 } from "@renaissance/shared";
 
 import { getUserProfile } from "../../../utils/userProfile.js";
@@ -445,6 +446,57 @@ export async function projectRouter(app: FastifyInstance) {
             }));
         } catch (error) {
             console.error("Failed to create branch:", error);
+            return reply.status(500).send(sendError(Errors.PROJECT_GET_FAILED));
+        }
+    });
+
+    // POST /api/v1/user/data/project/branches/diff
+    // Get changed files and file diffs between two branches in a single call
+    typedApp.post("/branches/diff", {
+        schema: {
+            body: GetBranchDiffRequestSchema,
+            response: CARResponses,
+            tags: ["User Data"]
+        }
+    }, async (request, reply) => {
+        try {
+            const { projectId, sourceBranch, targetBranch } = request.body as z.infer<typeof GetBranchDiffRequestSchema>;
+            const projectPath = path.join(app.appPaths.workspacePath, projectId);
+
+            const changedFiles = await app.vandcService.getChangedFilesBetweenBranches(sourceBranch, targetBranch, projectPath);
+
+            // Get diffs for all changed files
+            const diffs = await app.vandcService.getFilesDiff(sourceBranch, targetBranch, changedFiles, projectPath);
+
+            // Extract chapter IDs from file names and get chapter names
+            const changedFilesWithNames = changedFiles.map(filePath => {
+                const chapterId = filePath.replace('.json', '');
+                const chapter = app.indexService.getChapterById(chapterId);
+                return {
+                    filePath,
+                    chapterId,
+                    chapterName: chapter?.name || filePath
+                };
+            });
+
+            // Update diffs to use chapter names instead of file paths
+            const diffsWithNames = diffs.map(diff => {
+                const chapterId = diff.filePath.replace('.json', '');
+                const chapter = app.indexService.getChapterById(chapterId);
+                return {
+                    filePath: diff.filePath,
+                    chapterId,
+                    chapterName: chapter?.name || diff.filePath,
+                    diff: diff.diff
+                };
+            });
+
+            return reply.status(200).send(sendSuccess({
+                changedFiles: changedFilesWithNames,
+                diffs: diffsWithNames
+            }));
+        } catch (error) {
+            console.error("Failed to get branch diff:", error);
             return reply.status(500).send(sendError(Errors.PROJECT_GET_FAILED));
         }
     });

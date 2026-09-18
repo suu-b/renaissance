@@ -42,4 +42,8 @@ export interface VandcService {
     deleteBranch(branchName: string, repoPath?: string): Promise<void>;
 
     getFileNames(folderPath: string): Promise<string[]>;
+
+    getChangedFilesBetweenBranches(sourceBranch: string, targetBranch: string, repoPath?: string): Promise<string[]>;
+
+    getFilesDiff(sourceBranch: string, targetBranch: string, filePaths: string[], repoPath?: string): Promise<Array<{ filePath: string; diff: string }>>;
 }

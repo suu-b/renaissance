@@ -373,4 +373,47 @@ export class GitProvider implements VandcService {
             throw error;
         }
     }
+
+    async getChangedFilesBetweenBranches(sourceBranch: string, targetBranch: string, repoPath?: string): Promise<string[]> {
+        try {
+            const cwd = repoPath || this.repoPath;
+            const { stdout } = await execFileAsync("git", ["diff", sourceBranch, targetBranch, "--name-only"], { cwd });
+
+            return stdout
+                .trim()
+                .split("\n")
+                .filter(Boolean);
+        } catch (error) {
+            console.error(`Failed to get changed files between ${sourceBranch} and ${targetBranch}:`, error);
+            throw error;
+        }
+    }
+
+    async getFilesDiff(sourceBranch: string, targetBranch: string, filePaths: string[], repoPath?: string): Promise<Array<{ filePath: string; diff: string }>> {
+        try {
+            const cwd = repoPath || this.repoPath;
+            const diffs: Array<{ filePath: string; diff: string }> = [];
+
+            for (const filePath of filePaths) {
+                try {
+                    const { stdout } = await execFileAsync("git", ["diff", sourceBranch, targetBranch, "--", filePath], { cwd });
+                    diffs.push({
+                        filePath,
+                        diff: stdout
+                    });
+                } catch (error) {
+                    console.error(`Failed to get diff for file ${filePath}:`, error);
+                    diffs.push({
+                        filePath,
+                        diff: ""
+                    });
+                }
+            }
+
+            return diffs;
+        } catch (error) {
+            console.error(`Failed to get files diff between ${sourceBranch} and ${targetBranch}:`, error);
+            throw error;
+        }
+    }
 }

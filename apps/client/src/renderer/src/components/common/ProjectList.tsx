@@ -8,6 +8,7 @@ import Card from "../ui/Card";
 import Button from "../ui/Button";
 import Pagination from "../ui/Pagination";
 import Typography from "../ui/Typography";
+
 import type { ProjectObject } from "@renaissance/shared";
 
 const projectListVariants = cva("flex flex-col", {

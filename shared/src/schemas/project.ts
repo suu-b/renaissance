@@ -99,3 +99,25 @@ export const BranchSchema = z.object({
 });
 
 export type BranchObject = z.infer<typeof BranchSchema>;
+
+export const GetBranchDiffRequestSchema = z.object({
+    projectId: z.uuid(),
+    sourceBranch: z.string().min(1),
+    targetBranch: z.string().min(1)
+});
+
+export type GetBranchDiffRequestObject = z.infer<typeof GetBranchDiffRequestSchema>;
+
+export const FileDiffSchema = z.object({
+    filePath: z.string(),
+    diff: z.string()
+});
+
+export type FileDiffObject = z.infer<typeof FileDiffSchema>;
+
+export const GetBranchDiffResponseSchema = z.object({
+    changedFiles: z.array(z.string()),
+    diffs: z.array(FileDiffSchema).optional()
+});
+
+export type GetBranchDiffResponseObject = z.infer<typeof GetBranchDiffResponseSchema>;
