@@ -4,8 +4,8 @@ import Footer from "../common/Footer"
 const pageVariants = cva("max-w-full overflow-x-hidden", {
     variants: {
         alignment: {
-            default: "px-8 py-10",
-            equal: "p-5",
+            default: "px-8 py-10 min-h-[calc(100vh-64px)]",
+            equal: "p-5 min-h-[calc(100vh-64px)]",
             center: "flex items-center justify-center h-[calc(100vh-64px)]"
         }
     },
@@ -16,11 +16,10 @@ const pageVariants = cva("max-w-full overflow-x-hidden", {
 
 type PageProps = VariantProps<typeof pageVariants> & {
     children: React.ReactNode,
-    className?: string,
-    showSkeleton?: boolean
+    className?: string
 }
 
-export default function Page({ alignment, children, className, showSkeleton = true }: PageProps){
+export default function Page({ alignment, children, className }: PageProps){
     return (
         <>
             <main className={`${pageVariants({ alignment })} ${className}`}>

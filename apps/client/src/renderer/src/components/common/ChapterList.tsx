@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { cva, type VariantProps } from "class-variance-authority"
 import { FiInbox, FiTrash2 } from "react-icons/fi"
 import { type ChapterObject } from "@renaissance/shared"
-import Card from "../ui/Card"
+import ListItem from "../ui/ListItem"
 import Button from "../ui/Button"
 import Pagination from "../ui/Pagination"
 import Typography from "../ui/Typography"
@@ -110,8 +110,8 @@ export default function ChapterList({
         }
     }
 
-    const cardGap =
-        size === "sm" ? "gap-1" : size === "lg" ? "gap-6" : "gap-4"
+    const listItemGap =
+        size === "sm" ? "gap-0" : size === "lg" ? "gap-0" : "gap-0"
 
     return (
         <div
@@ -162,7 +162,7 @@ export default function ChapterList({
                 </div>
             )}
 
-            <div className={`flex flex-col ${cardGap}`}>
+            <div className={`flex flex-col ${listItemGap}`}>
                 {filteredChapters.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8">
                         <FiInbox className="mb-2 text-3xl text-muted-foreground" />
@@ -177,45 +177,35 @@ export default function ChapterList({
                         </Typography>
                     </div>
                 ) : (
-                    currentChapters.map(chapter => (
+                    currentChapters.map((chapter, index) => (
                         <div
                             key={chapter.id}
-                            className="flex items-start gap-3"
+                            className="flex items-center gap-3"
                         >
                             {onBulkDelete && (
                                 <Checkbox
                                     checked={selectedChapters.has(chapter.id)}
-                                    onChange={() =>
+                                    onChange={(e) => {
+                                        e.stopPropagation()
                                         handleSelectChapter(chapter.id)
-                                    }
-                                    className="mt-1"
+                                    }}
                                 />
                             )}
 
                             <div className="flex-1">
-                                <Card
+                                <ListItem
                                     size={size}
                                     title={chapter.name}
-                                    subtitle=""
                                     lastUpdatedAt={new Date(
                                         chapter.updatedAt
                                     ).toLocaleDateString()}
-                                    button={
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="primary"
-                                                size="sm"
-                                                onClick={() =>
-                                                    projectId &&
-                                                    navigate(
-                                                        `/project/${projectId}/chapter/${chapter.id}`
-                                                    )
-                                                }
-                                            >
-                                                Open
-                                            </Button>
-                                        </div>
+                                    onClick={() =>
+                                        projectId &&
+                                        navigate(
+                                            `/project/${projectId}/chapter/${chapter.id}`
+                                        )
                                     }
+                                    isLast={index === currentChapters.length - 1}
                                 />
                             </div>
                         </div>

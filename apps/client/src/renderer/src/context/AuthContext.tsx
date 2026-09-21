@@ -28,8 +28,8 @@ function buildGuestProfile() {
 
     return {
         id: guestId,
-        username: "user",
-        displayName: "User",
+        username: "Guest",
+        displayName: "Guest",
         avatarUrl: `https://picsum.photos/seed/${guestId}/200/200`,
         email: "guest@local.pc",
         createdAt: new Date().toISOString(),

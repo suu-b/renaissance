@@ -335,7 +335,7 @@ export default function Chapter() {
   }
 
   return (
-    <Page alignment="default" className="mx-auto max-w-4xl">
+    <Page alignment="default" className="mx-auto max-w-4xl min-h-[70vh]">
       <div className="mb-6 flex items-start justify-between">
         <div>
           <BackLink fallbackPath={`/project/${projectId}`} />

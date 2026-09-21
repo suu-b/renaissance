@@ -10,12 +10,14 @@ import TextHighlight from '../components/ui/TextHighlight'
 import Veil from '../components/ui/Veil'
 import Modal from '../components/ui/Modal'
 import { useToast } from '../components/ui/Toast'
+import { useAuth } from '../context/AuthContext'
 
 import { config } from '../config'
 import { ProjectSchema, type ProjectObject } from '@renaissance/shared'
 
 export default function Dashboard(): React.JSX.Element {
   const { showToast } = useToast()
+  const { user } = useAuth()
   const [projects, setProjects] = useState<ProjectObject[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -115,7 +117,7 @@ export default function Dashboard(): React.JSX.Element {
             <Typography variant="h1">Welcome</Typography>
             <Typography variant="h1">
               <TextHighlight color="bg-primary" intensity={60}>
-                Shubham!
+                {user?.name || 'Guest'}!
               </TextHighlight>
             </Typography>
           </div>
@@ -154,7 +156,7 @@ export default function Dashboard(): React.JSX.Element {
           </div>
         ) : (
           <ProjectList
-            itemsPerPage={5}
+            itemsPerPage={3}
             size="sm"
             className="my-5"
             projects={projects}
@@ -166,11 +168,11 @@ export default function Dashboard(): React.JSX.Element {
 
       <div className="mx-auto w-[25vw]">
         <Veil className="rounded-lg">
-          <Explore className="mb-4" />
+          <Explore className="max-h-[20vh] mb-2" />
         </Veil>
 
         <Veil className="rounded-lg">
-          <Activity className="max-h-[40vh] overflow-y-auto" />
+          <Activity className="max-h-[20vh] overflow-y-auto" />
         </Veil>
       </div>
 

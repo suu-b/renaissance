@@ -69,7 +69,7 @@ export default function ChapterReader({
       </div>
 
       {/* Chapter Content */}
-      <div className="leading-relaxed text-lg">
+      <div className="leading-relaxed text-lg min-h-[50vh]">
         <SlateRenderer content={content} />
       </div>
 

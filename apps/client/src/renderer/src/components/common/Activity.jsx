@@ -10,8 +10,6 @@ const activities = [
   { id: 1, user: "Shubham", action: "created", object: "Project 1", when: "4 hrs ago", dateGroup: "Today", avatar: pfp },
   { id: 2, user: "Diana", action: "contributed to", object: "Project 5", when: "5 hrs ago", dateGroup: "Today" },
   { id: 3, user: "Alice", action: "liked", object: "Project 2", when: "2 days ago", dateGroup: "Yesterday" },
-  { id: 4, user: "Charlie", action: "branched", object: "Project 4", when: "3 days ago", dateGroup: "Yesterday" },
-  { id: 5, user: "Bob", action: "forked", object: "Project 3", when: "1 week ago", dateGroup: "This Week" },
 ]
 
 const activityTypes = ["All", "created", "liked", "forked", "branched", "contributed to"]
@@ -37,7 +35,7 @@ export default function Activity() {
   }, {})
 
   return (
-    <div className="border border-foreground/20 rounded-lg p-4 max-h-full flex flex-col">
+    <div className="border border-foreground/20 rounded-lg p-4 flex flex-col">
       {/* Header with Mine button */}
       <div className="flex justify-between items-center mb-3">
         <Typography variant="h3">Activity</Typography>
@@ -75,7 +73,7 @@ export default function Activity() {
       </div>
 
       {/* Activity logs grouped by date */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto"> max-h-full 
         {Object.entries(groupedActivities).map(([dateGroup, groupActivities]) => (
           <div key={dateGroup} className="mb-3">
             <Typography variant="small" className="text-muted-foreground font-semibold mb-2 uppercase tracking-wider">

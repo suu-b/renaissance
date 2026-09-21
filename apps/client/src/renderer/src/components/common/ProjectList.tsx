@@ -106,10 +106,10 @@ export default function ProjectList({
 
   const cardGap =
     size === "sm"
-      ? "gap-1"
+      ? "gap-2"
       : size === "lg"
-        ? "gap-6"
-        : "gap-4";
+        ? "gap-8"
+        : "gap-6";
 
   return (
     <div className={`${projectListVariants({ size })} ${className ?? ""}`}>
@@ -180,12 +180,11 @@ export default function ProjectList({
           </div>
         ) : (
           currentProjects.map((project) => (
-            <div key={project.id} className="flex items-start gap-3">
+            <div key={project.id} className="flex items-center gap-3">
               {onBulkDelete && (
                 <Checkbox
                   checked={selectedProjects.has(project.id)}
                   onChange={() => handleSelectProject(project.id)}
-                  className="mt-1"
                 />
               )}
               <div className="flex-1">

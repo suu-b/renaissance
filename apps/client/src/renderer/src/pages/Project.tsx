@@ -307,7 +307,7 @@ export default function Project() {
 
         <ChapterList
           size="md"
-          itemsPerPage={5}
+          itemsPerPage={8}
           projectId={project?.id}
           chapters={chapters}
           searchTerm={searchTerm}
