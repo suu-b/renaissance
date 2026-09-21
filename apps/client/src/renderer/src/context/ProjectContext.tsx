@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, useCallback, useRef } from 'react'
+import { createContext, useContext, useMemo, useState, useCallback, useRef, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import {
   ProjectSchema,
@@ -274,6 +274,19 @@ export function ProjectProvider({ projectId, children }: ProjectProviderProps) {
       setBranchesLoading(false)
     }
   }, [projectId])
+
+  useEffect(() => {
+    if (projectId) {
+      fetchProject()
+      fetchBranches()
+    } else {
+      setProject(null)
+      setChapters([])
+      setHistory([])
+      setBranches([])
+      setCurrentBranch(null)
+    }
+  }, [projectId, fetchProject, fetchBranches])
 
   const refreshProject = useCallback(async () => {
     await fetchProject()

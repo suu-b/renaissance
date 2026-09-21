@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { FiArrowUpRight } from 'react-icons/fi'
 
@@ -11,15 +11,26 @@ import Typography from '../components/ui/Typography'
 import BackLink from '../components/ui/BackLink'
 import { useToast } from '../components/ui/Toast'
 import { useProject } from '../context/ProjectContext'
+import { useBreadcrumb } from '../context/BreadcrumbContext'
 
 import { config } from '../config'
 
 export default function NewChapter(): React.JSX.Element {
   const navigate = useNavigate()
   const { showToast } = useToast()
-  const { currentBranch, branches } = useProject()
+  const { project, currentBranch, branches } = useProject()
+  const { setBreadcrumbs } = useBreadcrumb()
 
   const { projectId } = useParams<{ projectId: string }>()
+
+  useEffect(() => {
+    const projectLabel = project?.name || 'Project'
+    setBreadcrumbs([
+      { label: 'Dashboard', path: '/dashboard' },
+      { label: projectLabel, path: `/project/${projectId}` },
+      { label: 'New Chapter' }
+    ])
+  }, [project, projectId, setBreadcrumbs])
 
   const [formData, setFormData] = useState({
     name: ''

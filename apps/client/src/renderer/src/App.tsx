@@ -72,6 +72,16 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
 
     if (path === '/dashboard') {
       setBreadcrumbs([{ label: 'Dashboard' }])
+    } else if (path === '/projects' || path === '/my-projects') {
+      setBreadcrumbs([
+        { label: 'Dashboard', path: '/dashboard' },
+        { label: 'Projects' }
+      ])
+    } else if (path === '/new-project') {
+      setBreadcrumbs([
+        { label: 'Dashboard', path: '/dashboard' },
+        { label: 'New Project' }
+      ])
     } else if (path.startsWith('/project/')) {
       const segments = path.split('/').filter(Boolean)
       const projectId = segments[1]
@@ -79,21 +89,19 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
       if (segments.length > 2 && segments[2] === 'new-chapter') {
         setBreadcrumbs([
           { label: 'Dashboard', path: '/dashboard' },
-          { label: `Project ${projectId}`, path: `/project/${projectId}` },
+          { label: 'Project', path: `/project/${projectId}` },
           { label: 'New Chapter' }
         ])
       } else if (segments.length > 2 && segments[2] === 'chapter') {
-        const chapterId = segments[3]
-        const chapterNumber = parseInt(chapterId || "1")
         setBreadcrumbs([
           { label: 'Dashboard', path: '/dashboard' },
-          { label: `Project ${projectId}`, path: `/project/${projectId}` },
-          { label: `Chapter ${chapterNumber}` }
+          { label: 'Project', path: `/project/${projectId}` },
+          { label: 'Chapter' }
         ])
       } else {
         setBreadcrumbs([
           { label: 'Dashboard', path: '/dashboard' },
-          { label: 'Project Details' }
+          { label: 'Project' }
         ])
       }
     } else {

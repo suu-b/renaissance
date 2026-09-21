@@ -53,17 +53,15 @@ export default function Chapter() {
   const currentBranchName = branches.find(branch => branch.id === currentBranch)?.branchName || 'Unknown Branch'
 
   useEffect(() => {
-    if (project) {
-      const chapterLabel = chapterName || 'Chapter'
+    const projectLabel = project?.name || 'Project'
+    const chapterLabel = chapterName || 'Chapter'
+    const modeLabel = isWriteMode ? ' (Editing)' : ''
 
-      const modeLabel = isWriteMode ? ' (Editing)' : ''
-
-      setBreadcrumbs([
-        { label: 'Dashboard', path: '/dashboard' },
-        { label: project.name || `Project ${projectId?.slice(0, 8)}...`, path: `/project/${projectId}` },
-        { label: `${chapterLabel}${modeLabel}` }
-      ])
-    }
+    setBreadcrumbs([
+      { label: 'Dashboard', path: '/dashboard' },
+      { label: projectLabel, path: `/project/${projectId}` },
+      { label: `${chapterLabel}${modeLabel}` }
+    ])
   }, [project, projectId, chapterName, isWriteMode, setBreadcrumbs])
 
   const previousChapter = chapterId ? getPreviousChapter(chapterId) : null
