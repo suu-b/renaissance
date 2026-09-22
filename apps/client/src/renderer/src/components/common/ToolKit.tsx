@@ -2,7 +2,8 @@ import { cva, type VariantProps } from "class-variance-authority"
 import EditTool from "../ui/EditTool"
 import DeleteTool from "../ui/DeleteTool"
 import NewTool from "../ui/NewTool"
-import SaveTool from "../ui/SaveTool"
+import CommitTool from "../ui/CommitTool"
+import LocalSaveTool from "../ui/LocalSaveTool"
 import CancelTool from "../ui/CancelTool"
 
 const toolKitVariants = cva(
@@ -26,17 +27,20 @@ type ToolKitProps = VariantProps<typeof toolKitVariants> & {
   onEdit?: () => void
   onDelete?: () => void
   onNew?: () => void
-  onSave?: () => void
+  onLocalSave?: () => void
+  onCommit?: () => void
   onCancel?: () => void
   confirm?: boolean
   confirmTitle?: string
   confirmContent?: string
-  saveConfirm?: boolean
-  saveConfirmTitle?: string
-  saveConfirmContent?: string
+  commitConfirm?: boolean
+  commitConfirmTitle?: string
+  commitConfirmContent?: string
   cancelConfirmTitle?: string
   cancelConfirmContent?: string
   showSaveCancel?: boolean
+  showLocalSave?: boolean
+  showCommit?: boolean
   showNew?: boolean
 }
 
@@ -46,30 +50,36 @@ export default function ToolKit({
   onEdit,
   onDelete,
   onNew,
-  onSave,
+  onLocalSave,
+  onCommit,
   onCancel,
   confirm,
   confirmTitle,
   confirmContent,
-  saveConfirm = true,
-  saveConfirmTitle = "Save Chapter",
-  saveConfirmContent = "Are you sure you want to save your changes to this chapter?",
+  commitConfirm = true,
+  commitConfirmTitle = "Commit Changes",
+  commitConfirmContent = "Are you sure you want to commit your changes?",
   cancelConfirmTitle,
   cancelConfirmContent,
   showSaveCancel = false,
+  showLocalSave = false,
+  showCommit = false,
   showNew = true,
 }: ToolKitProps) {
   return (
     <div className={`${toolKitVariants({ size })} ${className ?? ""}`}>
       {showSaveCancel ? (
         <>
-          <SaveTool
-            size={size}
-            onClick={onSave}
-            confirm={saveConfirm}
-            confirmTitle={saveConfirmTitle}
-            confirmContent={saveConfirmContent}
-          />
+          {showLocalSave && <LocalSaveTool size={size} onClick={onLocalSave} />}
+          {showCommit && (
+            <CommitTool
+              size={size}
+              onClick={onCommit}
+              confirm={commitConfirm}
+              confirmTitle={commitConfirmTitle}
+              confirmContent={commitConfirmContent}
+            />
+          )}
           <CancelTool
             size={size}
             onClick={onCancel}

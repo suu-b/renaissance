@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import Page from '@renderer/components/layout/Page'
 import BackLink from '@renderer/components/ui/BackLink'
 import Typography from '@renderer/components/ui/Typography'
-import { useBreadcrumb } from '@renderer/context/BreadcrumbContext'
 import { useProject } from '@renderer/context/ProjectContext'
 import { config } from '@renderer/config'
 
@@ -16,26 +15,14 @@ type CommitDiffData = {
 export default function CommitDiff() {
   const { projectId, hash } = useParams<{
     projectId: string
-    chapterId: string
     hash: string
   }>()
 
-  const navigate = useNavigate()
-  const { setBreadcrumbs } = useBreadcrumb()
   const { project } = useProject()
 
   const [diffData, setDiffData] = useState<CommitDiffData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const projectLabel = project?.name || 'Project'
-    setBreadcrumbs([
-      { label: 'Dashboard', path: '/dashboard' },
-      { label: projectLabel, path: `/project/${projectId}` },
-      { label: 'Milestone' }
-    ])
-  }, [project, projectId, setBreadcrumbs])
 
   useEffect(() => {
     const fetchDiff = async () => {

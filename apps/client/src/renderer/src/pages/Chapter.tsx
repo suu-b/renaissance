@@ -249,11 +249,6 @@ export default function Chapter() {
     }
   }
 
-  const handleSave = () => {
-    setShowSavePopover(true)
-    setSaveMessage('')
-  }
-
   const handleSaveWithMessage = async () => {
     if (!projectId || !chapterId || !config.serverUrl) {
       setError('Chapter information is missing')
@@ -334,6 +329,18 @@ export default function Chapter() {
     }
   }
 
+  const handleLocalSave = () => {
+    if (draftKey) {
+      localStorage.setItem(draftKey, JSON.stringify(content))
+      showToast('Saved to local storage', 'info')
+    }
+  }
+
+  const handleCommit = () => {
+    setShowSavePopover(true)
+    setSaveMessage('')
+  }
+
   return (
     <Page alignment="default" className="mx-auto max-w-4xl min-h-[70vh]">
       <div className="mb-6 flex items-start justify-between">
@@ -352,12 +359,15 @@ export default function Chapter() {
             confirmContent="Are you sure you want to delete this chapter? This action cannot be undone."
             onDelete={handleDelete}
             onEdit={handleEditChapterName}
-            onSave={handleSave}
+            onLocalSave={handleLocalSave}
+            onCommit={handleCommit}
             onCancel={handleCancel}
-            saveConfirm={false}
+            commitConfirm={false}
             cancelConfirmTitle="Cancel Editing"
             cancelConfirmContent="Are you sure you want to cancel? Any unsaved changes will be lost."
             showSaveCancel={isWriteMode}
+            showLocalSave={isWriteMode}
+            showCommit={isWriteMode}
             showNew={false}
           />
 

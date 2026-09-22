@@ -1,5 +1,6 @@
 import { toggleMarks, toggleBlocks, toggleLists } from "harmonia-text-editor"
-import { FiBold, FiItalic, FiUnderline, FiList, FiMinus } from "react-icons/fi"
+import { FiBold, FiItalic, FiUnderline, FiList, FiMinus, FiRotateCcw, FiRotateCw } from "react-icons/fi"
+import { HistoryEditor } from "slate-history"
 
 type TextEditorToolbarProps = {
   editor: any
@@ -8,17 +9,47 @@ type TextEditorToolbarProps = {
 export default function TextEditorToolbar({ editor }: TextEditorToolbarProps) {
   const isMarkActive = (format: string) => toggleMarks.isMarkActive(editor, format)
 
-  const ToolbarButton = ({ onClick, active, children }: { onClick: () => void; active?: boolean; children: React.ReactNode }) => (
+  const ToolbarButton = ({ onClick, active, disabled, children }: { onClick: () => void; active?: boolean; disabled?: boolean; children: React.ReactNode }) => (
     <button
       onClick={onClick}
-      className={`p-2 rounded hover:bg-foreground/10 transition-colors ${active ? "bg-foreground text-background" : "text-foreground"}`}
+      disabled={disabled}
+      className={`p-2 rounded hover:bg-foreground/10 transition-colors ${active ? "bg-foreground text-background" : "text-foreground"} ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
     >
       {children}
     </button>
   )
 
+  const handleUndo = () => {
+    HistoryEditor.undo(editor)
+  }
+
+  const handleRedo = () => {
+    HistoryEditor.redo(editor)
+  }
+
+  const canUndo = HistoryEditor.isHistoryEditor(editor) && editor.history.undos.length > 0
+  const canRedo = HistoryEditor.isHistoryEditor(editor) && editor.history.redos.length > 0
+
   return (
     <div className="flex flex-wrap gap-2 p-3 mb-4 bg-foreground/5 rounded-lg">
+      {/* Undo/Redo */}
+      <div className="flex gap-1">
+        <ToolbarButton
+          onClick={handleUndo}
+          disabled={!canUndo}
+        >
+          <FiRotateCcw className="text-sm" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={handleRedo}
+          disabled={!canRedo}
+        >
+          <FiRotateCw className="text-sm" />
+        </ToolbarButton>
+      </div>
+
+      <div className="w-px bg-foreground/20 mx-1" />
+
       {/* Inline formatting */}
       <div className="flex gap-1">
         <ToolbarButton

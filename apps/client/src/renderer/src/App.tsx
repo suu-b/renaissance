@@ -98,6 +98,12 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
           { label: 'Project', path: `/project/${projectId}` },
           { label: 'Chapter' }
         ])
+      } else if (segments.length > 2 && segments[2] === 'diff') {
+        setBreadcrumbs([
+          { label: 'Dashboard', path: '/dashboard' },
+          { label: 'Project', path: `/project/${projectId}` },
+          { label: 'Milestone Diff' }
+        ])
       } else {
         setBreadcrumbs([
           { label: 'Dashboard', path: '/dashboard' },
@@ -140,8 +146,8 @@ function AppContent({ sidebarItems, isSidebarExpanded, setIsSidebarExpanded }: {
               <Route index element={<Project />} />
               <Route path="new-chapter" element={<NewChapter />} />
               <Route path="chapter/:chapterId" element={<Chapter />} />
+              <Route path="diff/:hash" element={<CommitDiff />} />
             </Route>
-            <Route path="/project/:projectId/diff/:hash" element={<CommitDiff />} />
           </Routes>
         </main>
       </div>

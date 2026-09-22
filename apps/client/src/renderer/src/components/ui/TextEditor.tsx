@@ -1,6 +1,7 @@
 import { createMyEditor, HarmoniaTextEditor, renderBlock, renderLeaf } from "harmonia-text-editor"
 import { useMemo } from "react"
 import type { ReactNode } from "react"
+import { withHistory } from "slate-history"
 import "./harmonia-text-editor.css"
 import TextEditorToolbar from "./TextEditorToolbar"
 
@@ -21,7 +22,7 @@ export default function TextEditor({
   className,
   showToolbar = true,
 }: TextEditorProps) {
-  const editor = useMemo(() => createMyEditor(), [])
+  const editor = useMemo(() => withHistory(createMyEditor()), [])
 
   const defaultInitialValue: Array<{ type: string; children: Array<{ text: string }> }> = [
     {

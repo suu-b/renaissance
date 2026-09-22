@@ -1,9 +1,9 @@
 import { useState } from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { FiSave } from "react-icons/fi"
+import { FiGitCommit } from "react-icons/fi"
 import Modal from "./Modal"
 
-const saveToolVariants = cva(
+const commitToolVariants = cva(
   "flex items-center justify-center rounded border border-white/50 text-white transition-all duration-300 ease-out cursor-pointer",
   {
     variants: {
@@ -19,7 +19,7 @@ const saveToolVariants = cva(
   }
 )
 
-type SaveToolProps = VariantProps<typeof saveToolVariants> & {
+type CommitToolProps = VariantProps<typeof commitToolVariants> & {
   className?: string
   onClick?: () => void
   confirm?: boolean
@@ -27,14 +27,15 @@ type SaveToolProps = VariantProps<typeof saveToolVariants> & {
   confirmContent?: string
 }
 
-export default function SaveTool({
+// renamed from SaveTool to CommitTool
+export default function CommitTool({
   size,
   className,
   onClick,
   confirm = false,
-  confirmTitle = "Confirm Save",
-  confirmContent = "Are you sure you want to save your changes?",
-}: SaveToolProps) {
+  confirmTitle = "Confirm Commit",
+  confirmContent = "Are you sure you want to commit your changes?",
+}: CommitToolProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const handleClick = () => {
@@ -59,10 +60,11 @@ export default function SaveTool({
   return (
     <>
       <button
-        className={`${saveToolVariants({ size })} bg-foreground ${className ?? ""}`}
+        className={`${commitToolVariants({ size })} bg-foreground ${className ?? ""}`}
         onClick={handleClick}
+        title="Commit changes"
       >
-        <FiSave className="w-full h-full" />
+        <FiGitCommit className="w-full h-full" />
       </button>
       {confirm && (
         <Modal
