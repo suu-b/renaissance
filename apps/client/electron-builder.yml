@@ -1,5 +1,7 @@
-appId: com.electron.app
-productName: client
+appId: com.renaissance.app
+productName: Renaissance
+copyright: Copyright © 2025 Renaissance
+buildVersion: 1.0.0
 directories:
   buildResources: build
 files:
@@ -11,12 +13,16 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+  - "resources/server-bin/**/*.node"
+extraResources:
+  - from: "../server/bundle"
+    to: "server-bin"
 win:
-  executableName: client
+  executableName: Renaissance
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
-  shortcutName: ${productName}
-  uninstallDisplayName: ${productName}
+  artifactName: Renaissance-${version}-setup.${ext}
+  shortcutName: Renaissance
+  uninstallDisplayName: Renaissance
   createDesktopShortcut: always
 mac:
   entitlementsInherit: build/entitlements.mac.plist
@@ -27,16 +33,18 @@ mac:
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
 dmg:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: Renaissance-${version}.${ext}
 linux:
+  executableName: Renaissance
   target:
     - AppImage
-    - snap
     - deb
-  maintainer: electronjs.org
+  maintainer: https://github.com/suu-b
   category: Utility
 appImage:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: Renaissance-${version}.${ext}
+deb:
+  artifactName: Renaissance-${version}.${ext}
 npmRebuild: false
 publish:
   provider: generic

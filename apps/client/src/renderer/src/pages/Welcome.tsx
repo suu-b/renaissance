@@ -10,8 +10,8 @@ import Button from "../components/ui/Button"
 import Typography from "../components/ui/Typography"
 
 export default function Welcome(): React.JSX.Element {
-    const { authenticated, checkAuth, setAuthenticatedUser } = useAuth();
-    const { setWorkspacePath, setIndexFilePath } = useWorkspace();
+    const { authenticated, setAuthenticatedUser } = useAuth();
+    const { setWorkspacePath } = useWorkspace();
 
     const navigate = useNavigate();
     const [setupStatus, setSetupStatus] = useState<'idle' | 'checking' | 'setup_needed' | 'doing_setup' | 'complete' | 'error' | 'leftovers_detected'>('idle');
@@ -54,65 +54,42 @@ export default function Welcome(): React.JSX.Element {
         console.log('Status set to checking');
         
         try {
-            setSetupStep('Preparing your workspace...');
-            console.log('Checking git installation...');
-            const gitInstalled = await window.api.checkGitInstalled();
-            console.log('Git installed:', gitInstalled);
-            if (!gitInstalled) {
-                console.log('Git not installed, setting error');
-                setSetupStatus('error');
-                setErrorMessage('Git is required to begin. Please install it first.');
-                return;
-            }
-
-            const sqliteInstalled = await window.api.checkSqliteInstalled();
-            console.log('SQlite installed:', sqliteInstalled);
-            if (!sqliteInstalled) {
-                console.log('Sqlite not installed, setting error');
-                setSetupStatus('error');
-                setErrorMessage('Sqlite is required to begin. Please install it first.');
-                return;
-            }
+            setSetupStep('Checking your setup state...');
+            const setupState = await window.api.checkSetupState();
+            console.log('Setup state:', setupState);
             
-            // Check if renaissance folder exists
-            setSetupStep('Seeking your creative space...');
-            console.log('Checking renaissance folder...');
-            const folderExists = await window.api.folderExists('renaissance');
-            console.log('Renaissance folder exists:', folderExists);
-            
-            if (folderExists) {
-                // Folder exists, proceed to dashboard
-                console.log('Folder exists, proceeding to dashboard');
+            if (setupState.setupComplete) {
+                // Setup already complete, proceed to dashboard
+                console.log('Setup already complete, proceeding to dashboard');
                 setSetupStatus('complete');
                 setTimeout(() => {
                     window.api.maximizeWindow();
                     navigate("/dashboard");
                 }, 500);
             } else {
-                // Folder doesn't exist, do setup
-                console.log('Folder does not exist, setting setup_needed');
+                // Setup needed
+                console.log('Setup needed, setting setup_needed');
                 setSetupStatus('setup_needed');
             }
         } catch (error) {
             console.error('Setup check failed:', error);
-            setSetupStatus('error');
-            setErrorMessage('Setup check failed');
+            setSetupStatus('setup_needed'); // Fallback to setup on error
         }
     };
 
     const performSetup = async () => {
         setSetupStatus('doing_setup');
-        setSetupStep('Creating your sanctuary...');
+        setSetupStep('Installing dependencies...');
         
         try {
             // Pass false for withAccount since this is the "Continue without Account" flow
-            const result = await window.api.doSetup(false);
+            const result = await window.api.completeSetup(false);
             
             if (result.success) {
                 // Setup successful, verify again
+                setSetupStep('Finalizing setup...');
                 await checkUserSetup();
                 setWorkspacePath(result.workspacePath || null);
-                setIndexFilePath(result.indexFilePath || null);
             } else {
                 setSetupStatus('error');
                 setErrorMessage(result.error || 'Setup failed');
@@ -126,17 +103,17 @@ export default function Welcome(): React.JSX.Element {
 
     const performAuthenticatedSetup = async () => {
         setSetupStatus('doing_setup');
-        setSetupStep('Creating your sanctuary...');
+        setSetupStep('Installing dependencies...');
         
         try {
             // Pass true for withAccount since this is the authenticated flow
-            const result = await window.api.doSetup(true);
+            const result = await window.api.completeSetup(true);
             
             if (result.success) {
                 // Setup successful, verify again
+                setSetupStep('Finalizing setup...');
                 await checkUserSetup();
                 setWorkspacePath(result.workspacePath || null);
-                setIndexFilePath(result.indexFilePath || null);
             } else {
                 setSetupStatus('error');
                 setErrorMessage(result.error || 'Setup failed');
@@ -210,7 +187,7 @@ export default function Welcome(): React.JSX.Element {
     }, [authenticated, setupStatus, checkUserSetup]);
 
     return (
-        <Page alignment="center" showSkeleton={false}>
+        <Page alignment="center">
             <div className="flex flex-col gap-3 max-w-[50vw]">
                 <Typography variant="h1">Renaissance</Typography>
 

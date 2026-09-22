@@ -1,23 +1,26 @@
 import fp from "fastify-plugin";
 import envPaths from "env-paths";
-import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
 export default fp(async (app) => {
     const paths = envPaths("Renaissance");
-    const projectsPath = path.join(paths.data, "projects");
 
-    await mkdir(projectsPath, { recursive: true });
+    const userDataPath = paths.data;
+    const logPath = paths.log;
+    const workspacePath = path.join(userDataPath, "workspace-temp"); // TODO: harcoded but will handle when we extend the app to cloud capabilities
+    const installPath = process.env.RENAISSANCE_INSTALL_PATH;
+    const runtimePath = process.env.RENAISSANCE_RUNTIME_PATH;
+    const gitPath = process.env.RENAISSANCE_GIT_PATH;
+    const sqlitePath = process.env.RENAISSANCE_SQLITE_PATH;
 
     app.decorate("appPaths", {
         remoteUrl: "https://github.com/suu-b/renaissance-cgs.git",
-        // TODO: need to replace with user specific username
         remotePath: "tmp",
-        projects: projectsPath,
-
-        // local paths. need to replace
-        renaissancePath: "/home/suub/renaissance",
-        workspacePath: "/home/suub/renaissance/workspace-temp",
-        indexFilePath: "/home/suub/renaissance/workspace-temp/index.csv"
+        userDataPath,
+        workspacePath,
+        logPath,
+        installPath,
+        gitPath,
+        sqlitePath
     });
 });

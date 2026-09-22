@@ -28,6 +28,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "class-variance-authority": "^0.7.1",
     "crypto-js": "^4.2.0",
+    "extract-zip": "^2.0.1",
     "get-port": "^7.2.0",
     "harmonia-text-editor": "^2.0.4",
     "node-fetch": "^3.3.2",

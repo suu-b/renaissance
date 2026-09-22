@@ -15,9 +15,11 @@ const execFileAsync = promisify(execFile);
 export class GitHubProvider implements RepositoryService {
     private repoPath: string;
     private readonly remoteUrl?: string;
+    private gitPath: string;
 
-    constructor(repoPath: string, remoteUrl?: string) {
+    constructor(repoPath: string, gitPath: string, remoteUrl?: string) {
         this.repoPath = repoPath;
+        this.gitPath = gitPath;
         this.remoteUrl = remoteUrl;
     }
 
@@ -28,11 +30,11 @@ export class GitHubProvider implements RepositoryService {
             if (this.remoteUrl) {
                 try {
                     // Try adding the remote
-                    await execFileAsync("git", ["remote", "add", "origin", this.remoteUrl], { cwd: this.repoPath });
+                    await execFileAsync(this.gitPath, ["remote", "add", "origin", this.remoteUrl], { cwd: this.repoPath });
                 } catch (addError: any) {
                     // If it already exists, update it
                     if (addError.message && addError.message.includes("already exists")) {
-                        await execFileAsync("git", ["remote", "set-url", "origin", this.remoteUrl], { cwd: this.repoPath });
+                        await execFileAsync(this.gitPath, ["remote", "set-url", "origin", this.remoteUrl], { cwd: this.repoPath });
                     } else {
                         throw addError;
                     }
@@ -50,7 +52,7 @@ export class GitHubProvider implements RepositoryService {
         }
 
         try {
-            await execFileAsync("git", ["commit", "-m", message], { cwd });
+            await execFileAsync(this.gitPath, ["commit", "-m", message], { cwd });
         } catch (commitError: any) {
             const stderr = commitError.stderr || commitError.message || "";
             const isNothingToCommit =
@@ -67,7 +69,7 @@ export class GitHubProvider implements RepositoryService {
         }
 
         try {
-            await execFileAsync("git", ["push", "origin", "HEAD"], { cwd });
+            await execFileAsync(this.gitPath, ["push", "origin", "HEAD"], { cwd });
         } catch (pushError) {
             console.error(`Failed to push changes from ${cwd} to remote origin:`, pushError);
             throw pushError;

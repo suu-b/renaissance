@@ -18,15 +18,17 @@ const execFileAsync = promisify(execFile);
 
 export class GitProvider implements VandcService {
     private repoPath: string;
+    private gitPath: string;
 
-    constructor(repoPath: string) {
+    constructor(repoPath: string, gitPath: string) {
         this.repoPath = repoPath;
+        this.gitPath = gitPath;
     }
 
     async init(repoPath?: string): Promise<void> {
         try {
             const cwd = repoPath || this.repoPath;
-            await execFileAsync("git", ["init"], { cwd });
+            await execFileAsync(this.gitPath, ["init"], { cwd });
         } catch (error) {
             console.error(`Failed to initialize git repository:`, error);
             throw error;
@@ -37,19 +39,19 @@ export class GitProvider implements VandcService {
         try {
             await fs.writeFile(scopePath, content, encoding);
             const cwd = repoPath || this.repoPath;
-            await execFileAsync("git", ["add", "--", scopePath], { cwd });
+            await execFileAsync(this.gitPath, ["add", "--", scopePath], { cwd });
 
             // Handle the case where this might be the first commit
             try {
-                await execFileAsync("git", ["commit", "-m", message], { cwd });
+                await execFileAsync(this.gitPath, ["commit", "-m", message], { cwd });
             } catch (commitError) {
                 // If commit fails due to no commits, try with --allow-empty
                 const errorStr = String(commitError);
                 if (errorStr.includes("does not have any commits yet") || errorStr.includes("nothing to commit")) {
                     // Create an initial commit first
-                    await execFileAsync("git", ["commit", "--allow-empty", "-m", "Initial commit"], { cwd });
+                    await execFileAsync(this.gitPath, ["commit", "--allow-empty", "-m", "Initial commit"], { cwd });
                     // Then try the actual commit again
-                    await execFileAsync("git", ["commit", "-m", message], { cwd });
+                    await execFileAsync(this.gitPath, ["commit", "-m", message], { cwd });
                 } else {
                     throw commitError;
                 }
@@ -65,7 +67,7 @@ export class GitProvider implements VandcService {
             throw new Error("Repository path has not been initialized. Call init(repoPath) first.");
         }
         try {
-            await execFileAsync("git", ["add", "."], { cwd: this.repoPath });
+            await execFileAsync(this.gitPath, ["add", "."], { cwd: this.repoPath });
         } catch (error) {
             console.error(`Failed to save global changes at ${this.repoPath}:`, error);
             throw error;
@@ -88,16 +90,16 @@ export class GitProvider implements VandcService {
                 const gitkeepPath = path.join(folderPath, '.gitkeep');
                 await fs.writeFile(gitkeepPath, '# This file ensures the folder is tracked by git\n');
 
-                await execFileAsync("git", ["add", "--", gitkeepPath], { cwd });
+                await execFileAsync(this.gitPath, ["add", "--", gitkeepPath], { cwd });
 
                 // Handle the case where this might be the first commit
                 try {
-                    await execFileAsync("git", ["commit", "-m", `Add ${path.basename(folderPath)} folder`], { cwd });
+                    await execFileAsync(this.gitPath, ["commit", "-m", `Add ${path.basename(folderPath)} folder`], { cwd });
                 } catch (commitError) {
                     // If commit fails due to no commits, try with --allow-empty
                     const errorStr = String(commitError);
                     if (errorStr.includes("does not have any commits yet")) {
-                        await execFileAsync("git", ["commit", "--allow-empty", "-m", `Add ${path.basename(folderPath)} folder`], { cwd });
+                        await execFileAsync(this.gitPath, ["commit", "--allow-empty", "-m", `Add ${path.basename(folderPath)} folder`], { cwd });
                     } else {
                         throw commitError;
                     }
@@ -125,17 +127,17 @@ export class GitProvider implements VandcService {
                 const gitDir = path.join(cwd, '.git');
                 await fs.access(gitDir);
 
-                await execFileAsync("git", ["add", "--", filePath], { cwd });
+                await execFileAsync(this.gitPath, ["add", "--", filePath], { cwd });
 
                 // Commit the file with a descriptive message
                 const fileName = path.basename(filePath);
                 try {
-                    await execFileAsync("git", ["commit", "-m", `Add ${fileName}`], { cwd });
+                    await execFileAsync(this.gitPath, ["commit", "-m", `Add ${fileName}`], { cwd });
                 } catch (commitError) {
                     // If commit fails due to no commits, try with --allow-empty
                     const errorStr = String(commitError);
                     if (errorStr.includes("does not have any commits yet")) {
-                        await execFileAsync("git", ["commit", "--allow-empty", "-m", `Add ${fileName}`], { cwd });
+                        await execFileAsync(this.gitPath, ["commit", "--allow-empty", "-m", `Add ${fileName}`], { cwd });
                     } else {
                         throw commitError;
                     }
@@ -161,17 +163,17 @@ export class GitProvider implements VandcService {
                 await fs.access(gitDir);
 
                 // Stage the deletion in git
-                await execFileAsync("git", ["rm", "--", filePath], { cwd });
+                await execFileAsync(this.gitPath, ["rm", "--", filePath], { cwd });
 
                 // Commit the deletion with a descriptive message
                 const fileName = path.basename(filePath);
                 try {
-                    await execFileAsync("git", ["commit", "-m", `Delete ${fileName}`], { cwd });
+                    await execFileAsync(this.gitPath, ["commit", "-m", `Delete ${fileName}`], { cwd });
                 } catch (commitError) {
                     // If commit fails due to no commits, try with --allow-empty
                     const errorStr = String(commitError);
                     if (errorStr.includes("does not have any commits yet")) {
-                        await execFileAsync("git", ["commit", "--allow-empty", "-m", `Delete ${fileName}`], { cwd });
+                        await execFileAsync(this.gitPath, ["commit", "--allow-empty", "-m", `Delete ${fileName}`], { cwd });
                     } else {
                         throw commitError;
                     }
@@ -205,11 +207,11 @@ export class GitProvider implements VandcService {
                 // Stage the folder deletion in git (including .gitkeep file)
                 const gitkeepPath = path.join(folderPath, '.gitkeep');
                 try {
-                    await execFileAsync("git", ["rm", "-r", "--", folderPath], { cwd });
+                    await execFileAsync(this.gitPath, ["rm", "-r", "--", folderPath], { cwd });
                 } catch (rmError) {
                     // If folder removal fails, try removing just the .gitkeep file
                     try {
-                        await execFileAsync("git", ["rm", "--", gitkeepPath], { cwd });
+                        await execFileAsync(this.gitPath, ["rm", "--", gitkeepPath], { cwd });
                     } catch (gitkeepError) {
                         console.log(`Could not remove folder or .gitkeep from git, proceeding with direct deletion`);
                     }
@@ -218,12 +220,12 @@ export class GitProvider implements VandcService {
                 // Commit the deletion with a descriptive message
                 const folderName = path.basename(folderPath);
                 try {
-                    await execFileAsync("git", ["commit", "-m", `Delete ${folderName} folder`], { cwd });
+                    await execFileAsync(this.gitPath, ["commit", "-m", `Delete ${folderName} folder`], { cwd });
                 } catch (commitError) {
                     // If commit fails due to no commits, try with --allow-empty
                     const errorStr = String(commitError);
                     if (errorStr.includes("does not have any commits yet")) {
-                        await execFileAsync("git", ["commit", "--allow-empty", "-m", `Delete ${folderName} folder`], { cwd });
+                        await execFileAsync(this.gitPath, ["commit", "--allow-empty", "-m", `Delete ${folderName} folder`], { cwd });
                     } else {
                         throw commitError;
                     }
@@ -271,7 +273,7 @@ export class GitProvider implements VandcService {
                 args.push("--", relativePath);
             }
 
-            const { stdout } = await execFileAsync("git", args, { cwd });
+            const { stdout } = await execFileAsync(this.gitPath, args, { cwd });
 
             return stdout
                 .trim()
@@ -305,7 +307,7 @@ export class GitProvider implements VandcService {
             }
 
             const { stdout } = await execFileAsync(
-                "git",
+                this.gitPath,
                 [
                     "show",
                     hash
@@ -326,7 +328,7 @@ export class GitProvider implements VandcService {
     async createBranch(branchName: string, repoPath?: string): Promise<void> {
         try {
             const cwd = repoPath || this.repoPath;
-            await execFileAsync("git", ["branch", branchName], { cwd });
+            await execFileAsync(this.gitPath, ["branch", branchName], { cwd });
         } catch (error) {
             console.error(`Failed to create branch ${branchName}:`, error);
             throw error;
@@ -337,14 +339,14 @@ export class GitProvider implements VandcService {
         try {
             const cwd = repoPath || this.repoPath;
             try {
-                const { stdout } = await execFileAsync("git", ["rev-parse", "--abbrev-ref", "HEAD"], { cwd });
+                const { stdout } = await execFileAsync(this.gitPath, ["rev-parse", "--abbrev-ref", "HEAD"], { cwd });
                 if (stdout.trim() === branchName) {
                     return;
                 }
             } catch {
                 // If rev-parse fails, proceed to checkout
             }
-            await execFileAsync("git", ["checkout", branchName], { cwd });
+            await execFileAsync(this.gitPath, ["checkout", branchName], { cwd });
         } catch (error) {
             console.error(`Failed to change to branch ${branchName}:`, error);
             throw error;
@@ -354,7 +356,7 @@ export class GitProvider implements VandcService {
     async deleteBranch(branchName: string, repoPath?: string): Promise<void> {
         try {
             const cwd = repoPath || this.repoPath;
-            await execFileAsync("git", ["branch", "-D", branchName], { cwd });
+            await execFileAsync(this.gitPath, ["branch", "-D", branchName], { cwd });
         } catch (error) {
             console.error(`Failed to delete branch ${branchName}:`, error);
             throw error;
@@ -377,7 +379,7 @@ export class GitProvider implements VandcService {
     async getChangedFilesBetweenBranches(sourceBranch: string, targetBranch: string, repoPath?: string): Promise<string[]> {
         try {
             const cwd = repoPath || this.repoPath;
-            const { stdout } = await execFileAsync("git", ["diff", `${targetBranch}...${sourceBranch}`, "--name-only"], { cwd });
+            const { stdout } = await execFileAsync(this.gitPath, ["diff", `${targetBranch}...${sourceBranch}`, "--name-only"], { cwd });
 
             return stdout
                 .trim()
@@ -396,7 +398,7 @@ export class GitProvider implements VandcService {
 
             for (const filePath of filePaths) {
                 try {
-                    const { stdout } = await execFileAsync("git", ["diff", `${targetBranch}...${sourceBranch}`, "--", filePath], { cwd });
+                    const { stdout } = await execFileAsync(this.gitPath, ["diff", `${targetBranch}...${sourceBranch}`, "--", filePath], { cwd });
                     diffs.push({
                         filePath,
                         diff: stdout
@@ -422,13 +424,13 @@ export class GitProvider implements VandcService {
             const cwd = repoPath || this.repoPath;
 
             // Switch to main branch
-            await execFileAsync("git", ["switch", mainBranchId], { cwd });
+            await execFileAsync(this.gitPath, ["switch", mainBranchId], { cwd });
 
             // Generate default message if not provided
             const mergeMessage = message || `merge ${mainBranchName || mainBranchId} ${mergeBranchName || mergeBranchId}`;
 
             // Merge the other branch with -X theirs strategy and custom message
-            await execFileAsync("git", ["merge", "-X", "theirs", "-m", mergeMessage, mergeBranchId], { cwd });
+            await execFileAsync(this.gitPath, ["merge", "-X", "theirs", "-m", mergeMessage, mergeBranchId], { cwd });
         } catch (error) {
             console.error(`Failed to merge branch ${mergeBranchId} into ${mainBranchId}:`, error);
             throw error;

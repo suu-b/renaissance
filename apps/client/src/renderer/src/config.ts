@@ -23,9 +23,4 @@ export const config = {
   get serverUrl() {
     return serverUrl
   },
-
-
-  // we have to look into this
-  workspacePath: "home/suub/renaissance/workspace",
-  indexFilePath: "home/suub/renaissance/workspace/index.csv"
 };

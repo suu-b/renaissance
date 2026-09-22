@@ -14,12 +14,14 @@ declare module "fastify" {
         indexService: IndexService;
         db: DatabaseSync;
         appPaths: {
-            projects: string;
             remoteUrl: string;
             remotePath: string;
-            renaissancePath: string;
+            userDataPath: string;
             workspacePath: string;
-            indexFilePath: string;
+            logPath: string;
+            installPath?: string;
+            gitPath?: string;
+            sqlitePath?: string;
         };
     }
 }

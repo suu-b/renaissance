@@ -10,10 +10,9 @@ const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
 
 export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     const [workspacePath, setWorkspacePath] = useState<string | null>(null);
-    const [indexFilePath, setIndexFilePath] = useState<string | null>(null);
 
     return (
-        <WorkspaceContext.Provider value={{ workspacePath, setWorkspacePath, indexFilePath, setIndexFilePath}}>
+        <WorkspaceContext.Provider value={{ workspacePath, setWorkspacePath}}>
             {children}
         </WorkspaceContext.Provider>
     );

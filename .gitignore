@@ -5,3 +5,9 @@
 
 # a periodic claude review of the project that doesn't need to see the light of day
 review.md
+
+# bundled local server
+**/bundle/
+
+# temp files like reports
+**/tmp/

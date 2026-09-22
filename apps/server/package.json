@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": "./dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "build:binary": "tsc && pkg . --targets node18-linux-x64,node18-win-x64,node18-macos-x64",
+    "build:bundle": "ncc build src/index.ts -o bundle --minify"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +30,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.13.2",
+    "@vercel/ncc": "^0.38.4",
     "tsx": "^4.22.4",
     "typescript": "~6.0.3"
   }

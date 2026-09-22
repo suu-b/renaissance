@@ -31,7 +31,13 @@ if (process.contextIsolated) {
       doSetup: (withAccount: boolean): Promise<{ success: boolean; error?: string; workspacePath?: string }> => ipcRenderer.invoke('do-setup', withAccount),
       saveUserProfile: (profile: object): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('save-user-profile', profile),
       loadUserProfile: (): Promise<{ success: boolean; profile?: object; error?: string }> => ipcRenderer.invoke('load-user-profile'),
-      getServerPort: (): Promise<number> => ipcRenderer.invoke('get-port')
+      getServerPort: (): Promise<number> => ipcRenderer.invoke('get-port'),
+      loadManifest: (): Promise<any> => ipcRenderer.invoke('load-manifest'),
+      saveManifest: (manifest: any): Promise<{ success: boolean }> => ipcRenderer.invoke('save-manifest', manifest),
+      ensureGitInstalled: (): Promise<string> => ipcRenderer.invoke('ensure-git-installed'),
+      ensureSqliteInstalled: (): Promise<string> => ipcRenderer.invoke('ensure-sqlite-installed'),
+      completeSetup: (withAccount: boolean): Promise<any> => ipcRenderer.invoke('complete-setup', withAccount),
+      checkSetupState: (): Promise<any> => ipcRenderer.invoke('check-setup-state')
     })
   } catch (error) {
     console.error(error)
@@ -61,6 +67,12 @@ if (process.contextIsolated) {
     doSetup: (withAccount: boolean): Promise<{ success: boolean; error?: string; workspacePath?: string }> => ipcRenderer.invoke('do-setup', withAccount),
     saveUserProfile: (profile: object): Promise<{ success: boolean; error?: string }> => ipcRenderer.invoke('save-user-profile', profile),
     loadUserProfile: (): Promise<{ success: boolean; profile?: object; error?: string }> => ipcRenderer.invoke('load-user-profile'),
-    getServerPort: (): Promise<number> => ipcRenderer.invoke('get-port')
+    getServerPort: (): Promise<number> => ipcRenderer.invoke('get-port'),
+    loadManifest: (): Promise<any> => ipcRenderer.invoke('load-manifest'),
+    saveManifest: (manifest: any): Promise<{ success: boolean }> => ipcRenderer.invoke('save-manifest', manifest),
+    ensureGitInstalled: (): Promise<string> => ipcRenderer.invoke('ensure-git-installed'),
+    ensureSqliteInstalled: (): Promise<string> => ipcRenderer.invoke('ensure-sqlite-installed'),
+    completeSetup: (withAccount: boolean): Promise<any> => ipcRenderer.invoke('complete-setup', withAccount),
+    checkSetupState: (): Promise<any> => ipcRenderer.invoke('check-setup-state')
   }
 }

@@ -13,9 +13,10 @@ import { TokenStorageService } from "../services/token-storage.js";
 import { IndexService } from "../services/index-service.js";
 
 export default fp(async (app: FastifyInstance) => {
-    const cgsPath = path.join(app.appPaths.projects, app.appPaths.remotePath);
-    app.decorate<RepositoryService>("repositoryService", new GitHubProvider(cgsPath, app.appPaths.remoteUrl));
-    app.decorate<VandcService>("vandcService", new GitProvider(app.appPaths.workspacePath));
+    const cgsPath = path.join(app.appPaths.userDataPath, app.appPaths.remotePath);
+    const gitPath = app.appPaths.gitPath || "git";
+    app.decorate<RepositoryService>("repositoryService", new GitHubProvider(cgsPath, gitPath, app.appPaths.remoteUrl));
+    app.decorate<VandcService>("vandcService", new GitProvider(app.appPaths.workspacePath, gitPath));
     app.decorate("tokenStorageService", new TokenStorageService());
     app.decorate("indexService", new IndexService(app.db));
 });
