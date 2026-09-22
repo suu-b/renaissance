@@ -1,6 +1,6 @@
 import Fastify from "fastify";
-import swagger from "@fastify/swagger";
-import swaggerUi from "@fastify/swagger-ui";
+// import swagger from "@fastify/swagger";
+// import swaggerUi from "@fastify/swagger-ui";
 import cors from "@fastify/cors";
 
 import {
@@ -24,19 +24,20 @@ export function buildApp() {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  app.register(swagger, {
-    openapi: {
-      info: {
-        title: "Renaissance local server",
-        description: "Local Node process to serve Renaissance Desktop client",
-        version: "1.0.0",
-      },
-    },
-  });
+  // app.register(swagger, {
+  //   openapi: {
+  //     info: {
+  //       title: "Renaissance local server",
+  //       description: "Local Node process to serve Renaissance Desktop client",
+  //       version: "1.0.0",
+  //     },
+  //   },
+  // });
 
-  app.register(swaggerUi, {
-    routePrefix: "/docs",
-  });
+  // app.register(swaggerUi, {
+  //   routePrefix: "/docs",
+  //   baseDir: "/", // Required for ncc bundling
+  // });
   app.register(cors, {
     origin: "*",
     credentials: true,

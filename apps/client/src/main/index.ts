@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { spawn } from 'node:child_process'
 import { join } from 'path'
-import { electronApp, optimizer } from '@electron-toolkit/utils'
+import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import os from 'node:os'
 import fs from 'node:fs'
@@ -26,8 +26,8 @@ interface InstallationManifest {
   platform: string;
 }
 
-// directory paths
-const installDir: string = path.join(path.dirname(app.getPath("exe")), "renaissance");
+// directory paths - use userData for writable storage in all environments
+const installDir: string = path.join(app.getPath('userData'), 'renaissance');
 
 const runtimeDir: string = path.join(installDir, "runtime");
 console.log('Install directory:', installDir);
