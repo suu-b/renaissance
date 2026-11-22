@@ -12,7 +12,7 @@ export type UserProfile = {
 }
 
 export type AuthContextType = {
-    authenticated: boolean | null;
+    authenticated: boolean;
 
     // data only authenticated user has
     user: UserProfile | null;

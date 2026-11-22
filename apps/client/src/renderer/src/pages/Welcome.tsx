@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
-import { OAuthService } from "../services/oauthService"
-import { useAuth } from "../context/AuthContext"
 import { useWorkspace } from "../context/WorkspaceContext"
 
 import Page from "../components/layout/Page"
@@ -10,18 +8,12 @@ import Button from "../components/ui/Button"
 import Typography from "../components/ui/Typography"
 
 export default function Welcome(): React.JSX.Element {
-    const { authenticated, setAuthenticatedUser } = useAuth();
     const { setWorkspacePath } = useWorkspace();
 
     const navigate = useNavigate();
     const [setupStatus, setSetupStatus] = useState<'idle' | 'checking' | 'setup_needed' | 'doing_setup' | 'complete' | 'error' | 'leftovers_detected'>('idle');
     const [setupStep, setSetupStep] = useState<string>('');
     const [errorMessage, setErrorMessage] = useState<string>('');
-
-    const handleContinue = () => {
-        window.api.maximizeWindow();
-        navigate("/dashboard");
-    };
 
     const handleContinueWithoutAccount = async () => {
         console.log('Continue without Account button clicked');
@@ -101,90 +93,21 @@ export default function Welcome(): React.JSX.Element {
         }
     };
 
-    const performAuthenticatedSetup = async () => {
-        setSetupStatus('doing_setup');
-        setSetupStep('Installing dependencies...');
-        
-        try {
-            // Pass true for withAccount since this is the authenticated flow
-            const result = await window.api.completeSetup(true);
-            
-            if (result.success) {
-                // Setup successful, verify again
-                setSetupStep('Finalizing setup...');
-                await checkUserSetup();
-                setWorkspacePath(result.workspacePath || null);
-            } else {
-                setSetupStatus('error');
-                setErrorMessage(result.error || 'Setup failed');
-            }
-        } catch (error) {
-            console.error('Setup failed:', error);
-            setSetupStatus('error');
-            setErrorMessage('Setup failed');
-        }
-    };
+
 
     const handleSignIn = async () => {
-        try {
-            const oauthService = OAuthService.getInstance();
-            const authUrl = await oauthService.startOAuthFlow();
-            window.api.startOAuth(authUrl);
-        } catch (error) {
-            console.error("Error starting OAuth flow:", error);
-        }
+        // OAuth removed - button is unresponsive
+        console.log("Sign In button clicked - OAuth functionality removed");
     };
 
-    useEffect(() => {
-        const handleOAuthCallback = async (result: {
-        success: boolean;
-        data?: {
-            authenticated?: boolean;
-            email?: string;
-        };
-    }) => {
-            console.debug('OAuth result received in renderer:', result);
-            if (
-            result.success &&
-            result.data?.authenticated &&
-            result.data?.email
-            ) {
-                console.log('OAuth callback successful, authenticated via local server');
-                await setAuthenticatedUser(result.data.email);
-            } else {
-                console.error('OAuth callback failed: authentication unsuccessful');
-            } 
 
-            if (window.api?.onOAuthCallback) {
-                console.log('Setting up OAuth callback listener');
-                window.api.onOAuthCallback(handleOAuthCallback);
-            }
-
-            return () => {
-                if(window.api?.removeOAuthCallback) {
-                    window.api.removeOAuthCallback();
-                }
-            }
-        };
-        
-        if (window.api?.onOAuthCallback) {
-            console.log('Setting up OAuth callback listener');
-            window.api.onOAuthCallback(handleOAuthCallback);
-        }
-
-        return () => {
-            if(window.api?.removeOAuthCallback) {
-                window.api.removeOAuthCallback();
-            }
-        };
-    }, [setAuthenticatedUser]);
 
 
     useEffect(() => {
-        if (authenticated && setupStatus === 'idle') {
+        if (setupStatus === 'idle') {
             checkUserSetup();
         }
-    }, [authenticated, setupStatus, checkUserSetup]);
+    }, [setupStatus, checkUserSetup]);
 
     return (
         <Page alignment="center">
@@ -195,19 +118,7 @@ export default function Welcome(): React.JSX.Element {
                     A bower for thee. A quiet place for thought, creation, and things worth keeping.
                 </Typography>
 
-                {authenticated === null ? (
-                    <div className="flex justify-start items-center gap-4 mt-8">
-                        <div className="animate-pulse flex space-x-1">
-                            <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                        </div>
-                        <Typography variant="muted">
-                            Loading...
-                        </Typography>
-                    </div>
-                ) : setupStatus !== 'idle' ? (
-                    // Show setup flow for both authenticated and non-authenticated users when setup is in progress
+                {setupStatus !== 'idle' ? (
                     <div className="flex flex-col justify-start items-start gap-6 mt-8">
                         {setupStatus === 'checking' ? (
                             <div className="flex flex-col gap-4 w-full">
@@ -234,7 +145,7 @@ export default function Welcome(): React.JSX.Element {
                                 <Button
                                     variant="primary"
                                     size="sm"
-                                    onClick={authenticated ? performAuthenticatedSetup : performSetup}
+                                    onClick={performSetup}
                                 >
                                     Begin Setup
                                 </Button>
@@ -255,7 +166,7 @@ export default function Welcome(): React.JSX.Element {
                                 <Button
                                     variant="primary"
                                     size="sm"
-                                    onClick={authenticated ? performAuthenticatedSetup : performSetup}
+                                    onClick={performSetup}
                                 >
                                     Still Continue
                                 </Button>
@@ -311,19 +222,7 @@ export default function Welcome(): React.JSX.Element {
                             </div>
                         ) : null}
                     </div>
-                ) : authenticated ? (
-                    // Authenticated user with idle status
-                    <div className="flex flex-col justify-start items-start gap-6 mt-8">
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={handleContinue}
-                        >
-                            Continue to Dashboard
-                        </Button>
-                    </div>
                 ) : (
-                    // Not authenticated with idle status - show sign in options
                     <div className="flex flex-col gap-6 mt-8">
                         <div className="h-px bg-foreground/10 w-full"></div>
                         <div className="flex justify-start items-center gap-4">

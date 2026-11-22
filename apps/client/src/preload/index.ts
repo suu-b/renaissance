@@ -13,15 +13,6 @@ if (process.contextIsolated) {
       closeWindow: () => ipcRenderer.send("close-window"),
       toggleMaximizeWindow: () => ipcRenderer.send("toggle-maximize-window"),
       openExternal: (url: string) => ipcRenderer.send("open-external", url),
-      startOAuth: (url: string) => ipcRenderer.send("start-oauth", url),
-
-      onOAuthCallback: (callback: (result: any) => void) => {
-        ipcRenderer.on('oauth-callback', (_event, result) => callback(result))
-      },
-
-      removeOAuthCallback: () => {
-        ipcRenderer.removeAllListeners('oauth-callback')
-      },
 
       folderExists: (folderName: string): Promise<boolean> => ipcRenderer.invoke('folder-exists', folderName),
       checkSqliteInstalled: (): Promise<boolean> => ipcRenderer.invoke('check-sqlite-installed'),
@@ -52,13 +43,6 @@ if (process.contextIsolated) {
     closeWindow: () => ipcRenderer.send("close-window"),
     toggleMaximizeWindow: () => ipcRenderer.send("toggle-maximize-window"),
     openExternal: (url: string) => ipcRenderer.send("open-external", url),
-    startOAuth: (url: string) => ipcRenderer.send("start-oauth", url),
-    onOAuthCallback: (callback: (url: string) => void) => {
-      ipcRenderer.on('oauth-callback', (_event, url) => callback(url))
-    },
-    removeOAuthCallback: () => {
-      ipcRenderer.removeAllListeners('oauth-callback')
-    },
     folderExists: (folderName: string): Promise<boolean> => ipcRenderer.invoke('folder-exists', folderName),
     checkSqliteInstalled: (): Promise<boolean> => ipcRenderer.invoke('check-sqlite-installed'),
     checkGitInstalled: (): Promise<boolean> => ipcRenderer.invoke('check-git-installed'),
