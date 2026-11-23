@@ -4,23 +4,27 @@ import os from "os";
 
 import { UserSchema, UserObject } from "@renaissance/shared";
 
-const USER_PROFILE_PATH = path.join(os.homedir(), ".renaissance", "user.json");
-
 /**
- * Reads the user profile stored by the Electron client from
- * ~/.renaissance/user.json and validates it against the shared UserSchema.
+ * Reads the user profile stored by the Electron client
+ * and validates it against the shared UserSchema.
  *
+ * @param profilePath - Optional path to the user profile JSON file. Defaults to process.env.USER_RENAISSANCE_PROFILE_PATH or ~/.renaissance/user.json.
  * @returns The parsed and validated UserObject
  * @throws If the file does not exist, cannot be read, or fails schema validation
  */
-export function getUserProfile(): UserObject {
-  if (!fs.existsSync(USER_PROFILE_PATH)) {
-    throw new Error(`User profile not found at ${USER_PROFILE_PATH}`);
+export function getUserProfile(profilePath?: string): UserObject {
+  const targetPath =
+    profilePath ||
+    process.env.USER_RENAISSANCE_PROFILE_PATH ||
+    path.join(os.homedir(), ".renaissance", "user.json");
+
+  if (!targetPath || !fs.existsSync(targetPath)) {
+    throw new Error(`User profile not found at ${targetPath}`);
   }
 
   let raw: string;
   try {
-    raw = fs.readFileSync(USER_PROFILE_PATH, "utf-8");
+    raw = fs.readFileSync(targetPath, "utf-8");
   } catch (err) {
     throw new Error(`Failed to read user profile: ${(err as Error).message}`);
   }
@@ -44,11 +48,11 @@ export function getUserProfile(): UserObject {
 
 /**
  * Like getUserProfile() but returns null instead of throwing when the
- * profile is missing or invalid.  Useful when the profile is optional context.
+ * profile is missing or invalid. Useful when the profile is optional context.
  */
-export function getUserProfileOrNull(): UserObject | null {
+export function getUserProfileOrNull(profilePath?: string): UserObject | null {
   try {
-    return getUserProfile();
+    return getUserProfile(profilePath);
   } catch {
     return null;
   }

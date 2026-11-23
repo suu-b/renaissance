@@ -1,6 +1,4 @@
 import Fastify from "fastify";
-// import swagger from "@fastify/swagger";
-// import swaggerUi from "@fastify/swagger-ui";
 import cors from "@fastify/cors";
 
 import {
@@ -14,7 +12,9 @@ import servicesPlugin from "./plugins/services.js";
 import configPlugin from "./plugins/config.js";
 import sqlitePlugin from "./plugins/sqlite-plugin.js";
 
-export function buildApp() {
+import config from "./config.js";
+
+export async function buildApp() {
   const app = Fastify({
     logger: {
       level: "debug",
@@ -24,20 +24,23 @@ export function buildApp() {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  // app.register(swagger, {
-  //   openapi: {
-  //     info: {
-  //       title: "Renaissance local server",
-  //       description: "Local Node process to serve Renaissance Desktop client",
-  //       version: "1.0.0",
-  //     },
-  //   },
-  // });
+  if (config.ENABLE_SWAGGER) {
+    const swagger = (await import("@fastify/swagger")).default;
+    const swaggerUi = (await import("@fastify/swagger-ui")).default;
 
-  // app.register(swaggerUi, {
-  //   routePrefix: "/docs",
-  //   baseDir: "/", // Required for ncc bundling
-  // });
+    app.register(swagger, {
+      openapi: {
+        info: {
+          title: "Renaissance local server",
+          description: "Local Node process to serve Renaissance Desktop client",
+          version: "1.0.0",
+        },
+      },
+    });
+    app.register(swaggerUi, {
+      routePrefix: "/docs",
+    });
+  }
   app.register(cors, {
     origin: "*",
     credentials: true,

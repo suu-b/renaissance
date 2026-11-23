@@ -1,8 +1,8 @@
 import { buildApp } from "./app.js";
-const app = buildApp();
 
 async function start() {
   try {
+    const app = await buildApp();
     const port = Number(process.env.PORT);
     if (!port || Number.isNaN(port)) {
       throw new Error("Port configuration not found or invalid");
@@ -30,7 +30,7 @@ async function start() {
     // console.log("Server running at:", address);
     console.log("Returning this port:", port);
   } catch (err) {
-    app.log.error(err);
+    console.error(err);
     process.exit(1);
   }
 }

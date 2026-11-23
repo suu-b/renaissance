@@ -81,7 +81,7 @@ export async function projectRouter(app: FastifyInstance) {
     }, async (request, reply) => {
         try {
             const { includePrivate, limit, offset, sort, filters, fields } = request.body;
-            const userProfile = getUserProfile();
+            const userProfile = getUserProfile(app.appPaths.userProfilePath);
             const projects = app.indexService.getAllProjects({
                 includePrivate,
                 ownerId: userProfile.id,
@@ -119,7 +119,7 @@ export async function projectRouter(app: FastifyInstance) {
     }, async (request, reply) => {
         try {
             const { name, description, isPrivate } = request.body;
-            const userProfile = getUserProfile();
+            const userProfile = getUserProfile(app.appPaths.userProfilePath);
             const id = randomUUID();
             const localProjectPath = path.join(app.appPaths.workspacePath, id);
 

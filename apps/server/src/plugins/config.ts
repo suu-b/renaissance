@@ -1,13 +1,13 @@
 import fp from "fastify-plugin";
 import envPaths from "env-paths";
-import path from "node:path";
 
 export default fp(async (app) => {
     const paths = envPaths("Renaissance");
 
     const userDataPath = paths.data;
     const logPath = paths.log;
-    const workspacePath = path.join(userDataPath, "workspace-temp"); // TODO: harcoded but will handle when we extend the app to cloud capabilities
+    const workspacePath = process.env.USER_RENAISSANCE_TMP_WS_DIR_PATH;
+    const userProfilePath = process.env.USER_RENAISSANCE_PROFILE_PATH;
     const installPath = process.env.RENAISSANCE_INSTALL_PATH;
     const runtimePath = process.env.RENAISSANCE_RUNTIME_PATH;
     const gitPath = process.env.RENAISSANCE_GIT_PATH;
@@ -18,6 +18,7 @@ export default fp(async (app) => {
         remotePath: "tmp",
         userDataPath,
         workspacePath,
+        userProfilePath,
         logPath,
         installPath,
         gitPath,

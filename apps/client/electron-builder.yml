@@ -1,6 +1,6 @@
 appId: com.renaissance.app
 productName: Renaissance
-copyright: Copyright © 2025 Renaissance
+copyright: Copyright © 2026 Renaissance
 buildVersion: 1.0.0
 directories:
   buildResources: build
@@ -38,12 +38,9 @@ linux:
   executableName: Renaissance
   target:
     - AppImage
-    - deb
   maintainer: https://github.com/suu-b
   category: Utility
 appImage:
-  artifactName: Renaissance-${version}.${ext}
-deb:
   artifactName: Renaissance-${version}.${ext}
 npmRebuild: false
 publish:

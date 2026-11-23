@@ -15,7 +15,8 @@ declare module "fastify" {
             remoteUrl: string;
             remotePath: string;
             userDataPath: string;
-            workspacePath: string;
+            workspacePath?: string;
+            userProfilePath?: string;
             logPath: string;
             installPath?: string;
             gitPath?: string;

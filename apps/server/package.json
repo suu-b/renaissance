@@ -6,9 +6,8 @@
   "bin": "./dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "build:binary": "tsc && pkg . --targets node18-linux-x64,node18-win-x64,node18-macos-x64",
-    "build:bundle": "ncc build src/index.ts -o bundle --minify"
+    "build": "tsc --noEmit",
+    "build:bundle": "esbuild src/index.ts --bundle --platform=node --outfile=bundle/index.cjs --minify"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +18,7 @@
     "@fastify/swagger": "^9.8.1",
     "@fastify/swagger-ui": "^6.1.1",
     "@renaissance/shared": "workspace:*",
+    "dotenv": "^16.6.1",
     "env-paths": "^4.0.0",
     "fastify": "^5.8.5",
     "fastify-plugin": "^6.0.0",
@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.13.2",
-    "@vercel/ncc": "^0.38.4",
+    "esbuild": "^0.28.2",
     "tsx": "^4.22.4",
     "typescript": "~6.0.3"
   }

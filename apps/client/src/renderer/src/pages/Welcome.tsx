@@ -44,12 +44,12 @@ export default function Welcome(): React.JSX.Element {
         console.log('checkUserSetup called');
         setSetupStatus('checking');
         console.log('Status set to checking');
-        
+
         try {
             setSetupStep('Checking your setup state...');
             const setupState = await window.api.checkSetupState();
             console.log('Setup state:', setupState);
-            
+
             if (setupState.setupComplete) {
                 // Setup already complete, proceed to dashboard
                 console.log('Setup already complete, proceeding to dashboard');
@@ -72,11 +72,11 @@ export default function Welcome(): React.JSX.Element {
     const performSetup = async () => {
         setSetupStatus('doing_setup');
         setSetupStep('Installing dependencies...');
-        
+
         try {
             // Pass false for withAccount since this is the "Continue without Account" flow
             const result = await window.api.completeSetup(false);
-            
+
             if (result.success) {
                 // Setup successful, verify again
                 setSetupStep('Finalizing setup...');
@@ -93,15 +93,10 @@ export default function Welcome(): React.JSX.Element {
         }
     };
 
-
-
     const handleSignIn = async () => {
         // OAuth removed - button is unresponsive
         console.log("Sign In button clicked - OAuth functionality removed");
     };
-
-
-
 
     useEffect(() => {
         if (setupStatus === 'idle') {
