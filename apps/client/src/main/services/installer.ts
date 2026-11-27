@@ -268,7 +268,7 @@ export async function installLinSqlite(
 
 export function sqliteVersionCode(version: string): string {
     const [major, minor, patch] = version.split('.').map(Number)
-    return `${major}${minor.toString().padStart(2, '0')}${patch.toString().padStart(2, '0')}00`
+    return 
 }
 
 export async function checkSqliteInstalled(): Promise<boolean> {

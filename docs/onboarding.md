@@ -72,7 +72,22 @@ export const GIT_VERSION = '2.53.0'
 - If exists but is invalid or different version, reinstall.
 - If download or extraction fails, report the error.
 
-### 3. Migrations to create base tables
+### 4. Startup backend server.
+The system will create a user entry inside the `users` table entry for a guest account.
+
+**Method:**
+`ensureBackendRuns`
+
+**Desired State:**
+The fastify backend is up and listening.
+
+**Reconcilliation:**
+- If running already, let it be,
+- If not, start it.
+
+This step gives us HTTP access to backend, we can use it to run migrations and do backend stuff.
+
+### 5. Migrations to create base tables
 Next, the system will run a migrations to create all the base tables. Check out local schema designs inside inside [database docs](./database).
 I will create a simple schema runner file instead of using some ORM because the scale is not that big or complex. 
 
@@ -92,7 +107,7 @@ The database schema is at the latest migration version supported by this applica
 7. Record each successful migration.
 
 
-### 4. Create a User entry.
+### 5. Create a User entry.
 The system will create a user entry inside the `users` table entry for a guest account.
 
 **Method:**

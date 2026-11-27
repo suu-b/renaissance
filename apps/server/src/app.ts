@@ -12,6 +12,8 @@ import servicesPlugin from "./plugins/services.js";
 import configPlugin from "./plugins/config.js";
 import sqlitePlugin from "./plugins/sqlite-plugin.js";
 
+import MigrationRunner from "./db/migrationRunner.js";
+
 import config from "./config.js";
 
 export async function buildApp() {
@@ -53,6 +55,23 @@ export async function buildApp() {
 
   // Registering the API Router
   app.register(router, { prefix: "/api/v1" });
+
+  app.get("/health", async (request, reply) => {
+    return reply.code(200).send({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  app.post("/migrate", async (request, reply) => {
+    const migrationRunner = new MigrationRunner(app.db);
+    migrationRunner.run();
+
+    return reply.code(200).send({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+    });
+  });
 
   return app;
 }
