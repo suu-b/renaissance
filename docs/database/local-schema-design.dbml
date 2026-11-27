@@ -1,0 +1,50 @@
+Project renaissance {
+  database_type: 'SQLite'
+  Note: 'Renaissance Capstone'
+}
+
+Table users {
+  id uuid [pk]
+  display_name text [not null]
+  created_at timestamp [not null]
+}
+
+Table workspaces {
+  id uuid [pk]
+  user_id uuid [not null]
+  name text [not null]
+  created_at timestamp [not null]
+}
+
+Table projects {
+  id uuid [pk]
+  workspace_id uuid [not null]
+  name text [not null]
+  description text
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+}
+
+Table branches {
+  id uuid [pk]
+  project_id uuid [not null]
+  name text [not null]
+  created_at timestamp [not null]
+
+  indexes {
+    (project_id, name) [unique]
+  }
+}
+
+Table chapters {
+  id uuid [pk]
+  project_id uuid [not null]
+  name text [not null]
+  created_at timestamp [not null]
+}
+
+Ref: workspaces.user_id > users.id [delete: cascade]
+Ref: projects.workspace_id > workspaces.id [delete: cascade]
+Ref: branches.project_id > projects.id [delete: cascade]
+Ref: chapters.project_id > projects.id [delete: cascade]

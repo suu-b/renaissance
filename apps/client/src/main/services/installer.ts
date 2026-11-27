@@ -164,7 +164,6 @@ export async function installLinGit(
         const buffer = Buffer.from(await response.arrayBuffer())
         fs.writeFileSync(archivePath, buffer)
         console.log('Downloaded Git to:', archivePath)
-
         // Extract tar.xz using system tar
         console.log('Extracting Git to:', runtimeDir)
         await execAsync(`tar -xf ${archivePath} -C ${runtimeDir}`, { timeout: 120000 })

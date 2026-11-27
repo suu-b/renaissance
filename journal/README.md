@@ -18,3 +18,5 @@ A Template I will follow:
   
 Here are all the journals:
 - [Nov 22, 2026](./nov-22-2026.md)
+- [Nov 23, 2026](./nov-23-2026.md)
+- [Nov 27, 2026](./nov-27-2026.md)
